@@ -1,0 +1,28 @@
+@AGENTS.md
+
+# Arquitectura
+
+Este proyecto usa arquitectura hexagonal (puertos y adaptadores). La dirección de dependencias es estricta y va en un solo sentido:
+
+`presentation (src/app, src/components) → application (src/application) → domain (src/domain)`, con `infrastructure (src/infrastructure)` implementando los `ports` que define `domain`.
+
+- **`src/domain`**: entidades, value objects y `ports` (interfaces). No importa nada de `application`, `infrastructure` ni `src/app`. Cero dependencias de Next.js/React.
+- **`src/application`**: casos de uso, uno por acción de negocio. Solo dependen de `domain` y reciben sus dependencias (`ports`) inyectadas por parámetro — nunca importan un adaptador concreto de `infrastructure`.
+- **`src/infrastructure`**: adaptadores que implementan los `ports` del dominio. Hoy solo existen adaptadores mock (`src/infrastructure/mock/`) con datos quemados; al conectar un backend real se agregan adaptadores nuevos ahí sin tocar `domain` ni `application`.
+- **`src/infrastructure/container.ts`**: composition root. Es el único archivo que conecta casos de uso con adaptadores concretos. Las páginas y componentes de `src/app` importan `container`, nunca un repositorio o caso de uso directamente.
+- **Datos quemados**: viven únicamente en `src/infrastructure/mock/data/`. Nunca hardcodear datos de ejemplo dentro de componentes, páginas o casos de uso.
+- **Control de acceso por rol**: vive en `src/proxy.ts` (reemplaza a `middleware.ts`, deprecado en Next 16 — ver `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`) + `src/lib/auth/` + los `layout.tsx` de cada grupo de rutas por rol (`src/app/guard`, `src/app/admin`, `src/app/superadmin`). No agregar checks de rol ad hoc dentro de páginas individuales.
+- **Server actions**: Proxy no protege las Server Functions de forma fiable (no son rutas separadas en su cadena de ejecución; un cambio de `matcher` puede dejarlas sin cobertura silenciosamente). Cada server action que mute datos debe validar sesión/rol por su cuenta, como hace `requireGuard()` en `src/app/guard/actions.ts` — no depender solo de Proxy o del layout.
+- **Validación de formularios**: con `zod`, esquemas en `src/lib/validation/`, reutilizados tanto en el cliente (mensajes de error) como en las server actions.
+
+# Testing
+
+- **Regla obligatoria**: todo cambio que agregue o modifique comportamiento debe incluir o actualizar sus pruebas en el mismo cambio. Un cambio sin sus pruebas correspondientes no se considera terminado.
+- Unitarias/componentes con **Vitest** + React Testing Library. Casos de uso del dominio (ventanas de tiempo, reglas de negocio) y componentes con lógica no trivial siempre deben tener prueba.
+- End-to-end con **Playwright** (carpeta `e2e/`), especialmente para flujos de seguridad: control de acceso por rol, usuarios desactivados que no pueden iniciar sesión, y ventanas de tiempo de escaneo de estaciones. Priorizar estos casos sobre cobertura visual.
+- Los tests unitarios/componentes viven junto al archivo que prueban (`archivo.ts` + `archivo.test.ts`), no en una carpeta paralela.
+- Comandos: `npm run test` (unitarias), `npm run test:coverage`, `npm run e2e` (Playwright, levanta el servidor de dev automáticamente).
+
+# CI
+
+Cada PR corre lint, typecheck, tests unitarios, build y e2e (ver `.github/workflows/ci.yml`), además de CodeQL y dependency review. Un PR no debe mergearse con checks en rojo.
