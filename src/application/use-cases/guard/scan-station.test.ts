@@ -22,6 +22,7 @@ const TEST_SITE: Site = {
     { id: "station-3", siteId: "site-test", name: "Estación 3", order: 3, qrCodeId: "qr-3" },
     { id: "station-4", siteId: "site-test", name: "Estación 4", order: 4, qrCodeId: "qr-4" },
   ],
+  visitingLocals: ["Recepción", "Otro"],
 };
 
 const GUARD: GuardUser = {

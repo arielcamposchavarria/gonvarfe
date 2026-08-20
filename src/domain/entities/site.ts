@@ -8,4 +8,6 @@ export interface Site {
   readonly startQrCodeId: string;
   readonly exitQrCodeId: string;
   readonly stations: Station[];
+  /** Locales/negocios que un visitante puede indicar en la bitácora de ingreso. */
+  readonly visitingLocals: string[];
 }

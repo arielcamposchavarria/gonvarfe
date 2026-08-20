@@ -16,6 +16,9 @@ test("un guard inicia su jornada, la estación 1 queda escaneada automáticament
   await page.getByRole("button", { name: /ingresar/i }).click();
   await expect(page).toHaveURL(/\/guard\/dashboard$/);
 
+  await page.getByTestId("option-scan").click();
+  await expect(page).toHaveURL(/\/guard\/scan$/);
+
   await page.getByRole("button", { name: /escanear qr de inicio/i }).click();
 
   const station1 = page.getByTestId("station-scan-1");

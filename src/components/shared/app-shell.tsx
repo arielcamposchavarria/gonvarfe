@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { LogOut, type LucideIcon } from "lucide-react";
 
@@ -23,9 +24,12 @@ export function AppShell({ role, userName, navItems, children }: AppShellProps) 
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 px-4">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <span className="text-sm font-bold tracking-tight text-foreground">GonVar</span>
-            <span className="truncate text-xs text-muted-foreground">{ROLE_LABELS[role]}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <Image src="/gonvar-shield.png" alt="" width={28} height={28} className="shrink-0 rounded-md" priority />
+            <div className="flex min-w-0 items-baseline gap-2">
+              <span className="text-sm font-bold tracking-tight text-foreground">GonVar</span>
+              <span className="truncate text-xs text-muted-foreground">{ROLE_LABELS[role]}</span>
+            </div>
           </div>
 
           <nav className="hidden items-center gap-1 sm:flex">

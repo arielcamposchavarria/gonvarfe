@@ -26,7 +26,7 @@ test.describe("login y control de acceso por rol", () => {
     await login(page, "guard", "1234");
 
     await expect(page).toHaveURL(/\/guard\/dashboard$/);
-    await expect(page.getByText(/bodega central gonvar/i)).toBeVisible();
+    await expect(page.getByText(/plaza amara/i)).toBeVisible();
   });
 
   test("credenciales inválidas muestran un error y no inician sesión", async ({ page }) => {

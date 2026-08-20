@@ -36,4 +36,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Sin esto, el ícono del selector nativo de fecha/hora se dibuja en negro y es invisible sobre el fondo oscuro. */
+  color-scheme: dark;
 }
