@@ -14,6 +14,8 @@ import { scanStation, type ScanStationInput } from "@/application/use-cases/guar
 import { endShift } from "@/application/use-cases/guard/end-shift";
 import { reportMissedScan, type ReportMissedScanInput } from "@/application/use-cases/guard/report-missed-scan";
 import { getShiftStatus } from "@/application/use-cases/guard/get-shift-status";
+import { submitEntryLog, type SubmitEntryLogInput } from "@/application/use-cases/guard/submit-entry-log";
+import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
 import { listSites } from "@/application/use-cases/admin/list-sites";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
 import { listUsers } from "@/application/use-cases/superadmin/list-users";
@@ -52,6 +54,9 @@ export const container = {
   getShiftStatus: (siteId: string, guardId: string) =>
     getShiftStatus({ shiftSessionRepository, roundRepository, siteRepository }, siteId, guardId),
 
+  submitEntryLog: (input: SubmitEntryLogInput) => submitEntryLog({ entryLogRepository }, input),
+  submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),
+
   listSites: () => listSites({ siteRepository }),
   listGuards: () => listGuards({ userRepository }),
   listUsers: () => listUsers({ userRepository }),
@@ -59,8 +64,7 @@ export const container = {
   findUserById: (id: string) => userRepository.findById(id),
 };
 
-// Se exponen para casos donde el composition root necesita repos crudos (p.ej. entry/incident logs
-// en la siguiente fase, cuando se implementen sus casos de uso).
+// Se exponen para casos donde se necesite un repo crudo fuera de un caso de uso ya envuelto arriba.
 export const repositories = {
   siteRepository,
   userRepository,

@@ -2,9 +2,9 @@ import type { Site } from "@/domain/entities/site";
 import type { Round } from "@/domain/entities/round";
 import type { StationScan } from "@/domain/entities/station-scan";
 import { createTimeWindow } from "@/domain/value-objects/time-window";
-import { STATION_WINDOW_MINUTES } from "@/domain/constants";
+import { ROUND_DURATION_MINUTES } from "@/domain/constants";
 
-/** Crea un recorrido nuevo con sus 4 ventanas de estación calculadas desde startedAt. */
+/** Crea un recorrido nuevo repartiendo la hora entre las estaciones del sitio. */
 export function buildRound(params: {
   id: string;
   shiftSessionId: string;
@@ -13,6 +13,7 @@ export function buildRound(params: {
   startedAt: Date;
 }): Round {
   const stations = [...params.site.stations].sort((a, b) => a.order - b.order);
+  const stationWindowMinutes = ROUND_DURATION_MINUTES / stations.length;
 
   const scans: StationScan[] = stations.map((station, index) => ({
     id: crypto.randomUUID(),
@@ -20,8 +21,8 @@ export function buildRound(params: {
     stationId: station.id,
     order: station.order,
     window: createTimeWindow(
-      new Date(params.startedAt.getTime() + index * STATION_WINDOW_MINUTES * 60_000),
-      STATION_WINDOW_MINUTES,
+      new Date(params.startedAt.getTime() + index * stationWindowMinutes * 60_000),
+      stationWindowMinutes,
     ),
     status: "pending",
     scannedAt: null,

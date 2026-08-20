@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { LayoutDashboard, UserRound } from "lucide-react";
+import { LayoutDashboard, QrCode, UserRound } from "lucide-react";
 
 import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
@@ -7,6 +7,7 @@ import { AppShell, type NavItem } from "@/components/shared/app-shell";
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/guard/dashboard", label: "Panel", icon: LayoutDashboard },
+  { href: "/guard/scan", label: "Recorrido", icon: QrCode },
   { href: "/guard/profile", label: "Perfil", icon: UserRound },
 ];
 

@@ -5,6 +5,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { reportMissedScanAction } from "@/app/guard/actions";
 
 export interface ReportMissedDialogProps {
@@ -38,14 +39,13 @@ export function ReportMissedDialog({ stationId, onClose, onSubmitted }: ReportMi
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="reason">Motivo</Label>
-            <textarea
+            <Textarea
               id="reason"
               name="reason"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               required
               rows={3}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
           </div>
           <DialogFooter>

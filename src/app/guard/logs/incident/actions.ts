@@ -1,0 +1,48 @@
+"use server";
+
+import { redirect } from "next/navigation";
+
+import { container } from "@/infrastructure/container";
+import { requireGuard } from "@/app/guard/actions";
+import { incidentLogSchema } from "@/lib/validation/incident-log-schema";
+import { MAX_LOG_IMAGES } from "@/domain/constants";
+import { fileToDataUrl } from "@/lib/files/file-to-data-url";
+
+export interface IncidentLogActionState {
+  error: string | null;
+}
+
+export async function submitIncidentLogAction(
+  _prevState: IncidentLogActionState,
+  formData: FormData,
+): Promise<IncidentLogActionState> {
+  const guard = await requireGuard();
+
+  const parsed = incidentLogSchema.safeParse({
+    incidentType: formData.get("incidentType"),
+    locationZone: formData.get("locationZone"),
+    description: formData.get("description"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const photos = formData.getAll("photos").filter((entry): entry is File => entry instanceof File && entry.size > 0);
+  if (photos.length > MAX_LOG_IMAGES) {
+    return { error: `Máximo ${MAX_LOG_IMAGES} imágenes.` };
+  }
+
+  const photoUrls = await Promise.all(photos.map(fileToDataUrl));
+
+  await container.submitIncidentLog({
+    siteId: guard.assignedSiteId,
+    guardId: guard.id,
+    incidentType: parsed.data.incidentType,
+    locationZone: parsed.data.locationZone,
+    description: parsed.data.description,
+    photoUrls,
+  });
+
+  redirect("/guard/dashboard");
+}

@@ -12,7 +12,7 @@ export interface GuardActionState {
 
 const OK: GuardActionState = { error: null };
 
-async function requireGuard(): Promise<GuardUser> {
+export async function requireGuard(): Promise<GuardUser> {
   const session = await getSession();
   if (!session || session.role !== "guard") throw new Error("No autorizado.");
   const user = await container.findUserById(session.userId);

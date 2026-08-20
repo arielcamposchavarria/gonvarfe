@@ -8,7 +8,7 @@ export interface EntryLog {
   readonly guardId: string;
   date: string;
   entryTime: string;
-  exitTime: string | null;
+  exitTime: string;
   plate: PlateNumber;
   driverName: string;
   cedula: Cedula;
