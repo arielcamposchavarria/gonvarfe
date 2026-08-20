@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,17 +15,19 @@ export default async function AdminGuardsPage() {
 
       <Card className="divide-y divide-border overflow-hidden sm:hidden">
         {guards.map((guard) => (
-          <div key={guard.id} className="flex items-center justify-between gap-3 p-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{guard.name}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {guard.username} · {siteNameById.get(guard.assignedSiteId) ?? guard.assignedSiteId}
-              </p>
+          <Link key={guard.id} href={`/admin/guards/${guard.id}`} className="block">
+            <div className="flex items-center justify-between gap-3 p-3 transition-colors hover:bg-surface-hover">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{guard.name}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {guard.username} · {siteNameById.get(guard.assignedSiteId) ?? guard.assignedSiteId}
+                </p>
+              </div>
+              <Badge variant={guard.isActive ? "success" : "destructive"} className="shrink-0">
+                {guard.isActive ? "Activo" : "Inactivo"}
+              </Badge>
             </div>
-            <Badge variant={guard.isActive ? "success" : "destructive"} className="shrink-0">
-              {guard.isActive ? "Activo" : "Inactivo"}
-            </Badge>
-          </div>
+          </Link>
         ))}
       </Card>
 
@@ -39,14 +43,28 @@ export default async function AdminGuardsPage() {
           </TableHeader>
           <TableBody>
             {guards.map((guard) => (
-              <TableRow key={guard.id}>
-                <TableCell>{guard.name}</TableCell>
-                <TableCell>{guard.username}</TableCell>
-                <TableCell>{siteNameById.get(guard.assignedSiteId) ?? guard.assignedSiteId}</TableCell>
-                <TableCell>
-                  <Badge variant={guard.isActive ? "success" : "destructive"}>
-                    {guard.isActive ? "Activo" : "Inactivo"}
-                  </Badge>
+              <TableRow key={guard.id} className="cursor-pointer">
+                <TableCell className="p-0">
+                  <Link href={`/admin/guards/${guard.id}`} className="block p-3">
+                    {guard.name}
+                  </Link>
+                </TableCell>
+                <TableCell className="p-0">
+                  <Link href={`/admin/guards/${guard.id}`} className="block p-3">
+                    {guard.username}
+                  </Link>
+                </TableCell>
+                <TableCell className="p-0">
+                  <Link href={`/admin/guards/${guard.id}`} className="block p-3">
+                    {siteNameById.get(guard.assignedSiteId) ?? guard.assignedSiteId}
+                  </Link>
+                </TableCell>
+                <TableCell className="p-0">
+                  <Link href={`/admin/guards/${guard.id}`} className="block p-3">
+                    <Badge variant={guard.isActive ? "success" : "destructive"}>
+                      {guard.isActive ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}

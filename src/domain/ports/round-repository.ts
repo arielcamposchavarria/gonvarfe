@@ -4,6 +4,7 @@ export interface RoundRepository {
   findById(id: string): Promise<Round | null>;
   findActiveByShiftSession(shiftSessionId: string): Promise<Round | null>;
   findByShiftSession(shiftSessionId: string): Promise<Round[]>;
+  findBySite(siteId: string): Promise<Round[]>;
   create(round: Round): Promise<Round>;
   update(round: Round): Promise<Round>;
 }

@@ -8,6 +8,9 @@ export function createMockEntryLogRepository(): EntryLogRepository {
     async findBySite(siteId) {
       return logs.filter((log) => log.siteId === siteId);
     },
+    async findByGuard(guardId) {
+      return logs.filter((log) => log.guardId === guardId);
+    },
     async create(log) {
       logs.push(log);
       return log;

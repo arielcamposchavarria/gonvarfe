@@ -5,11 +5,17 @@ export function createMockShiftSessionRepository(): ShiftSessionRepository {
   const sessions = new Map<string, ShiftSession>();
 
   return {
+    async findById(id) {
+      return sessions.get(id) ?? null;
+    },
     async findActiveByGuard(guardId) {
       for (const session of sessions.values()) {
         if (session.guardId === guardId && session.status === "active") return session;
       }
       return null;
+    },
+    async findByGuard(guardId) {
+      return [...sessions.values()].filter((session) => session.guardId === guardId);
     },
     async create(session) {
       sessions.set(session.id, session);
