@@ -52,6 +52,12 @@ export function ImageUploadField({ name, maxFiles = 5, label = "Imágenes (opcio
       <div className="flex flex-wrap gap-2">
         {previews.map((src, index) => (
           <div key={index} className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border">
+            {/*
+              `src` es un blob: URL de URL.createObjectURL() sobre un File que el propio usuario eligió en su
+              equipo: es opaco, generado por el navegador y nunca contiene el contenido del archivo ni texto/HTML
+              de un tercero, así que no hay riesgo de XSS aunque CodeQL (js/xss-through-dom) lo marque como tal.
+            */}
+            {/* lgtm[js/xss-through-dom] */}
             {/* eslint-disable-next-line @next/next/no-img-element -- vista previa local desde blob:, no un asset del sitio */}
             <img src={src} alt="" className="h-full w-full object-cover" />
             <button
