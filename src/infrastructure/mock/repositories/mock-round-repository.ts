@@ -19,6 +19,9 @@ export function createMockRoundRepository(): RoundRepository {
         .filter((round) => round.shiftSessionId === shiftSessionId)
         .sort((a, b) => a.sequence - b.sequence);
     },
+    async findBySite(siteId) {
+      return [...rounds.values()].filter((round) => round.siteId === siteId);
+    },
     async create(round) {
       rounds.set(round.id, round);
       return round;
