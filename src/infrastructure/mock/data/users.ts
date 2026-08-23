@@ -29,6 +29,8 @@ export const users: AppUser[] = [
     assignedSiteId: "site-1",
     isActive: true,
     createdAt: new Date("2025-02-01"),
+    // Sin foto asignada aún; el admin la carga al crear/editar el oficial.
+    photoUrl: null,
   },
   {
     id: "user-guard-2",
@@ -38,5 +40,6 @@ export const users: AppUser[] = [
     assignedSiteId: "site-2",
     isActive: false,
     createdAt: new Date("2025-02-10"),
+    photoUrl: null,
   },
 ];

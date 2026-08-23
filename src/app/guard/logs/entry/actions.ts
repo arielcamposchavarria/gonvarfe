@@ -20,6 +20,10 @@ export async function submitEntryLogAction(
 ): Promise<EntryLogActionState> {
   const guard = await requireGuard();
 
+  const selectedLocal = formData.get("visitingLocal");
+  const visitingLocal =
+    selectedLocal === "Otro" ? formData.get("visitingLocalOther") : selectedLocal;
+
   const parsed = entryLogSchema.safeParse({
     date: formData.get("date"),
     entryTime: formData.get("entryTime"),
@@ -29,7 +33,7 @@ export async function submitEntryLogAction(
     cedula: formData.get("cedula"),
     company: formData.get("company"),
     reason: formData.get("reason"),
-    visitingLocal: formData.get("visitingLocal"),
+    visitingLocal,
     observations: formData.get("observations"),
   });
 

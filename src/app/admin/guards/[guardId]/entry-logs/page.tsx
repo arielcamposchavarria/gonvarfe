@@ -5,15 +5,25 @@ import { ChevronLeft } from "lucide-react";
 import { container } from "@/infrastructure/container";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 
 export default async function AdminGuardEntryLogsPage({
   params,
+  searchParams,
 }: PageProps<"/admin/guards/[guardId]/entry-logs">) {
   const { guardId } = await params;
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const entryLogs = await container.listGuardEntryLogs(guardId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const entryLogs = await container.listGuardEntryLogs(
+    guardId,
+    parseDateRangeParams({ from: fromParam, to: toParam }),
+  );
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,8 +38,10 @@ export default async function AdminGuardEntryLogsPage({
           </Link>
           <h1 className="text-lg font-semibold">Bitácora de ingresos</h1>
         </div>
-        <ExportButton href={`/admin/guards/${guardId}/entry-logs/export`} />
+        <ExportButton href={`/admin/guards/${guardId}/entry-logs/export${exportQuery}`} />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {entryLogs.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard todavía no ha registrado ingresos.</p>

@@ -18,6 +18,7 @@ import { submitEntryLog, type SubmitEntryLogInput } from "@/application/use-case
 import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
 import { listSites } from "@/application/use-cases/admin/list-sites";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
+import { createGuard, type CreateGuardInput } from "@/application/use-cases/admin/create-guard";
 import { getSite } from "@/application/use-cases/admin/get-site";
 import { listRoundsBySite } from "@/application/use-cases/admin/list-rounds-by-site";
 import { getRoundDetail } from "@/application/use-cases/admin/get-round-detail";
@@ -30,7 +31,13 @@ import { listGuardIncidentLogs } from "@/application/use-cases/admin/list-guard-
 import { listGuardRounds } from "@/application/use-cases/admin/list-guard-rounds";
 import { listGuardScannedStations } from "@/application/use-cases/admin/list-guard-scanned-stations";
 import { listUsers } from "@/application/use-cases/superadmin/list-users";
+import { createSite, type CreateSiteInput } from "@/application/use-cases/superadmin/create-site";
+import {
+  addSiteVisitingLocal,
+  type AddSiteVisitingLocalInput,
+} from "@/application/use-cases/superadmin/add-site-visiting-local";
 import type { GuardUser } from "@/domain/entities/user";
+import type { DateRange } from "@/lib/date-range";
 
 /**
  * Composition root: único lugar donde se conectan los casos de uso con
@@ -70,7 +77,10 @@ export const container = {
 
   listSites: () => listSites({ siteRepository }),
   listGuards: () => listGuards({ userRepository }),
+  createGuard: (input: CreateGuardInput) => createGuard({ userRepository, authService }, input),
   listUsers: () => listUsers({ userRepository }),
+  createSite: (input: CreateSiteInput) => createSite({ siteRepository }, input),
+  addSiteVisitingLocal: (input: AddSiteVisitingLocalInput) => addSiteVisitingLocal({ siteRepository }, input),
 
   getSite: (siteId: string) => getSite({ siteRepository }, siteId),
   listRoundsBySite: (siteId: string) =>
@@ -86,15 +96,16 @@ export const container = {
       { userRepository, siteRepository, shiftSessionRepository, roundRepository, entryLogRepository, incidentLogRepository },
       guardId,
     ),
-  listGuardMissedScans: (guardId: string) =>
-    listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, guardId),
-  listGuardEntryLogs: (guardId: string) => listGuardEntryLogs({ entryLogRepository, siteRepository }, guardId),
-  listGuardIncidentLogs: (guardId: string) =>
-    listGuardIncidentLogs({ incidentLogRepository, siteRepository }, guardId),
-  listGuardRounds: (guardId: string) =>
-    listGuardRounds({ shiftSessionRepository, roundRepository, siteRepository }, guardId),
-  listGuardScannedStations: (guardId: string) =>
-    listGuardScannedStations({ shiftSessionRepository, roundRepository, siteRepository }, guardId),
+  listGuardMissedScans: (guardId: string, range?: DateRange) =>
+    listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, guardId, range),
+  listGuardEntryLogs: (guardId: string, range?: DateRange) =>
+    listGuardEntryLogs({ entryLogRepository, siteRepository }, guardId, range),
+  listGuardIncidentLogs: (guardId: string, range?: DateRange) =>
+    listGuardIncidentLogs({ incidentLogRepository, siteRepository }, guardId, range),
+  listGuardRounds: (guardId: string, range?: DateRange) =>
+    listGuardRounds({ shiftSessionRepository, roundRepository, siteRepository }, guardId, range),
+  listGuardScannedStations: (guardId: string, range?: DateRange) =>
+    listGuardScannedStations({ shiftSessionRepository, roundRepository, siteRepository }, guardId, range),
 
   findUserById: (id: string) => userRepository.findById(id),
 };

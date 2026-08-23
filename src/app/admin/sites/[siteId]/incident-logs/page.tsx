@@ -38,7 +38,9 @@ export default async function AdminSiteIncidentLogsPage({
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base">{log.locationZone}</CardTitle>
-                <Badge variant="destructive">{log.incidentType}</Badge>
+                <Badge variant="destructive">
+                  {log.incidentType === "Otro" && log.incidentTypeDetail ? log.incidentTypeDetail : log.incidentType}
+                </Badge>
               </div>
               <CardDescription>
                 {guardName} · {new Date(log.occurredAt).toLocaleString()}

@@ -1,11 +1,13 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { container } from "@/infrastructure/container";
-import { buildXlsxResponse, slugifyFilename } from "@/lib/export/xlsx";
+import { slugifyFilename } from "@/lib/export/xlsx";
+import { parseReportFormat, buildReportResponse } from "@/lib/export/report-response";
 import { buildGuardRoundsSheet } from "@/lib/export/guard-report-sheets";
+import { parseDateRangeParams } from "@/lib/date-range";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: RouteContext<"/admin/guards/[guardId]/rounds/export">) {
+export async function GET(request: Request, { params }: RouteContext<"/admin/guards/[guardId]/rounds/export">) {
   try {
     await requireAdmin();
   } catch {
@@ -16,7 +18,12 @@ export async function GET(_request: Request, { params }: RouteContext<"/admin/gu
   const detail = await container.getGuardDetail(guardId);
   if (!detail) return new Response("Guard no encontrado.", { status: 404 });
 
-  const rounds = await container.listGuardRounds(guardId);
+  const range = parseDateRangeParams(new URL(request.url).searchParams);
+  const rounds = await container.listGuardRounds(guardId, range);
 
-  return buildXlsxResponse([buildGuardRoundsSheet(rounds)], `${slugifyFilename(detail.guard.name)}-recorridos.xlsx`);
+  return buildReportResponse(
+    parseReportFormat(request),
+    [buildGuardRoundsSheet(rounds)],
+    `${slugifyFilename(detail.guard.name)}-recorridos`,
+  );
 }

@@ -56,6 +56,12 @@ function createFakeSiteRepository(sites: Site[]): SiteRepository {
     async findById(id) {
       return sites.find((site) => site.id === id) ?? null;
     },
+    async create(site) {
+      return site;
+    },
+    async addVisitingLocal() {
+      return null;
+    },
   };
 }
 
@@ -72,6 +78,10 @@ function createFakeUserRepository(users: AppUser[]): UserRepository {
     },
     async findByRole(role) {
       return users.filter((user) => user.role === role);
+    },
+    async create(user) {
+      users.push(user);
+      return user;
     },
   };
 }
@@ -175,6 +185,7 @@ describe("getGuardDetail", () => {
       guardId: GUARD.id,
       occurredAt: new Date("2026-01-01T08:20:00Z"),
       incidentType: "Otro",
+      incidentTypeDetail: null,
       locationZone: "Entrada",
       description: "Sin novedad",
       photoUrls: [],

@@ -6,15 +6,25 @@ import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 
 export default async function AdminGuardIncidentLogsPage({
   params,
+  searchParams,
 }: PageProps<"/admin/guards/[guardId]/incident-logs">) {
   const { guardId } = await params;
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const incidentLogs = await container.listGuardIncidentLogs(guardId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const incidentLogs = await container.listGuardIncidentLogs(
+    guardId,
+    parseDateRangeParams({ from: fromParam, to: toParam }),
+  );
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,8 +39,10 @@ export default async function AdminGuardIncidentLogsPage({
           </Link>
           <h1 className="text-lg font-semibold">Bitácora de incidencias</h1>
         </div>
-        <ExportButton href={`/admin/guards/${guardId}/incident-logs/export`} />
+        <ExportButton href={`/admin/guards/${guardId}/incident-logs/export${exportQuery}`} />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {incidentLogs.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard todavía no ha reportado incidencias.</p>
@@ -42,7 +54,9 @@ export default async function AdminGuardIncidentLogsPage({
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base">{log.locationZone}</CardTitle>
-                <Badge variant="destructive">{log.incidentType}</Badge>
+                <Badge variant="destructive">
+                  {log.incidentType === "Otro" && log.incidentTypeDetail ? log.incidentTypeDetail : log.incidentType}
+                </Badge>
               </div>
               <CardDescription>
                 {siteName} · {new Date(log.occurredAt).toLocaleString()}

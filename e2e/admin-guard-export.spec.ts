@@ -7,8 +7,8 @@ async function login(page: import("@playwright/test").Page, username: string, pa
   await page.getByRole("button", { name: /ingresar/i }).click();
 }
 
-test.describe("exportar reportes de guard a Excel", () => {
-  test("el admin puede descargar el reporte completo y cada reporte individual", async ({ page }) => {
+test.describe("exportar reportes de guard a Excel y PDF", () => {
+  test("el admin puede descargar el reporte completo y cada reporte individual en Excel", async ({ page }) => {
     await login(page, "admin", "1234");
     await expect(page).toHaveURL(/\/admin\/dashboard$/);
 
@@ -17,30 +17,43 @@ test.describe("exportar reportes de guard a Excel", () => {
 
     const [fullDownload] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("link", { name: /exportar todo/i }).click(),
+      page.getByRole("link", { name: /excel: todo/i }).click(),
     ]);
     expect(fullDownload.suggestedFilename()).toBe("mario-solano-reporte-completo.xlsx");
 
     await page.goto("/admin/guards/user-guard-1/missed-scans");
     const [missedDownload] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("link", { name: /exportar a excel/i }).click(),
+      page.getByRole("link", { name: "Descargar Justificación", exact: true }).click(),
     ]);
     expect(missedDownload.suggestedFilename()).toBe("mario-solano-qr-no-escaneados.xlsx");
 
     await page.goto("/admin/guards/user-guard-1/scanned-stations");
     const [scannedDownload] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("link", { name: /exportar a excel/i }).click(),
+      page.getByRole("link", { name: /descargar excel/i }).click(),
     ]);
     expect(scannedDownload.suggestedFilename()).toBe("mario-solano-qr-escaneados.xlsx");
 
     await page.goto("/admin/guards/user-guard-1/rounds");
     const [roundsDownload] = await Promise.all([
       page.waitForEvent("download"),
-      page.getByRole("link", { name: /exportar a excel/i }).click(),
+      page.getByRole("link", { name: /descargar excel/i }).click(),
     ]);
     expect(roundsDownload.suggestedFilename()).toBe("mario-solano-recorridos.xlsx");
+  });
+
+  test("el admin puede descargar el reporte de recorridos en PDF", async ({ page }) => {
+    await login(page, "admin", "1234");
+    await expect(page).toHaveURL(/\/admin\/dashboard$/);
+
+    await page.goto("/admin/guards/user-guard-1/rounds");
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("link", { name: /descargar pdf/i }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("mario-solano-recorridos.pdf");
   });
 
   test("las rutas de exportación redirigen a login si no hay sesión de admin", async ({ page }) => {

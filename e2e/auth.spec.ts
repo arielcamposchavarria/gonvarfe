@@ -29,17 +29,24 @@ test.describe("login y control de acceso por rol", () => {
     await expect(page.getByText(/plaza amara/i)).toBeVisible();
   });
 
-  test("credenciales inválidas muestran un error y no inician sesión", async ({ page }) => {
+  test("credenciales inválidas muestran un error genérico y no inician sesión", async ({ page }) => {
     await login(page, "guard", "incorrecta");
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator('p[role="alert"]')).toHaveText(/usuario o contraseña inválidos/i);
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("un guard desactivado no puede iniciar sesión", async ({ page }) => {
+  test("un usuario inexistente muestra el mismo error genérico que una contraseña incorrecta", async ({ page }) => {
+    await login(page, "usuario-que-no-existe", "1234");
+
+    await expect(page.locator('p[role="alert"]')).toHaveText(/usuario o contraseña inválidos/i);
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("un guard desactivado ve un mensaje específico de usuario desactivado", async ({ page }) => {
     await login(page, "guardInactivo", "1234");
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator('p[role="alert"]')).toHaveText(/desactivado/i);
     await expect(page).toHaveURL(/\/login$/);
   });
 

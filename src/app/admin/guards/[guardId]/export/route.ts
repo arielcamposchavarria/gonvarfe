@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { container } from "@/infrastructure/container";
-import { buildXlsxResponse, slugifyFilename } from "@/lib/export/xlsx";
+import { slugifyFilename } from "@/lib/export/xlsx";
+import { parseReportFormat, buildReportResponse } from "@/lib/export/report-response";
 import {
   buildGuardRoundsSheet,
   buildGuardScannedStationsSheet,
@@ -11,7 +12,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: RouteContext<"/admin/guards/[guardId]/export">) {
+export async function GET(request: Request, { params }: RouteContext<"/admin/guards/[guardId]/export">) {
   try {
     await requireAdmin();
   } catch {
@@ -38,5 +39,5 @@ export async function GET(_request: Request, { params }: RouteContext<"/admin/gu
     buildGuardIncidentLogsSheet(incidentLogs),
   ];
 
-  return buildXlsxResponse(sheets, `${slugifyFilename(detail.guard.name)}-reporte-completo.xlsx`);
+  return buildReportResponse(parseReportFormat(request), sheets, `${slugifyFilename(detail.guard.name)}-reporte-completo`);
 }

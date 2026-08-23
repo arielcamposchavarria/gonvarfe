@@ -6,4 +6,5 @@ export interface UserRepository {
   findById(id: string): Promise<AppUser | null>;
   findByUsername(username: string): Promise<AppUser | null>;
   findByRole(role: Role): Promise<AppUser[]>;
+  create(user: AppUser): Promise<AppUser>;
 }
