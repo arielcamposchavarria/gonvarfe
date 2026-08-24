@@ -19,7 +19,7 @@ describe("CreateSiteForm", () => {
 
     expect(screen.getByLabelText(/nombre del sitio/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/dirección/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/marcas\/locales/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/marcas/i)).toBeInTheDocument();
   });
 
   it("muestra el error devuelto por la acción", async () => {

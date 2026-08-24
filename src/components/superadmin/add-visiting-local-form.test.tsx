@@ -25,7 +25,7 @@ describe("AddVisitingLocalForm", () => {
     const user = userEvent.setup();
     render(<AddVisitingLocalForm siteId="site-inexistente" />);
 
-    await user.type(screen.getByLabelText(/nueva marca o local/i), "Marca X");
+    await user.type(screen.getByLabelText(/nueva marca/i), "Marca X");
     await user.click(screen.getByRole("button", { name: /agregar marca/i }));
 
     expect(await screen.findByText(/no se encontró el sitio/i)).toBeInTheDocument();

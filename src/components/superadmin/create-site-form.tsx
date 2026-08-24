@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { MarcaTagInput } from "@/components/superadmin/marca-tag-input";
 
 const INITIAL_STATE: CreateSiteActionState = { error: null };
 
@@ -25,7 +26,7 @@ export function CreateSiteForm() {
       <Card className="max-w-md">
         <CardHeader>
           <CardTitle>Nuevo sitio</CardTitle>
-          <CardDescription>Crea un sitio y sus marcas/locales visitables.</CardDescription>
+          <CardDescription>Crea un sitio y sus marcas visitables.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="flex flex-col gap-4">
@@ -39,10 +40,7 @@ export function CreateSiteForm() {
               <Input id="address" name="address" required />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="visitingLocals">Marcas/locales (separadas por coma)</Label>
-              <Input id="visitingLocals" name="visitingLocals" placeholder="BAC, Burger King, MEP" />
-            </div>
+            <MarcaTagInput name="visitingLocals" label="Marcas" />
 
             {state.error && (
               <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">

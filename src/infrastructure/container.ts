@@ -1,4 +1,5 @@
 import { createMockSiteRepository } from "./mock/repositories/mock-site-repository";
+import { createHttpSitioRepository } from "./http/http-sitio-repository";
 import { createMockUserRepository } from "./mock/repositories/mock-user-repository";
 import { createMockShiftSessionRepository } from "./mock/repositories/mock-shift-session-repository";
 import { createMockRoundRepository } from "./mock/repositories/mock-round-repository";
@@ -31,11 +32,12 @@ import { listGuardIncidentLogs } from "@/application/use-cases/admin/list-guard-
 import { listGuardRounds } from "@/application/use-cases/admin/list-guard-rounds";
 import { listGuardScannedStations } from "@/application/use-cases/admin/list-guard-scanned-stations";
 import { listUsers } from "@/application/use-cases/superadmin/list-users";
-import { createSite, type CreateSiteInput } from "@/application/use-cases/superadmin/create-site";
-import {
-  addSiteVisitingLocal,
-  type AddSiteVisitingLocalInput,
-} from "@/application/use-cases/superadmin/add-site-visiting-local";
+import { listSitios } from "@/application/use-cases/superadmin/list-sitios";
+import { getSitio } from "@/application/use-cases/superadmin/get-sitio";
+import { createSitio } from "@/application/use-cases/superadmin/create-sitio";
+import { addMarca, type AddMarcaInput } from "@/application/use-cases/superadmin/add-marca";
+import { generateMarcaQr, type GenerateMarcaQrInput } from "@/application/use-cases/superadmin/generate-marca-qr";
+import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { GuardUser } from "@/domain/entities/user";
 import type { DateRange } from "@/lib/date-range";
 
@@ -45,6 +47,13 @@ import type { DateRange } from "@/lib/date-range";
  * cambia (se reemplazan los `createMock*` por adaptadores reales).
  */
 const siteRepository = createMockSiteRepository();
+/**
+ * Repositorio de sitios/marcas de superAdmin, respaldado por el backend real
+ * (gonvarbe). Deliberadamente separado del `siteRepository` mock de arriba:
+ * ese sigue modelando estaciones/QR de recorrido para guardia/admin/rondas,
+ * un concepto distinto que el backend real todavía no implementa.
+ */
+const sitioRepository = createHttpSitioRepository();
 const userRepository = createMockUserRepository();
 const shiftSessionRepository = createMockShiftSessionRepository();
 const roundRepository = createMockRoundRepository();
@@ -79,8 +88,11 @@ export const container = {
   listGuards: () => listGuards({ userRepository }),
   createGuard: (input: CreateGuardInput) => createGuard({ userRepository, authService }, input),
   listUsers: () => listUsers({ userRepository }),
-  createSite: (input: CreateSiteInput) => createSite({ siteRepository }, input),
-  addSiteVisitingLocal: (input: AddSiteVisitingLocalInput) => addSiteVisitingLocal({ siteRepository }, input),
+  listSitios: () => listSitios({ sitioRepository }),
+  getSitio: (sitioId: string) => getSitio({ sitioRepository }, sitioId),
+  createSitio: (input: CreateSitioInput) => createSitio({ sitioRepository }, input),
+  addMarca: (input: AddMarcaInput) => addMarca({ sitioRepository }, input),
+  generateMarcaQr: (input: GenerateMarcaQrInput) => generateMarcaQr({ sitioRepository }, input),
 
   getSite: (siteId: string) => getSite({ siteRepository }, siteId),
   listRoundsBySite: (siteId: string) =>

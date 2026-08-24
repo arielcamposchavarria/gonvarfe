@@ -19,7 +19,7 @@ export function AddVisitingLocalForm({ siteId }: AddVisitingLocalFormProps) {
     <form action={formAction} className="flex flex-col gap-2">
       <input type="hidden" name="siteId" value={siteId} />
       <div className="flex gap-2">
-        <Input name="local" placeholder="Nueva marca/local" aria-label="Nueva marca o local" required />
+        <Input name="local" placeholder="Nueva marca" aria-label="Nueva marca" required />
         <Button type="submit" variant="outline" size="sm" disabled={isPending}>
           {isPending ? "Agregando..." : "Agregar marca"}
         </Button>
