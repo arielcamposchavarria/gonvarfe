@@ -28,7 +28,11 @@ export default async function AdminGuardDetailPage({ params }: PageProps<"/admin
             {guard.username} · Sitio asignado: {assignedSite.name}
           </p>
         </div>
-        <ExportButton href={`/admin/guards/${guard.id}/export`} label="Exportar todo" />
+        <ExportButton
+          href={`/admin/guards/${guard.id}/export`}
+          excelLabel="Excel: todo"
+          pdfLabel="PDF: todo"
+        />
       </div>
 
       <Card>

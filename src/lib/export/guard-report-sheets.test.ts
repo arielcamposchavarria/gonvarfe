@@ -86,6 +86,7 @@ describe("buildGuardMissedScansSheet", () => {
     ]);
 
     expect(sheet.name).toBe("QR no escaneados");
+    expect(sheet.columns.map((c) => c.header)).toEqual(["Sitio", "Estación", "Recorrido #", "Reportado", "Justificación"]);
     expect(sheet.rows).toEqual([
       {
         site: "Plaza Amara",
@@ -148,6 +149,7 @@ describe("buildGuardIncidentLogsSheet", () => {
       guardId: "guard-1",
       occurredAt: new Date("2026-01-01T08:20:00.000Z"),
       incidentType: "Otro",
+      incidentTypeDetail: null,
       locationZone: "Entrada",
       description: "Sin novedad",
       photoUrls: [],
@@ -167,5 +169,24 @@ describe("buildGuardIncidentLogsSheet", () => {
         photoCount: 0,
       },
     ]);
+  });
+
+  it("usa el detalle libre como tipo cuando la incidencia es Otro", () => {
+    const log: IncidentLog = {
+      id: "log-2",
+      siteId: "site-1",
+      guardId: "guard-1",
+      occurredAt: new Date("2026-01-01T08:20:00.000Z"),
+      incidentType: "Otro",
+      incidentTypeDetail: "Fuga de agua en el parqueo",
+      locationZone: "Entrada",
+      description: "Sin novedad",
+      photoUrls: [],
+      createdAt: new Date(),
+    };
+
+    const sheet = buildGuardIncidentLogsSheet([{ log, siteName: "Plaza Amara" }]);
+
+    expect(sheet.rows[0].incidentType).toBe("Fuga de agua en el parqueo");
   });
 });

@@ -7,6 +7,8 @@ export interface IncidentLog {
   readonly guardId: string;
   occurredAt: Date;
   incidentType: IncidentType;
+  /** Detalle libre cuando incidentType es "Otro"; ignorado en otros casos. */
+  incidentTypeDetail: string | null;
   locationZone: string;
   description: string;
   /** Máximo MAX_LOG_IMAGES, campo opcional. */

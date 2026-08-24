@@ -6,6 +6,8 @@ import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 import type { RoundStatus } from "@/domain/entities/round";
 
 const STATUS_LABEL: Record<RoundStatus, string> = {
@@ -13,12 +15,19 @@ const STATUS_LABEL: Record<RoundStatus, string> = {
   completed: "Completado",
 };
 
-export default async function AdminGuardRoundsPage({ params }: PageProps<"/admin/guards/[guardId]/rounds">) {
+export default async function AdminGuardRoundsPage({
+  params,
+  searchParams,
+}: PageProps<"/admin/guards/[guardId]/rounds">) {
   const { guardId } = await params;
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const rounds = await container.listGuardRounds(guardId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const rounds = await container.listGuardRounds(guardId, parseDateRangeParams({ from: fromParam, to: toParam }));
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,8 +42,10 @@ export default async function AdminGuardRoundsPage({ params }: PageProps<"/admin
           </Link>
           <h1 className="text-lg font-semibold">Recorridos</h1>
         </div>
-        <ExportButton href={`/admin/guards/${guardId}/rounds/export`} />
+        <ExportButton href={`/admin/guards/${guardId}/rounds/export${exportQuery}`} />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {rounds.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard todavía no tiene recorridos registrados.</p>

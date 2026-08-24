@@ -32,6 +32,12 @@ function createFakeSiteRepository(sites: Site[]): SiteRepository {
     async findById(id) {
       return sites.find((site) => site.id === id) ?? null;
     },
+    async create(site) {
+      return site;
+    },
+    async addVisitingLocal() {
+      return null;
+    },
   };
 }
 
@@ -136,5 +142,49 @@ describe("listGuardMissedScans", () => {
     const result = await listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, "guard-1");
 
     expect(result).toEqual([]);
+  });
+
+  it("filtra por el rango de fechas del reporte", async () => {
+    const roundRepository = createMockRoundRepository();
+    const shiftSessionRepository = createMockShiftSessionRepository();
+    const siteRepository = createFakeSiteRepository([SITE]);
+
+    await shiftSessionRepository.create(buildSession({}));
+    await roundRepository.create(
+      buildRound({
+        scans: [
+          buildScan({
+            id: "scan-fuera",
+            status: "missed",
+            scannedAt: null,
+            missedReport: {
+              id: "missed-fuera",
+              stationScanId: "scan-fuera",
+              reason: "Fuera de rango",
+              reportedAt: new Date("2025-12-31T08:00:00Z"),
+            },
+          }),
+          buildScan({
+            id: "scan-dentro",
+            stationId: "station-2",
+            status: "missed",
+            scannedAt: null,
+            missedReport: {
+              id: "missed-dentro",
+              stationScanId: "scan-dentro",
+              reason: "Dentro de rango",
+              reportedAt: new Date("2026-01-05T08:00:00Z"),
+            },
+          }),
+        ],
+      }),
+    );
+
+    const result = await listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, "guard-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
+
+    expect(result.map((entry) => entry.reason)).toEqual(["Dentro de rango"]);
   });
 });

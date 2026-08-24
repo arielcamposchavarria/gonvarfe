@@ -71,7 +71,7 @@ export default async function AdminRoundDetailPage({
                     {scan.scannedAt && ` a las ${new Date(scan.scannedAt).toLocaleTimeString()}`}
                   </p>
                   {scan.missedReport && (
-                    <p className="text-xs text-danger">Motivo: {scan.missedReport.reason}</p>
+                    <p className="text-xs text-danger">Justificación: {scan.missedReport.reason}</p>
                   )}
                 </div>
               </div>

@@ -2,6 +2,7 @@ import type { ShiftSessionRepository } from "@/domain/ports/shift-session-reposi
 import type { RoundRepository } from "@/domain/ports/round-repository";
 import type { SiteRepository } from "@/domain/ports/site-repository";
 import type { Round } from "@/domain/entities/round";
+import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListGuardRoundsDeps {
   shiftSessionRepository: ShiftSessionRepository;
@@ -15,7 +16,11 @@ export interface RoundWithSite {
 }
 
 /** Recorridos de un guard a través de todas sus jornadas, del más reciente (o en curso) al más antiguo. */
-export async function listGuardRounds(deps: ListGuardRoundsDeps, guardId: string): Promise<RoundWithSite[]> {
+export async function listGuardRounds(
+  deps: ListGuardRoundsDeps,
+  guardId: string,
+  range: DateRange = {},
+): Promise<RoundWithSite[]> {
   const sessions = await deps.shiftSessionRepository.findByGuard(guardId);
   const roundsBySession = await Promise.all(
     sessions.map((session) => deps.roundRepository.findByShiftSession(session.id)),
@@ -26,6 +31,7 @@ export async function listGuardRounds(deps: ListGuardRoundsDeps, guardId: string
   const siteNameById = new Map(sites.map((site) => [site.id, site.name]));
 
   return [...rounds]
+    .filter((round) => isWithinDateRange(round.startedAt, range))
     .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
     .map((round) => ({ round, siteName: siteNameById.get(round.siteId) ?? round.siteId }));
 }

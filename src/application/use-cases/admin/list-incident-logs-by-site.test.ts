@@ -30,6 +30,9 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
     async findByRole(role) {
       return users.filter((user) => user.role === role);
     },
+    async create(user) {
+      return user;
+    },
   };
 }
 
@@ -40,6 +43,7 @@ function buildLog(overrides: Partial<IncidentLog>): IncidentLog {
     guardId: GUARD.id,
     occurredAt: new Date("2026-01-01T08:00:00Z"),
     incidentType: "Otro",
+    incidentTypeDetail: null,
     locationZone: "Entrada principal",
     description: "Sin novedad",
     photoUrls: [],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -18,6 +18,7 @@ const INITIAL_STATE: IncidentLogActionState = { error: null };
 
 export function IncidentLogForm() {
   const [state, formAction, isPending] = useActionState(submitIncidentLogAction, INITIAL_STATE);
+  const [incidentType, setIncidentType] = useState("");
 
   return (
     <div className="flex flex-col gap-3">
@@ -35,7 +36,13 @@ export function IncidentLogForm() {
           <form action={formAction} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="incidentType">Tipo de incidencia</Label>
-              <Select id="incidentType" name="incidentType" defaultValue="" required>
+              <Select
+                id="incidentType"
+                name="incidentType"
+                required
+                value={incidentType}
+                onChange={(event) => setIncidentType(event.target.value)}
+              >
                 <option value="" disabled>
                   Seleccione...
                 </option>
@@ -46,6 +53,18 @@ export function IncidentLogForm() {
                 ))}
               </Select>
             </div>
+
+            {incidentType === "Otro" && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="incidentTypeDetail">Especifique la incidencia</Label>
+                <Input
+                  id="incidentTypeDetail"
+                  name="incidentTypeDetail"
+                  placeholder="Escriba el tipo exacto de incidencia"
+                  required
+                />
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="locationZone">Local o zona</Label>

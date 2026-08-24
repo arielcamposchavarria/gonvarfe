@@ -32,6 +32,9 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
     async findByRole(role) {
       return users.filter((user) => user.role === role);
     },
+    async create(user) {
+      return user;
+    },
   };
 }
 

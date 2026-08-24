@@ -16,5 +16,9 @@ export function createMockUserRepository(): UserRepository {
     async findByRole(role) {
       return users.filter((user) => user.role === role);
     },
+    async create(user) {
+      users.push(user);
+      return user;
+    },
   };
 }

@@ -6,9 +6,12 @@ export function createMockAuthService(userRepository: UserRepository): AuthServi
   return {
     async authenticate(username, password) {
       const user = await userRepository.findByUsername(username);
-      if (!user || !user.isActive) return null;
+      if (!user) return null;
       if (MOCK_CREDENTIALS[user.id] !== password) return null;
       return user;
+    },
+    async registerCredentials(userId, password) {
+      MOCK_CREDENTIALS[userId] = password;
     },
   };
 }

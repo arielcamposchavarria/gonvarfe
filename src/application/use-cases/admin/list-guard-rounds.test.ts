@@ -38,6 +38,12 @@ function createFakeSiteRepository(sites: Site[]): SiteRepository {
     async findById(id) {
       return sites.find((site) => site.id === id) ?? null;
     },
+    async create(site) {
+      return site;
+    },
+    async addVisitingLocal() {
+      return null;
+    },
   };
 }
 
@@ -101,5 +107,26 @@ describe("listGuardRounds", () => {
     const result = await listGuardRounds({ roundRepository, shiftSessionRepository, siteRepository }, "guard-1");
 
     expect(result).toEqual([]);
+  });
+
+  it("filtra por el rango de fechas de inicio del recorrido", async () => {
+    const roundRepository = createMockRoundRepository();
+    const shiftSessionRepository = createMockShiftSessionRepository();
+    const siteRepository = createFakeSiteRepository([SITE_1]);
+
+    await shiftSessionRepository.create(buildSession({ id: "session-1", siteId: SITE_1.id }));
+    await roundRepository.create(
+      buildRound({ id: "round-fuera", shiftSessionId: "session-1", startedAt: new Date("2025-12-31T08:00:00Z") }),
+    );
+    await roundRepository.create(
+      buildRound({ id: "round-dentro", shiftSessionId: "session-1", startedAt: new Date("2026-01-05T08:00:00Z") }),
+    );
+
+    const result = await listGuardRounds({ roundRepository, shiftSessionRepository, siteRepository }, "guard-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
+
+    expect(result.map((r) => r.round.id)).toEqual(["round-dentro"]);
   });
 });

@@ -1,6 +1,7 @@
 import type { ShiftSessionRepository } from "@/domain/ports/shift-session-repository";
 import type { RoundRepository } from "@/domain/ports/round-repository";
 import type { SiteRepository } from "@/domain/ports/site-repository";
+import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListGuardScannedStationsDeps {
   shiftSessionRepository: ShiftSessionRepository;
@@ -19,6 +20,7 @@ export interface ScannedStationEntry {
 export async function listGuardScannedStations(
   deps: ListGuardScannedStationsDeps,
   guardId: string,
+  range: DateRange = {},
 ): Promise<ScannedStationEntry[]> {
   const sessions = await deps.shiftSessionRepository.findByGuard(guardId);
   const roundsBySession = await Promise.all(
@@ -36,6 +38,7 @@ export async function listGuardScannedStations(
 
     for (const scan of round.scans) {
       if (scan.status !== "on-time" || !scan.scannedAt) continue;
+      if (!isWithinDateRange(scan.scannedAt, range)) continue;
       const station = stationById.get(scan.stationId);
       entries.push({
         siteName: site?.name ?? round.siteId,

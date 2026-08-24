@@ -5,15 +5,25 @@ import { ChevronLeft, CheckCircle2 } from "lucide-react";
 import { container } from "@/infrastructure/container";
 import { Card } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 
 export default async function AdminGuardScannedStationsPage({
   params,
+  searchParams,
 }: PageProps<"/admin/guards/[guardId]/scanned-stations">) {
   const { guardId } = await params;
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const scannedStations = await container.listGuardScannedStations(guardId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const scannedStations = await container.listGuardScannedStations(
+    guardId,
+    parseDateRangeParams({ from: fromParam, to: toParam }),
+  );
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,8 +38,10 @@ export default async function AdminGuardScannedStationsPage({
           </Link>
           <h1 className="text-lg font-semibold">QR escaneados a tiempo</h1>
         </div>
-        <ExportButton href={`/admin/guards/${guardId}/scanned-stations/export`} />
+        <ExportButton href={`/admin/guards/${guardId}/scanned-stations/export${exportQuery}`} />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {scannedStations.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard todavía no ha escaneado ninguna estación.</p>

@@ -10,6 +10,7 @@ export interface SubmitIncidentLogInput {
   siteId: string;
   guardId: string;
   incidentType: IncidentType;
+  incidentTypeDetail: string | null;
   locationZone: string;
   description: string;
   photoUrls: string[];
@@ -25,6 +26,7 @@ export async function submitIncidentLog(
     guardId: input.guardId,
     occurredAt: new Date(),
     incidentType: input.incidentType,
+    incidentTypeDetail: input.incidentTypeDetail,
     locationZone: input.locationZone,
     description: input.description,
     photoUrls: input.photoUrls,

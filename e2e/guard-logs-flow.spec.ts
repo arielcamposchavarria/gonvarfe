@@ -20,7 +20,7 @@ test.describe("bitácoras del guard", () => {
     await page.getByLabel(/cédula/i).fill("123456789");
     await page.getByLabel(/empresa/i).fill("Acme S.A.");
     await page.getByLabel(/motivo/i).fill("Entrega de mercadería");
-    await page.getByLabel(/local que visita/i).selectOption("BAC");
+    await page.getByLabel(/local que visita/i).selectOption("BANCO BAC SAN JOSE SA");
 
     await page.getByRole("button", { name: /guardar registro/i }).click();
     await expect(page).toHaveURL(/\/guard\/dashboard$/);
@@ -37,7 +37,7 @@ test.describe("bitácoras del guard", () => {
     await page.getByLabel(/cédula/i).fill("123");
     await page.getByLabel(/empresa/i).fill("Acme S.A.");
     await page.getByLabel(/motivo/i).fill("Entrega");
-    await page.getByLabel(/local que visita/i).selectOption("BAC");
+    await page.getByLabel(/local que visita/i).selectOption("BANCO BAC SAN JOSE SA");
 
     await page.getByRole("button", { name: /guardar registro/i }).click();
     await expect(page.getByText(/cédula inválida/i)).toBeVisible();

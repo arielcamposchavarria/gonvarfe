@@ -20,6 +20,8 @@ export interface GuardUser extends BaseUser {
   role: "guard";
   /** Sitio donde el guard hace sus recorridos. */
   assignedSiteId: string;
+  /** Foto de referencia asignada por el admin; el guard no puede modificarla. */
+  photoUrl?: string | null;
 }
 
 export type AppUser = SuperAdminUser | AdminUser | GuardUser;

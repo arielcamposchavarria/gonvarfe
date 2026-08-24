@@ -20,6 +20,7 @@ export async function submitIncidentLogAction(
 
   const parsed = incidentLogSchema.safeParse({
     incidentType: formData.get("incidentType"),
+    incidentTypeDetail: formData.get("incidentTypeDetail") ?? undefined,
     locationZone: formData.get("locationZone"),
     description: formData.get("description"),
   });
@@ -39,6 +40,7 @@ export async function submitIncidentLogAction(
     siteId: guard.assignedSiteId,
     guardId: guard.id,
     incidentType: parsed.data.incidentType,
+    incidentTypeDetail: parsed.data.incidentType === "Otro" ? (parsed.data.incidentTypeDetail ?? null) : null,
     locationZone: parsed.data.locationZone,
     description: parsed.data.description,
     photoUrls,

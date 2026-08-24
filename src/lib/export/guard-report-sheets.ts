@@ -61,7 +61,7 @@ export function buildGuardMissedScansSheet(entries: MissedScanEntry[]): SheetDef
       { header: "Estación", key: "station", width: 30 },
       { header: "Recorrido #", key: "round", width: 14 },
       { header: "Reportado", key: "reportedAt" },
-      { header: "Motivo", key: "reason", width: 40 },
+      { header: "Justificación", key: "reason", width: 40 },
     ],
     rows: entries.map((entry) => ({
       site: entry.siteName,
@@ -121,7 +121,7 @@ export function buildGuardIncidentLogsSheet(entries: IncidentLogWithSite[]): She
     rows: entries.map(({ log, siteName }) => ({
       site: siteName,
       occurredAt: log.occurredAt.toLocaleString(),
-      incidentType: log.incidentType,
+      incidentType: log.incidentType === "Otro" && log.incidentTypeDetail ? log.incidentTypeDetail : log.incidentType,
       locationZone: log.locationZone,
       description: log.description,
       photoCount: log.photoUrls.length,

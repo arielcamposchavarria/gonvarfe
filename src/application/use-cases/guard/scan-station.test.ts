@@ -43,6 +43,12 @@ function createFakeSiteRepository(): SiteRepository {
     async findById(id) {
       return id === TEST_SITE.id ? TEST_SITE : null;
     },
+    async create(site) {
+      return site;
+    },
+    async addVisitingLocal() {
+      return null;
+    },
   };
 }
 
@@ -79,7 +85,7 @@ describe("scanStation", () => {
     return { shiftSessionRepository, roundRepository, siteRepository, clockService: clock };
   }
 
-  it("rechaza escanear una estación antes de que abra su ventana de 15 minutos", async () => {
+  it("rechaza escanear una estación antes de que abra su ventana de 2 minutos (tope máximo)", async () => {
     await startShift(deps(), GUARD);
 
     await expect(scanStation(deps(), { guardId: GUARD.id, stationId: "station-2" })).rejects.toThrow(
@@ -89,7 +95,7 @@ describe("scanStation", () => {
 
   it("permite escanear una estación una vez abierta su ventana", async () => {
     await startShift(deps(), GUARD);
-    clock.advanceMinutes(15);
+    clock.advanceMinutes(2);
 
     const result = await scanStation(deps(), { guardId: GUARD.id, stationId: "station-2" });
     const scan = result.round.scans.find((s) => s.stationId === "station-2");
@@ -100,11 +106,11 @@ describe("scanStation", () => {
 
   it("marca el recorrido como completado al escanear la última estación", async () => {
     await startShift(deps(), GUARD);
-    clock.advanceMinutes(15);
+    clock.advanceMinutes(2);
     await scanStation(deps(), { guardId: GUARD.id, stationId: "station-2" });
-    clock.advanceMinutes(15);
+    clock.advanceMinutes(2);
     await scanStation(deps(), { guardId: GUARD.id, stationId: "station-3" });
-    clock.advanceMinutes(15);
+    clock.advanceMinutes(2);
 
     const result = await scanStation(deps(), { guardId: GUARD.id, stationId: "station-4" });
 
