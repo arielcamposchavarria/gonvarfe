@@ -6,13 +6,14 @@ import type { Sitio } from "@/domain/entities/sitio";
 
 describe("getSitio", () => {
   it("retorna el sitio si existe", async () => {
-    const sitio: Sitio = { id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [] };
+    const sitio: Sitio = { id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [], locales: [] };
     const sitioRepository: SitioRepository = {
       findAll: async () => [sitio],
       findById: async (id) => (id === "1" ? sitio : null),
       create: async () => sitio,
       addMarca: async () => null,
       generateMarcaQr: async () => null,
+      createLocal: async () => null,
     };
 
     await expect(getSitio({ sitioRepository }, "1")).resolves.toEqual(sitio);
@@ -27,6 +28,7 @@ describe("getSitio", () => {
       },
       addMarca: async () => null,
       generateMarcaQr: async () => null,
+      createLocal: async () => null,
     };
 
     await expect(getSitio({ sitioRepository }, "999")).resolves.toBeNull();

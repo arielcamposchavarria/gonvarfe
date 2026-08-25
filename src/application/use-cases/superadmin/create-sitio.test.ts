@@ -12,6 +12,7 @@ describe("createSitio", () => {
       direccion: "San José",
       activo: true,
       marcas: [{ id: "m1", nombre: "Marca A", qrCodeId: null }],
+      locales: [],
     };
     let receivedInput: CreateSitioInput | null = null;
     const sitioRepository: SitioRepository = {
@@ -23,6 +24,7 @@ describe("createSitio", () => {
       },
       addMarca: async () => null,
       generateMarcaQr: async () => null,
+      createLocal: async () => null,
     };
 
     const input: CreateSitioInput = { nombre: "Plaza Nueva", direccion: "San José", marcas: ["Marca A"] };

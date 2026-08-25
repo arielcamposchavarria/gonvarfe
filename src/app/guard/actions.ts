@@ -2,23 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
-import type { GuardUser } from "@/domain/entities/user";
+import { requireGuard } from "@/lib/auth/require-guard";
 
 export interface GuardActionState {
   error: string | null;
 }
 
 const OK: GuardActionState = { error: null };
-
-export async function requireGuard(): Promise<GuardUser> {
-  const session = await getSession();
-  if (!session || session.role !== "guard") throw new Error("No autorizado.");
-  const user = await container.findUserById(session.userId);
-  if (!user || user.role !== "guard" || !user.isActive) throw new Error("No autorizado.");
-  return user;
-}
 
 function toErrorState(error: unknown): GuardActionState {
   return { error: error instanceof Error ? error.message : "Ocurrió un error inesperado." };

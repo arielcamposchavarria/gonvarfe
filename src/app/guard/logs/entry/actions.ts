@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { container } from "@/infrastructure/container";
-import { requireGuard } from "@/app/guard/actions";
+import { requireGuard } from "@/lib/auth/require-guard";
 import { entryLogSchema } from "@/lib/validation/entry-log-schema";
 import { createCedula } from "@/domain/value-objects/cedula";
 import { createPlateNumber } from "@/domain/value-objects/plate-number";

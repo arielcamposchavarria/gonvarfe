@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { container } from "@/infrastructure/container";
-import { requireGuard } from "@/app/guard/actions";
+import { requireGuard } from "@/lib/auth/require-guard";
 import { incidentLogSchema } from "@/lib/validation/incident-log-schema";
 import { MAX_LOG_IMAGES } from "@/domain/constants";
 import { fileToDataUrl } from "@/lib/files/file-to-data-url";

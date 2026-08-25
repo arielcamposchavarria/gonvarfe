@@ -14,4 +14,6 @@ export interface SitioRepository {
   addMarca(sitioId: string, nombre: string): Promise<Sitio | null>;
   /** Idempotente: si la marca ya tiene un qrCodeId, lo retorna sin regenerarlo. Retorna null si el sitio no existe. */
   generateMarcaQr(sitioId: string, marcaId: string): Promise<Sitio | null>;
+  /** Retorna null si el sitio no existe. */
+  createLocal(sitioId: string, nombre: string): Promise<Sitio | null>;
 }

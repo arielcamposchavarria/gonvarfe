@@ -73,15 +73,11 @@ function createFakeUserRepository(users: AppUser[]): UserRepository {
     async findById(id) {
       return users.find((user) => user.id === id) ?? null;
     },
-    async findByUsername(username) {
-      return users.find((user) => user.username === username) ?? null;
-    },
     async findByRole(role) {
       return users.filter((user) => user.role === role);
     },
-    async create(user) {
-      users.push(user);
-      return user;
+    async create() {
+      throw new Error("No usado en esta prueba.");
     },
   };
 }

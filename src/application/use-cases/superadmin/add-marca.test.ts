@@ -16,12 +16,20 @@ function createRepository(sitio: Sitio | null): SitioRepository {
       return { ...sitio, marcas: [...sitio.marcas, { id: "nueva", nombre, qrCodeId: null }] };
     },
     generateMarcaQr: async () => null,
+    createLocal: async () => null,
   };
 }
 
 describe("addMarca", () => {
   it("agrega la marca al sitio y la retorna", async () => {
-    const sitio: Sitio = { id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [] };
+    const sitio: Sitio = {
+      id: "1",
+      nombre: "Plaza Amara",
+      direccion: "San José",
+      activo: true,
+      marcas: [],
+      locales: [],
+    };
     const sitioRepository = createRepository(sitio);
 
     const result = await addMarca({ sitioRepository }, { sitioId: "1", nombre: "BAC" });

@@ -13,12 +13,14 @@ describe("generateMarcaQr", () => {
       direccion: "San José",
       activo: true,
       marcas: [{ id: "m1", nombre: "BAC", qrCodeId: "qr-123" }],
+      locales: [],
     };
     const sitioRepository: SitioRepository = {
       findAll: async () => [sitio],
       findById: async () => sitio,
       create: async () => sitio,
       addMarca: async () => null,
+      createLocal: async () => null,
       generateMarcaQr: async () => sitio,
     };
 
@@ -33,6 +35,7 @@ describe("generateMarcaQr", () => {
         throw new Error("no usado");
       },
       addMarca: async () => null,
+      createLocal: async () => null,
       generateMarcaQr: async () => null,
     };
 

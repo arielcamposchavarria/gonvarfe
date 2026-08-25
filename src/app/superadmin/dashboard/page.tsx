@@ -1,5 +1,9 @@
+import Link from "next/link";
+import { UserPlus } from "lucide-react";
+
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ROLE_LABELS } from "@/domain/value-objects/role";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -9,7 +13,15 @@ export default async function SuperAdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold">Usuarios del sistema</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold">Usuarios del sistema</h1>
+        <Button asChild size="sm">
+          <Link href="/superadmin/dashboard/new">
+            <UserPlus className="h-4 w-4" />
+            Nuevo usuario
+          </Link>
+        </Button>
+      </div>
 
       <Card className="divide-y divide-border overflow-hidden sm:hidden">
         {users.map((user) => (

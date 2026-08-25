@@ -26,3 +26,7 @@ Este proyecto usa arquitectura hexagonal (puertos y adaptadores). La dirección 
 # CI
 
 Cada PR corre lint, typecheck, tests unitarios, build y e2e (ver `.github/workflows/ci.yml`), además de CodeQL y dependency review. Un PR no debe mergearse con checks en rojo.
+
+# No modificar datos de la base de datos
+
+El backend real (gonvarbe) usa la base de datos de Railway, no una de prueba local. **No crear, editar ni borrar registros contra el backend real** (llamadas sueltas a los endpoints solo para "probar y limpiar después", scripts ad hoc, etc.) sin permiso explícito del usuario para esa acción puntual — esto aplica incluso a datos que Claude mismo haya creado momentos antes en la misma conversación: pedir confirmación antes de borrarlos. Para verificar un flujo, preferir los tests (Vitest/Playwright) o pedirle al usuario que cree/borre los datos de prueba él mismo.

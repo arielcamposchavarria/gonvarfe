@@ -7,13 +7,13 @@ const ROLE_BY_SEGMENT: Record<string, Role> = Object.fromEntries(
   (Object.entries(ROLE_PATH_SEGMENT) as [Role, string][]).map(([role, segment]) => [segment, role]),
 );
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const segment = pathname.split("/")[1];
   const requiredRole = ROLE_BY_SEGMENT[segment];
   if (!requiredRole) return NextResponse.next();
 
-  const session = parseSessionCookie(request.cookies.get(SESSION_COOKIE_NAME)?.value);
+  const session = await parseSessionCookie(request.cookies.get(SESSION_COOKIE_NAME)?.value);
   if (!session || session.role !== requiredRole) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

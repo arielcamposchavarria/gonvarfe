@@ -1,12 +1,13 @@
 import { createMockSiteRepository } from "./mock/repositories/mock-site-repository";
 import { createHttpSitioRepository } from "./http/http-sitio-repository";
-import { createMockUserRepository } from "./mock/repositories/mock-user-repository";
+import { createHttpUserRepository } from "./http/http-user-repository";
+import { createHttpAuthService } from "./http/http-auth-service";
+import { createHttpRoleRepository } from "./http/http-role-repository";
 import { createMockShiftSessionRepository } from "./mock/repositories/mock-shift-session-repository";
 import { createMockRoundRepository } from "./mock/repositories/mock-round-repository";
 import { createMockQrCodeRepository } from "./mock/repositories/mock-qr-code-repository";
 import { createMockEntryLogRepository } from "./mock/repositories/mock-entry-log-repository";
 import { createMockIncidentLogRepository } from "./mock/repositories/mock-incident-log-repository";
-import { createMockAuthService } from "./mock/services/mock-auth-service";
 import { createSystemClockService } from "./mock/services/system-clock-service";
 
 import { authenticateUser, type AuthenticateUserInput } from "@/application/use-cases/auth/authenticate-user";
@@ -19,7 +20,6 @@ import { submitEntryLog, type SubmitEntryLogInput } from "@/application/use-case
 import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
 import { listSites } from "@/application/use-cases/admin/list-sites";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
-import { createGuard, type CreateGuardInput } from "@/application/use-cases/admin/create-guard";
 import { getSite } from "@/application/use-cases/admin/get-site";
 import { listRoundsBySite } from "@/application/use-cases/admin/list-rounds-by-site";
 import { getRoundDetail } from "@/application/use-cases/admin/get-round-detail";
@@ -37,7 +37,11 @@ import { getSitio } from "@/application/use-cases/superadmin/get-sitio";
 import { createSitio } from "@/application/use-cases/superadmin/create-sitio";
 import { addMarca, type AddMarcaInput } from "@/application/use-cases/superadmin/add-marca";
 import { generateMarcaQr, type GenerateMarcaQrInput } from "@/application/use-cases/superadmin/generate-marca-qr";
+import { createLocal, type CreateLocalInput } from "@/application/use-cases/admin/create-local";
+import { createUser } from "@/application/use-cases/superadmin/create-user";
+import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
+import type { CreateUserInput } from "@/domain/ports/user-repository";
 import type { GuardUser } from "@/domain/entities/user";
 import type { DateRange } from "@/lib/date-range";
 
@@ -54,13 +58,15 @@ const siteRepository = createMockSiteRepository();
  * un concepto distinto que el backend real todavía no implementa.
  */
 const sitioRepository = createHttpSitioRepository();
-const userRepository = createMockUserRepository();
+/** Usuarios, roles y autenticación reales contra el backend (gonvarbe). */
+const userRepository = createHttpUserRepository();
+const roleRepository = createHttpRoleRepository();
+const authService = createHttpAuthService();
 const shiftSessionRepository = createMockShiftSessionRepository();
 const roundRepository = createMockRoundRepository();
 const qrCodeRepository = createMockQrCodeRepository();
 const entryLogRepository = createMockEntryLogRepository();
 const incidentLogRepository = createMockIncidentLogRepository();
-const authService = createMockAuthService(userRepository);
 const clockService = createSystemClockService();
 
 export const container = {
@@ -86,13 +92,15 @@ export const container = {
 
   listSites: () => listSites({ siteRepository }),
   listGuards: () => listGuards({ userRepository }),
-  createGuard: (input: CreateGuardInput) => createGuard({ userRepository, authService }, input),
+  createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
+  listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),
   listSitios: () => listSitios({ sitioRepository }),
   getSitio: (sitioId: string) => getSitio({ sitioRepository }, sitioId),
   createSitio: (input: CreateSitioInput) => createSitio({ sitioRepository }, input),
   addMarca: (input: AddMarcaInput) => addMarca({ sitioRepository }, input),
   generateMarcaQr: (input: GenerateMarcaQrInput) => generateMarcaQr({ sitioRepository }, input),
+  createLocal: (input: CreateLocalInput) => createLocal({ sitioRepository }, input),
 
   getSite: (siteId: string) => getSite({ siteRepository }, siteId),
   listRoundsBySite: (siteId: string) =>

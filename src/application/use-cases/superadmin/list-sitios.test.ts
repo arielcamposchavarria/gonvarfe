@@ -11,12 +11,15 @@ function createMockRepository(sitios: Sitio[]): SitioRepository {
     create: async () => sitios[0],
     addMarca: async () => null,
     generateMarcaQr: async () => null,
+    createLocal: async () => null,
   };
 }
 
 describe("listSitios", () => {
   it("retorna todos los sitios del repositorio", async () => {
-    const sitios: Sitio[] = [{ id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [] }];
+    const sitios: Sitio[] = [
+      { id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [], locales: [] },
+    ];
     const sitioRepository = createMockRepository(sitios);
 
     await expect(listSitios({ sitioRepository })).resolves.toEqual(sitios);
