@@ -4,36 +4,44 @@ import userEvent from "@testing-library/user-event";
 
 import { MarcaQrButton } from "./marca-qr-button";
 
-const generateMarcaQrAction = vi.fn();
-
-vi.mock("@/app/superadmin/sites/actions", () => ({
-  generateMarcaQrAction: (...args: unknown[]) => generateMarcaQrAction(...args),
-}));
+const generateQrAction = vi.fn();
 
 describe("MarcaQrButton", () => {
   beforeEach(() => {
-    generateMarcaQrAction.mockClear();
+    generateQrAction.mockClear();
   });
 
   it("genera el QR en el primer click y lo muestra", async () => {
-    generateMarcaQrAction.mockResolvedValue({ qrCodeId: "qr-123", error: null });
+    generateQrAction.mockResolvedValue({ qrCodeId: "qr-123", error: null });
     const user = userEvent.setup();
-    render(<MarcaQrButton sitioId="sitio-1" marca={{ id: "marca-1", nombre: "BAC", qrCodeId: null }} />);
+    render(
+      <MarcaQrButton
+        sitioId="sitio-1"
+        marca={{ id: "marca-1", nombre: "BAC", qrCodeId: null }}
+        generateQrAction={generateQrAction}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: /qr/i }));
 
-    await waitFor(() => expect(generateMarcaQrAction).toHaveBeenCalledWith("sitio-1", "marca-1"));
+    await waitFor(() => expect(generateQrAction).toHaveBeenCalledWith("sitio-1", "marca-1"));
     expect(await screen.findByText(/qr de bac/i)).toBeInTheDocument();
   });
 
   it("no vuelve a llamar la acción en un segundo click", async () => {
-    generateMarcaQrAction.mockResolvedValue({ qrCodeId: "qr-123", error: null });
+    generateQrAction.mockResolvedValue({ qrCodeId: "qr-123", error: null });
     const user = userEvent.setup();
-    render(<MarcaQrButton sitioId="sitio-1" marca={{ id: "marca-1", nombre: "BAC", qrCodeId: null }} />);
+    render(
+      <MarcaQrButton
+        sitioId="sitio-1"
+        marca={{ id: "marca-1", nombre: "BAC", qrCodeId: null }}
+        generateQrAction={generateQrAction}
+      />,
+    );
 
     const button = screen.getByRole("button", { name: /qr/i });
     await user.click(button);
-    await waitFor(() => expect(generateMarcaQrAction).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(generateQrAction).toHaveBeenCalledTimes(1));
 
     // Cierra el diálogo (como haría el usuario) antes de volver a abrirlo.
     await user.keyboard("{Escape}");
@@ -41,17 +49,23 @@ describe("MarcaQrButton", () => {
 
     await user.click(button);
 
-    expect(generateMarcaQrAction).toHaveBeenCalledTimes(1);
+    expect(generateQrAction).toHaveBeenCalledTimes(1);
     expect(await screen.findByText(/qr de bac/i)).toBeInTheDocument();
   });
 
   it("si la marca ya tiene qrCodeId, el click nunca llama a la acción", async () => {
     const user = userEvent.setup();
-    render(<MarcaQrButton sitioId="sitio-1" marca={{ id: "marca-1", nombre: "BAC", qrCodeId: "qr-existente" }} />);
+    render(
+      <MarcaQrButton
+        sitioId="sitio-1"
+        marca={{ id: "marca-1", nombre: "BAC", qrCodeId: "qr-existente" }}
+        generateQrAction={generateQrAction}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: /qr/i }));
 
-    expect(generateMarcaQrAction).not.toHaveBeenCalled();
+    expect(generateQrAction).not.toHaveBeenCalled();
     expect(await screen.findByText(/qr de bac/i)).toBeInTheDocument();
   });
 });

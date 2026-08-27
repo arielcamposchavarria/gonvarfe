@@ -2,20 +2,18 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { AddVisitingLocalForm } from "./add-visiting-local-form";
+import { AddMarcaForm } from "./add-marca-form";
 
-vi.mock("@/app/superadmin/sites/actions", () => ({
-  addVisitingLocalAction: vi.fn(async (_prevState: { error: string | null }, formData: FormData) => {
-    if (formData.get("siteId") === "site-inexistente") {
-      return { error: 'No se encontró el sitio "site-inexistente".' };
-    }
-    return { error: null };
-  }),
-}));
+const action = vi.fn(async (_prevState: { error: string | null }, formData: FormData) => {
+  if (formData.get("siteId") === "site-inexistente") {
+    return { error: 'No se encontró el sitio "site-inexistente".' };
+  }
+  return { error: null };
+});
 
-describe("AddVisitingLocalForm", () => {
+describe("AddMarcaForm", () => {
   it("incluye el siteId como campo oculto", () => {
-    render(<AddVisitingLocalForm siteId="site-1" />);
+    render(<AddMarcaForm siteId="site-1" action={action} />);
 
     const hiddenInput = document.querySelector('input[name="siteId"]');
     expect(hiddenInput).toHaveValue("site-1");
@@ -23,7 +21,7 @@ describe("AddVisitingLocalForm", () => {
 
   it("muestra el error devuelto por la acción cuando el sitio no existe", async () => {
     const user = userEvent.setup();
-    render(<AddVisitingLocalForm siteId="site-inexistente" />);
+    render(<AddMarcaForm siteId="site-inexistente" action={action} />);
 
     await user.type(screen.getByLabelText(/nueva marca/i), "Marca X");
     await user.click(screen.getByRole("button", { name: /agregar marca/i }));

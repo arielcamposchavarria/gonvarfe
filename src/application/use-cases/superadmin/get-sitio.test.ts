@@ -11,8 +11,12 @@ describe("getSitio", () => {
       findAll: async () => [sitio],
       findById: async (id) => (id === "1" ? sitio : null),
       create: async () => sitio,
+      update: async () => null,
+      deactivate: async () => null,
       addMarca: async () => null,
       generateMarcaQr: async () => null,
+      updateMarca: async () => null,
+      deactivateMarca: async () => null,
       createLocal: async () => null,
     };
 
@@ -26,8 +30,12 @@ describe("getSitio", () => {
       create: async () => {
         throw new Error("no usado");
       },
+      update: async () => null,
+      deactivate: async () => null,
       addMarca: async () => null,
       generateMarcaQr: async () => null,
+      updateMarca: async () => null,
+      deactivateMarca: async () => null,
       createLocal: async () => null,
     };
 

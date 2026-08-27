@@ -11,7 +11,7 @@ describe("createSitio", () => {
       nombre: "Plaza Nueva",
       direccion: "San José",
       activo: true,
-      marcas: [{ id: "m1", nombre: "Marca A", qrCodeId: null }],
+      marcas: [{ id: "m1", nombre: "Marca A", qrCodeId: null, activo: true }],
       locales: [],
     };
     let receivedInput: CreateSitioInput | null = null;
@@ -22,8 +22,12 @@ describe("createSitio", () => {
         receivedInput = input;
         return created;
       },
+      update: async () => null,
+      deactivate: async () => null,
       addMarca: async () => null,
       generateMarcaQr: async () => null,
+      updateMarca: async () => null,
+      deactivateMarca: async () => null,
       createLocal: async () => null,
     };
 

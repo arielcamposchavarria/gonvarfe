@@ -2,18 +2,22 @@
 
 import { useActionState } from "react";
 
-import { addVisitingLocalAction, type AddVisitingLocalActionState } from "@/app/superadmin/sites/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export interface AddVisitingLocalFormProps {
-  siteId: string;
+export interface AddMarcaFormState {
+  error: string | null;
 }
 
-const INITIAL_STATE: AddVisitingLocalActionState = { error: null };
+export interface AddMarcaFormProps {
+  siteId: string;
+  action: (state: AddMarcaFormState, formData: FormData) => Promise<AddMarcaFormState>;
+}
 
-export function AddVisitingLocalForm({ siteId }: AddVisitingLocalFormProps) {
-  const [state, formAction, isPending] = useActionState(addVisitingLocalAction, INITIAL_STATE);
+const INITIAL_STATE: AddMarcaFormState = { error: null };
+
+export function AddMarcaForm({ siteId, action }: AddMarcaFormProps) {
+  const [state, formAction, isPending] = useActionState(action, INITIAL_STATE);
 
   return (
     <form action={formAction} className="flex flex-col gap-2">

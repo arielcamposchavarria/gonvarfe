@@ -9,8 +9,12 @@ function createMockRepository(sitios: Sitio[]): SitioRepository {
     findAll: async () => sitios,
     findById: async () => null,
     create: async () => sitios[0],
+    update: async () => null,
+    deactivate: async () => null,
     addMarca: async () => null,
     generateMarcaQr: async () => null,
+    updateMarca: async () => null,
+    deactivateMarca: async () => null,
     createLocal: async () => null,
   };
 }

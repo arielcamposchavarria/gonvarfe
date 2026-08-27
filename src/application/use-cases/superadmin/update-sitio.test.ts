@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createLocal, SitioNotFoundError } from "./create-local";
+import { updateSitio } from "./update-sitio";
+import { SitioNotFoundError } from "./add-marca";
 import type { SitioRepository } from "@/domain/ports/sitio-repository";
 import type { Sitio } from "@/domain/entities/sitio";
 
@@ -11,34 +12,35 @@ function createRepository(sitio: Sitio | null): SitioRepository {
     create: async () => {
       throw new Error("no usado");
     },
-    update: async () => null,
+    update: async (sitioId, input) => {
+      if (!sitio || sitio.id !== sitioId) return null;
+      return { ...sitio, nombre: input.nombre, direccion: input.direccion };
+    },
     deactivate: async () => null,
     addMarca: async () => null,
     generateMarcaQr: async () => null,
     updateMarca: async () => null,
     deactivateMarca: async () => null,
-    createLocal: async (sitioId, nombre) => {
-      if (!sitio || sitio.id !== sitioId) return null;
-      return { ...sitio, locales: [...sitio.locales, { id: "nuevo", nombre }] };
-    },
+    createLocal: async () => null,
   };
 }
 
-describe("createLocal", () => {
-  it("agrega el local al sitio y lo retorna", async () => {
+describe("updateSitio", () => {
+  it("edita el sitio y lo retorna", async () => {
     const sitio: Sitio = { id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [], locales: [] };
     const sitioRepository = createRepository(sitio);
 
-    const result = await createLocal({ sitioRepository }, { sitioId: "1", nombre: "Panadería El Trigo" });
+    const result = await updateSitio({ sitioRepository }, { sitioId: "1", nombre: "Plaza Renovada", direccion: "Escazú" });
 
-    expect(result.locales.map((l) => l.nombre)).toEqual(["Panadería El Trigo"]);
+    expect(result.nombre).toBe("Plaza Renovada");
+    expect(result.direccion).toBe("Escazú");
   });
 
   it("lanza SitioNotFoundError si el sitio no existe", async () => {
     const sitioRepository = createRepository(null);
 
     await expect(
-      createLocal({ sitioRepository }, { sitioId: "999", nombre: "Panadería El Trigo" }),
+      updateSitio({ sitioRepository }, { sitioId: "999", nombre: "X", direccion: "Y" }),
     ).rejects.toBeInstanceOf(SitioNotFoundError);
   });
 });

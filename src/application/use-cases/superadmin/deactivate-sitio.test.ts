@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { addMarca, SitioNotFoundError } from "./add-marca";
+import { deactivateSitio } from "./deactivate-sitio";
+import { SitioNotFoundError } from "./add-marca";
 import type { SitioRepository } from "@/domain/ports/sitio-repository";
 import type { Sitio } from "@/domain/entities/sitio";
 
@@ -12,11 +13,11 @@ function createRepository(sitio: Sitio | null): SitioRepository {
       throw new Error("no usado");
     },
     update: async () => null,
-    deactivate: async () => null,
-    addMarca: async (sitioId, nombre) => {
+    deactivate: async (sitioId) => {
       if (!sitio || sitio.id !== sitioId) return null;
-      return { ...sitio, marcas: [...sitio.marcas, { id: "nueva", nombre, qrCodeId: null, activo: true }] };
+      return { ...sitio, activo: false };
     },
+    addMarca: async () => null,
     generateMarcaQr: async () => null,
     updateMarca: async () => null,
     deactivateMarca: async () => null,
@@ -24,28 +25,19 @@ function createRepository(sitio: Sitio | null): SitioRepository {
   };
 }
 
-describe("addMarca", () => {
-  it("agrega la marca al sitio y la retorna", async () => {
-    const sitio: Sitio = {
-      id: "1",
-      nombre: "Plaza Amara",
-      direccion: "San José",
-      activo: true,
-      marcas: [],
-      locales: [],
-    };
+describe("deactivateSitio", () => {
+  it("desactiva el sitio y lo retorna", async () => {
+    const sitio: Sitio = { id: "1", nombre: "Plaza Amara", direccion: "San José", activo: true, marcas: [], locales: [] };
     const sitioRepository = createRepository(sitio);
 
-    const result = await addMarca({ sitioRepository }, { sitioId: "1", nombre: "BAC" });
+    const result = await deactivateSitio({ sitioRepository }, "1");
 
-    expect(result.marcas.map((m) => m.nombre)).toEqual(["BAC"]);
+    expect(result.activo).toBe(false);
   });
 
   it("lanza SitioNotFoundError si el sitio no existe", async () => {
     const sitioRepository = createRepository(null);
 
-    await expect(addMarca({ sitioRepository }, { sitioId: "999", nombre: "BAC" })).rejects.toBeInstanceOf(
-      SitioNotFoundError,
-    );
+    await expect(deactivateSitio({ sitioRepository }, "999")).rejects.toBeInstanceOf(SitioNotFoundError);
   });
 });

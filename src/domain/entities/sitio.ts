@@ -2,6 +2,7 @@ export interface Marca {
   readonly id: string;
   readonly nombre: string;
   readonly qrCodeId: string | null;
+  readonly activo: boolean;
 }
 
 /** Local comercial dentro de un sitio, distinto de una marca: sin QR, lo crea el rol admin. */

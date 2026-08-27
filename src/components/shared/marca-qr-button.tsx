@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-import { generateMarcaQrAction } from "@/app/superadmin/sites/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -14,9 +13,10 @@ export interface MarcaQrButtonProps {
     nombre: string;
     qrCodeId: string | null;
   };
+  generateQrAction: (sitioId: string, marcaId: string) => Promise<{ qrCodeId: string | null; error: string | null }>;
 }
 
-export function MarcaQrButton({ sitioId, marca }: MarcaQrButtonProps) {
+export function MarcaQrButton({ sitioId, marca, generateQrAction }: MarcaQrButtonProps) {
   const [qrCodeId, setQrCodeId] = useState(marca.qrCodeId);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export function MarcaQrButton({ sitioId, marca }: MarcaQrButtonProps) {
     }
 
     startTransition(async () => {
-      const result = await generateMarcaQrAction(sitioId, marca.id);
+      const result = await generateQrAction(sitioId, marca.id);
       if (result.error) {
         setError(result.error);
         return;

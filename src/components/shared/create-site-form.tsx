@@ -4,21 +4,29 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
-import { createSiteAction, type CreateSiteActionState } from "@/app/superadmin/sites/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MarcaTagInput } from "@/components/superadmin/marca-tag-input";
+import { MarcaTagInput } from "@/components/shared/marca-tag-input";
 
-const INITIAL_STATE: CreateSiteActionState = { error: null };
+export interface CreateSiteFormState {
+  error: string | null;
+}
 
-export function CreateSiteForm() {
-  const [state, formAction, isPending] = useActionState(createSiteAction, INITIAL_STATE);
+export interface CreateSiteFormProps {
+  action: (state: CreateSiteFormState, formData: FormData) => Promise<CreateSiteFormState>;
+  backHref: string;
+}
+
+const INITIAL_STATE: CreateSiteFormState = { error: null };
+
+export function CreateSiteForm({ action, backHref }: CreateSiteFormProps) {
+  const [state, formAction, isPending] = useActionState(action, INITIAL_STATE);
 
   return (
     <div className="flex flex-col gap-3">
-      <Link href="/superadmin/sites" className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link href={backHref} className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-4 w-4" />
         Volver
       </Link>

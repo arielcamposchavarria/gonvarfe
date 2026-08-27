@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { container } from "@/infrastructure/container";
 import { requireSuperAdmin } from "@/lib/auth/require-super-admin";
 import { createSiteSchema } from "@/lib/validation/create-site-schema";
+import { updateSiteSchema } from "@/lib/validation/update-site-schema";
+import { updateMarcaSchema } from "@/lib/validation/update-marca-schema";
 import { SitioNotFoundError } from "@/application/use-cases/superadmin/add-marca";
 
 export interface CreateSiteActionState {
@@ -82,4 +84,98 @@ export async function generateMarcaQrAction(sitioId: string, marcaId: string): P
     if (error instanceof SitioNotFoundError) return { qrCodeId: null, error: error.message };
     throw error;
   }
+}
+
+export interface UpdateSiteActionState {
+  error: string | null;
+}
+
+export async function updateSiteAction(
+  _prevState: UpdateSiteActionState,
+  formData: FormData,
+): Promise<UpdateSiteActionState> {
+  await requireSuperAdmin();
+
+  const siteId = formData.get("siteId");
+  if (typeof siteId !== "string" || !siteId) {
+    return { error: "Sitio inválido." };
+  }
+
+  const parsed = updateSiteSchema.safeParse({
+    name: formData.get("name"),
+    address: formData.get("address"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  try {
+    await container.updateSitio({ sitioId: siteId, nombre: parsed.data.name, direccion: parsed.data.address });
+  } catch (error) {
+    if (error instanceof SitioNotFoundError) return { error: error.message };
+    throw error;
+  }
+
+  redirect(`/superadmin/sites/${siteId}`);
+}
+
+export interface DeactivateSiteActionState {
+  error: string | null;
+}
+
+export async function deactivateSiteAction(sitioId: string): Promise<DeactivateSiteActionState> {
+  await requireSuperAdmin();
+
+  try {
+    await container.deactivateSitio(sitioId);
+  } catch (error) {
+    if (error instanceof SitioNotFoundError) return { error: error.message };
+    throw error;
+  }
+
+  redirect(`/superadmin/sites/${sitioId}`);
+}
+
+export interface UpdateMarcaActionState {
+  error: string | null;
+}
+
+export async function updateMarcaAction(
+  _prevState: UpdateMarcaActionState,
+  formData: FormData,
+): Promise<UpdateMarcaActionState> {
+  await requireSuperAdmin();
+
+  const sitioId = formData.get("sitioId");
+  const marcaId = formData.get("marcaId");
+  if (typeof sitioId !== "string" || !sitioId || typeof marcaId !== "string" || !marcaId) {
+    return { error: "Marca inválida." };
+  }
+
+  const parsed = updateMarcaSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  try {
+    await container.updateMarca({ sitioId, marcaId, nombre: parsed.data.name });
+  } catch (error) {
+    if (error instanceof SitioNotFoundError) return { error: error.message };
+    throw error;
+  }
+
+  redirect(`/superadmin/sites/${sitioId}`);
+}
+
+export async function deactivateMarcaAction(sitioId: string, marcaId: string): Promise<{ error: string | null }> {
+  await requireSuperAdmin();
+
+  try {
+    await container.deactivateMarca({ sitioId, marcaId });
+  } catch (error) {
+    if (error instanceof SitioNotFoundError) return { error: error.message };
+    throw error;
+  }
+
+  redirect(`/superadmin/sites/${sitioId}`);
 }

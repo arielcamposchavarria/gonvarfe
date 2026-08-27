@@ -1,4 +1,4 @@
-import type { CreateSitioInput, SitioRepository } from "@/domain/ports/sitio-repository";
+import type { CreateSitioInput, SitioRepository, UpdateSitioInput } from "@/domain/ports/sitio-repository";
 import type { Sitio } from "@/domain/entities/sitio";
 import { getAccessToken } from "@/lib/auth/session";
 
@@ -35,6 +35,27 @@ export function createHttpSitioRepository(): SitioRepository {
       return (await res.json()) as Sitio;
     },
 
+    async update(sitioId, input: UpdateSitioInput) {
+      const res = await fetch(`${baseUrl}/sitios/${sitioId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ nombre: input.nombre, direccion: input.direccion }),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("No se pudo editar el sitio.");
+      return (await res.json()) as Sitio;
+    },
+
+    async deactivate(sitioId) {
+      const res = await fetch(`${baseUrl}/sitios/${sitioId}/deactivate`, {
+        method: "PATCH",
+        headers: await authHeaders(),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("No se pudo desactivar el sitio.");
+      return (await res.json()) as Sitio;
+    },
+
     async addMarca(sitioId, nombre) {
       const res = await fetch(`${baseUrl}/sitios/${sitioId}/marcas`, {
         method: "POST",
@@ -53,6 +74,27 @@ export function createHttpSitioRepository(): SitioRepository {
       });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("No se pudo generar el QR de la marca.");
+      return (await res.json()) as Sitio;
+    },
+
+    async updateMarca(sitioId, marcaId, nombre) {
+      const res = await fetch(`${baseUrl}/sitios/${sitioId}/marcas/${marcaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ nombre }),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("No se pudo editar la marca.");
+      return (await res.json()) as Sitio;
+    },
+
+    async deactivateMarca(sitioId, marcaId) {
+      const res = await fetch(`${baseUrl}/sitios/${sitioId}/marcas/${marcaId}/deactivate`, {
+        method: "PATCH",
+        headers: await authHeaders(),
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("No se pudo desactivar la marca.");
       return (await res.json()) as Sitio;
     },
 

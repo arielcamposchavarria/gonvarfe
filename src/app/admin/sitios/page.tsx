@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default async function AdminSitiosPage() {
@@ -9,7 +11,15 @@ export default async function AdminSitiosPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold">Sitios</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold">Sitios</h1>
+        <Button asChild size="sm">
+          <Link href="/admin/sitios/new">
+            <Plus className="h-4 w-4" />
+            Nuevo sitio
+          </Link>
+        </Button>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {sitios.map((sitio) => (
           <Link key={sitio.id} href={`/admin/sitios/${sitio.id}`} className="block">

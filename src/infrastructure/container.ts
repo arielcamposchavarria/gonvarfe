@@ -35,8 +35,12 @@ import { listUsers } from "@/application/use-cases/superadmin/list-users";
 import { listSitios } from "@/application/use-cases/superadmin/list-sitios";
 import { getSitio } from "@/application/use-cases/superadmin/get-sitio";
 import { createSitio } from "@/application/use-cases/superadmin/create-sitio";
+import { updateSitio, type UpdateSitioInput as UpdateSitioUseCaseInput } from "@/application/use-cases/superadmin/update-sitio";
+import { deactivateSitio } from "@/application/use-cases/superadmin/deactivate-sitio";
 import { addMarca, type AddMarcaInput } from "@/application/use-cases/superadmin/add-marca";
 import { generateMarcaQr, type GenerateMarcaQrInput } from "@/application/use-cases/superadmin/generate-marca-qr";
+import { updateMarca, type UpdateMarcaInput } from "@/application/use-cases/superadmin/update-marca";
+import { deactivateMarca, type DeactivateMarcaInput } from "@/application/use-cases/superadmin/deactivate-marca";
 import { createLocal, type CreateLocalInput } from "@/application/use-cases/admin/create-local";
 import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
@@ -98,8 +102,12 @@ export const container = {
   listSitios: () => listSitios({ sitioRepository }),
   getSitio: (sitioId: string) => getSitio({ sitioRepository }, sitioId),
   createSitio: (input: CreateSitioInput) => createSitio({ sitioRepository }, input),
+  updateSitio: (input: UpdateSitioUseCaseInput) => updateSitio({ sitioRepository }, input),
+  deactivateSitio: (sitioId: string) => deactivateSitio({ sitioRepository }, sitioId),
   addMarca: (input: AddMarcaInput) => addMarca({ sitioRepository }, input),
   generateMarcaQr: (input: GenerateMarcaQrInput) => generateMarcaQr({ sitioRepository }, input),
+  updateMarca: (input: UpdateMarcaInput) => updateMarca({ sitioRepository }, input),
+  deactivateMarca: (input: DeactivateMarcaInput) => deactivateMarca({ sitioRepository }, input),
   createLocal: (input: CreateLocalInput) => createLocal({ sitioRepository }, input),
 
   getSite: (siteId: string) => getSite({ siteRepository }, siteId),

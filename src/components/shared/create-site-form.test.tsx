@@ -4,18 +4,16 @@ import userEvent from "@testing-library/user-event";
 
 import { CreateSiteForm } from "./create-site-form";
 
-vi.mock("@/app/superadmin/sites/actions", () => ({
-  createSiteAction: vi.fn(async (_prevState: { error: string | null }, formData: FormData) => {
-    if (formData.get("name") === "Plaza Amara") {
-      return { error: 'El sitio "Plaza Amara" ya existe.' };
-    }
-    return { error: null };
-  }),
-}));
+const action = vi.fn(async (_prevState: { error: string | null }, formData: FormData) => {
+  if (formData.get("name") === "Plaza Amara") {
+    return { error: 'El sitio "Plaza Amara" ya existe.' };
+  }
+  return { error: null };
+});
 
 describe("CreateSiteForm", () => {
   it("muestra los campos del formulario", () => {
-    render(<CreateSiteForm />);
+    render(<CreateSiteForm action={action} backHref="/superadmin/sites" />);
 
     expect(screen.getByLabelText(/nombre del sitio/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/dirección/i)).toBeInTheDocument();
@@ -24,7 +22,7 @@ describe("CreateSiteForm", () => {
 
   it("muestra el error devuelto por la acción", async () => {
     const user = userEvent.setup();
-    render(<CreateSiteForm />);
+    render(<CreateSiteForm action={action} backHref="/superadmin/sites" />);
 
     await user.type(screen.getByLabelText(/nombre del sitio/i), "Plaza Amara");
     await user.type(screen.getByLabelText(/dirección/i), "San José");

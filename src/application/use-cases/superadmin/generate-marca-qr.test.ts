@@ -12,16 +12,20 @@ describe("generateMarcaQr", () => {
       nombre: "Plaza Amara",
       direccion: "San José",
       activo: true,
-      marcas: [{ id: "m1", nombre: "BAC", qrCodeId: "qr-123" }],
+      marcas: [{ id: "m1", nombre: "BAC", qrCodeId: "qr-123", activo: true }],
       locales: [],
     };
     const sitioRepository: SitioRepository = {
       findAll: async () => [sitio],
       findById: async () => sitio,
       create: async () => sitio,
+      update: async () => null,
+      deactivate: async () => null,
       addMarca: async () => null,
       createLocal: async () => null,
       generateMarcaQr: async () => sitio,
+      updateMarca: async () => null,
+      deactivateMarca: async () => null,
     };
 
     await expect(generateMarcaQr({ sitioRepository }, { sitioId: "1", marcaId: "m1" })).resolves.toEqual(sitio);
@@ -34,9 +38,13 @@ describe("generateMarcaQr", () => {
       create: async () => {
         throw new Error("no usado");
       },
+      update: async () => null,
+      deactivate: async () => null,
       addMarca: async () => null,
       createLocal: async () => null,
       generateMarcaQr: async () => null,
+      updateMarca: async () => null,
+      deactivateMarca: async () => null,
     };
 
     await expect(
