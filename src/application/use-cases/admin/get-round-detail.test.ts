@@ -1,48 +1,76 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { getRoundDetail } from "./get-round-detail";
-import { createMockRoundRepository } from "@/infrastructure/mock/repositories/mock-round-repository";
-import { createMockShiftSessionRepository } from "@/infrastructure/mock/repositories/mock-shift-session-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
 import type { UserRepository } from "@/domain/ports/user-repository";
 import type { GuardUser } from "@/domain/entities/user";
-import type { Round } from "@/domain/entities/round";
-import type { ShiftSession } from "@/domain/entities/shift-session";
-import type { Site } from "@/domain/entities/site";
+import type { Recorrido } from "@/domain/entities/recorrido";
+import type { Turno } from "@/domain/entities/turno";
+import type { Sitio } from "@/domain/entities/sitio";
 
-const SITE: Site = {
-  id: "site-1",
-  name: "Sitio de prueba",
-  address: "N/A",
-  isActive: true,
-  startQrCodeId: "qr-start",
-  exitQrCodeId: "qr-exit",
-  stations: [],
-  visitingLocals: [],
-};
+const SITE: Sitio = { id: "site-1", nombre: "Sitio de prueba", direccion: "N/A", activo: true, marcas: [], locales: [] };
 
 const GUARD: GuardUser = {
   id: "guard-1",
   name: "Ana Pérez",
   username: "ana",
   role: "guard",
-  assignedSiteId: SITE.id,
   isActive: true,
   createdAt: new Date("2025-01-01"),
 };
 
-function createFakeSiteRepository(sites: Site[]): SiteRepository {
+const RECORRIDO: Recorrido = {
+  id: "recorrido-1",
+  turnoId: "turno-1",
+  sitioId: SITE.id,
+  secuencia: 1,
+  iniciadoEn: new Date("2026-01-01T08:00:00Z"),
+  estado: "completado",
+  completadoEn: new Date("2026-01-01T09:00:00Z"),
+  registros: [],
+};
+
+const TURNO: Turno = {
+  id: "turno-1",
+  guardiaId: GUARD.id,
+  sitioId: SITE.id,
+  iniciadoEn: new Date("2026-01-01T08:00:00Z"),
+  estado: "finalizado",
+  finalizadoEn: new Date("2026-01-01T09:00:00Z"),
+};
+
+function createFakeSitioRepository(sitios: Sitio[]): SitioRepository {
   return {
     async findAll() {
-      return sites;
+      return sitios;
     },
     async findById(id) {
-      return sites.find((site) => site.id === id) ?? null;
+      return sitios.find((sitio) => sitio.id === id) ?? null;
     },
-    async create(site) {
-      return site;
+    async create() {
+      throw new Error("No usado en esta prueba.");
     },
-    async addVisitingLocal() {
+    async update() {
+      return null;
+    },
+    async deactivate() {
+      return null;
+    },
+    async addMarca() {
+      return null;
+    },
+    async generateMarcaQr() {
+      return null;
+    },
+    async updateMarca() {
+      return null;
+    },
+    async deactivateMarca() {
+      return null;
+    },
+    async createLocal() {
       return null;
     },
   };
@@ -65,65 +93,62 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
   };
 }
 
-const ROUND: Round = {
-  id: "round-1",
-  shiftSessionId: "session-1",
-  siteId: SITE.id,
-  sequence: 1,
-  startedAt: new Date("2026-01-01T08:00:00Z"),
-  status: "completed",
-  completedAt: new Date("2026-01-01T09:00:00Z"),
-  scans: [],
-};
-
-const SESSION: ShiftSession = {
-  id: "session-1",
-  guardId: GUARD.id,
-  siteId: SITE.id,
-  startedAt: new Date("2026-01-01T08:00:00Z"),
-  status: "completed",
-  endedAt: new Date("2026-01-01T09:00:00Z"),
-};
-
 describe("getRoundDetail", () => {
   it("devuelve el recorrido, el sitio y el nombre del guarda responsable", async () => {
-    const roundRepository = createMockRoundRepository();
-    const shiftSessionRepository = createMockShiftSessionRepository();
-    const siteRepository = createFakeSiteRepository([SITE]);
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn(),
+      porSitio: vi.fn(),
+      porId: vi.fn().mockResolvedValue(RECORRIDO),
+    };
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn(),
+      porSitio: vi.fn().mockResolvedValue([TURNO]),
+    };
+    const sitioRepository = createFakeSitioRepository([SITE]);
     const userRepository = createFakeUserRepository([GUARD]);
 
-    await roundRepository.create(ROUND);
-    await shiftSessionRepository.create(SESSION);
-
     const detail = await getRoundDetail(
-      { roundRepository, shiftSessionRepository, siteRepository, userRepository },
+      { recorridoRepository, turnoRepository, sitioRepository, userRepository },
       SITE.id,
-      ROUND.id,
+      RECORRIDO.id,
     );
 
-    expect(detail?.round.id).toBe(ROUND.id);
-    expect(detail?.site.id).toBe(SITE.id);
+    expect(detail?.recorrido.id).toBe(RECORRIDO.id);
+    expect(detail?.sitio.id).toBe(SITE.id);
     expect(detail?.guardName).toBe("Ana Pérez");
   });
 
   it("devuelve null si el recorrido no existe o pertenece a otro sitio", async () => {
-    const roundRepository = createMockRoundRepository();
-    const shiftSessionRepository = createMockShiftSessionRepository();
-    const siteRepository = createFakeSiteRepository([SITE]);
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn(),
+      porSitio: vi.fn(),
+      porId: vi.fn().mockResolvedValue(RECORRIDO),
+    };
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn(),
+      porSitio: vi.fn().mockResolvedValue([TURNO]),
+    };
+    const sitioRepository = createFakeSitioRepository([SITE]);
     const userRepository = createFakeUserRepository([GUARD]);
+    const deps = { recorridoRepository, turnoRepository, sitioRepository, userRepository };
 
-    await roundRepository.create(ROUND);
+    await expect(getRoundDetail(deps, "site-2", RECORRIDO.id)).resolves.toBeNull();
 
+    const missingRepository: RecorridoRepository = { ...recorridoRepository, porId: vi.fn().mockResolvedValue(null) };
     await expect(
-      getRoundDetail({ roundRepository, shiftSessionRepository, siteRepository, userRepository }, "site-2", ROUND.id),
-    ).resolves.toBeNull();
-
-    await expect(
-      getRoundDetail(
-        { roundRepository, shiftSessionRepository, siteRepository, userRepository },
-        SITE.id,
-        "round-missing",
-      ),
+      getRoundDetail({ ...deps, recorridoRepository: missingRepository }, SITE.id, "recorrido-missing"),
     ).resolves.toBeNull();
   });
 });

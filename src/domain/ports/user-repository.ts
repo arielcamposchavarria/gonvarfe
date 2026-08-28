@@ -6,8 +6,6 @@ export interface CreateUserInput {
   username: string;
   password: string;
   role: Role;
-  /** Solo aplica cuando `role` es `"guard"`. */
-  assignedSiteId?: string;
 }
 
 export class UsernameTakenError extends Error {

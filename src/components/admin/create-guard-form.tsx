@@ -8,16 +8,11 @@ import { createGuardAction, type CreateGuardActionState } from "@/app/admin/guar
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
-export interface CreateGuardFormProps {
-  sites: { id: string; name: string }[];
-}
 
 const INITIAL_STATE: CreateGuardActionState = { error: null };
 
-export function CreateGuardForm({ sites }: CreateGuardFormProps) {
+export function CreateGuardForm() {
   const [state, formAction, isPending] = useActionState(createGuardAction, INITIAL_STATE);
 
   return (
@@ -30,7 +25,7 @@ export function CreateGuardForm({ sites }: CreateGuardFormProps) {
       <Card className="max-w-md">
         <CardHeader>
           <CardTitle>Nuevo oficial</CardTitle>
-          <CardDescription>Crea un usuario de guard y asígnalo a un sitio.</CardDescription>
+          <CardDescription>Crea un usuario de guard. El sitio lo elige al iniciar cada turno.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="flex flex-col gap-4">
@@ -47,20 +42,6 @@ export function CreateGuardForm({ sites }: CreateGuardFormProps) {
             <div className="flex flex-col gap-2">
               <Label htmlFor="password">Contraseña</Label>
               <Input id="password" name="password" type="password" required />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="assignedSiteId">Sitio asignado</Label>
-              <Select id="assignedSiteId" name="assignedSiteId" defaultValue="" required>
-                <option value="" disabled>
-                  Seleccione...
-                </option>
-                {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.name}
-                  </option>
-                ))}
-              </Select>
             </div>
 
             {state.error && (

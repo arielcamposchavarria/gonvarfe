@@ -18,7 +18,6 @@ const ACTIVE_GUARD: GuardUser = {
   name: "Mario Solano",
   username: "guard",
   role: "guard",
-  assignedSiteId: "site-1",
   isActive: true,
   createdAt: new Date("2025-01-01"),
 };

@@ -1,16 +1,33 @@
 import { describe, expect, it } from "vitest";
 
 import { submitIncidentLog } from "./submit-incident-log";
-import { createMockIncidentLogRepository } from "@/infrastructure/mock/repositories/mock-incident-log-repository";
+import type { IncidentLogRepository } from "@/domain/ports/incident-log-repository";
+import type { IncidentLog } from "@/domain/entities/incident-log";
+
+function createFakeIncidentLogRepository(): IncidentLogRepository {
+  const logs: IncidentLog[] = [];
+  return {
+    async findBySite(sitioId) {
+      return logs.filter((log) => log.sitioId === sitioId);
+    },
+    async findByGuard(guardId) {
+      return logs.filter((log) => log.guardId === guardId);
+    },
+    async create(log) {
+      logs.push(log);
+      return log;
+    },
+  };
+}
 
 describe("submitIncidentLog", () => {
   it("guarda la bitácora de incidencias con todos sus campos", async () => {
-    const incidentLogRepository = createMockIncidentLogRepository();
+    const incidentLogRepository = createFakeIncidentLogRepository();
 
     const log = await submitIncidentLog(
       { incidentLogRepository },
       {
-        siteId: "site-1",
+        sitioId: "sitio-1",
         guardId: "guard-1",
         incidentType: "Persona sospechosa",
         incidentTypeDetail: null,
@@ -23,16 +40,16 @@ describe("submitIncidentLog", () => {
     expect(log.id).toBeTruthy();
     expect(log.incidentType).toBe("Persona sospechosa");
     expect(log.occurredAt).toBeInstanceOf(Date);
-    await expect(incidentLogRepository.findBySite("site-1")).resolves.toEqual([log]);
+    await expect(incidentLogRepository.findBySite("sitio-1")).resolves.toEqual([log]);
   });
 
   it("guarda el detalle libre cuando el tipo de incidencia es Otro", async () => {
-    const incidentLogRepository = createMockIncidentLogRepository();
+    const incidentLogRepository = createFakeIncidentLogRepository();
 
     const log = await submitIncidentLog(
       { incidentLogRepository },
       {
-        siteId: "site-1",
+        sitioId: "sitio-1",
         guardId: "guard-1",
         incidentType: "Otro",
         incidentTypeDetail: "Fuga de agua en el parqueo",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -14,14 +14,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 export interface CreateUserFormProps {
   roles: { id: string; name: string }[];
-  sites: { id: string; name: string }[];
 }
 
 const INITIAL_STATE: CreateUserActionState = { error: null };
 
-export function CreateUserForm({ roles, sites }: CreateUserFormProps) {
+export function CreateUserForm({ roles }: CreateUserFormProps) {
   const [state, formAction, isPending] = useActionState(createUserAction, INITIAL_STATE);
-  const [selectedRole, setSelectedRole] = useState<string>("");
 
   return (
     <div className="flex flex-col gap-3">
@@ -57,13 +55,7 @@ export function CreateUserForm({ roles, sites }: CreateUserFormProps) {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="role">Rol</Label>
-              <Select
-                id="role"
-                name="role"
-                defaultValue=""
-                required
-                onChange={(event) => setSelectedRole(event.target.value)}
-              >
+              <Select id="role" name="role" defaultValue="" required>
                 <option value="" disabled>
                   Seleccione...
                 </option>
@@ -74,22 +66,6 @@ export function CreateUserForm({ roles, sites }: CreateUserFormProps) {
                 ))}
               </Select>
             </div>
-
-            {selectedRole === "guard" && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="assignedSiteId">Sitio asignado</Label>
-                <Select id="assignedSiteId" name="assignedSiteId" defaultValue="" required>
-                  <option value="" disabled>
-                    Seleccione...
-                  </option>
-                  {sites.map((site) => (
-                    <option key={site.id} value={site.id}>
-                      {site.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            )}
 
             {state.error && (
               <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">

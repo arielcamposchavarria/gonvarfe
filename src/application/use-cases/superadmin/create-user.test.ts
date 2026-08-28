@@ -27,7 +27,6 @@ function createFakeUserRepository(existing: AppUser[] = []): UserRepository {
               name: input.name,
               username: input.username,
               role: "guard",
-              assignedSiteId: input.assignedSiteId ?? "",
               isActive: true,
               createdAt: new Date(),
               photoUrl: null,
@@ -59,18 +58,15 @@ describe("createUser", () => {
     expect(user.role).toBe("admin");
   });
 
-  it("crea un guard con el sitio asignado", async () => {
+  it("crea un guard", async () => {
     const userRepository = createFakeUserRepository();
 
     const user = await createUser(
       { userRepository },
-      { name: "Nuevo Oficial", username: "nuevo-oficial", password: "clave123", role: "guard", assignedSiteId: "site-1" },
+      { name: "Nuevo Oficial", username: "nuevo-oficial", password: "clave123", role: "guard" },
     );
 
     expect(user.role).toBe("guard");
-    if (user.role === "guard") {
-      expect(user.assignedSiteId).toBe("site-1");
-    }
   });
 
   it("propaga UsernameTakenError si el repositorio la lanza", async () => {

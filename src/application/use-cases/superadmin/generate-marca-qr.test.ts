@@ -12,7 +12,7 @@ describe("generateMarcaQr", () => {
       nombre: "Plaza Amara",
       direccion: "San José",
       activo: true,
-      marcas: [{ id: "m1", nombre: "BAC", qrCodeId: "qr-123", activo: true }],
+      marcas: [{ id: "m1", nombre: "BAC", orden: 1, qrCodeId: "qr-123", activo: true }],
       locales: [],
     };
     const sitioRepository: SitioRepository = {

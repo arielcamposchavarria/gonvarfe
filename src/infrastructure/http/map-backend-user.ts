@@ -8,7 +8,6 @@ export interface BackendUser {
   name: string;
   role: string;
   isActive: boolean;
-  assignedSiteId: string | null;
 }
 
 /**
@@ -33,7 +32,6 @@ export function buildAppUser(backendUser: BackendUser): AppUser {
     return {
       ...base,
       role: "guard",
-      assignedSiteId: backendUser.assignedSiteId ?? "",
       photoUrl: null,
     };
   }

@@ -4,6 +4,7 @@ import { ClipboardList, ListChecks, QrCode, ShieldAlert, UserRound } from "lucid
 import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
 import { OptionCard } from "@/components/shared/option-card";
+import { ChangeSiteButton } from "@/components/guard/change-site-button";
 
 export default async function GuardHomePage() {
   const session = await getSession();
@@ -12,21 +13,19 @@ export default async function GuardHomePage() {
   const guard = await container.findUserById(session.userId);
   if (!guard || guard.role !== "guard") redirect("/login");
 
-  const status = await container.getShiftStatus(guard.assignedSiteId, guard.id);
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno) redirect("/guard/select-site");
 
-  const roundDescription = !status.session
-    ? "Jornada sin iniciar"
-    : status.session.status === "completed"
-      ? "Jornada finalizada"
-      : status.activeRound
-        ? "Recorrido en curso"
-        : "Listo para el siguiente recorrido";
+  const roundDescription = estado.recorridoActivo ? "Recorrido en curso" : "Listo para el siguiente recorrido";
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-semibold">Hola, {guard.name.split(" ")[0]}</h1>
-        <p className="text-sm text-muted-foreground">{status.site.name}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold">Hola, {guard.name.split(" ")[0]}</h1>
+          <p className="text-sm text-muted-foreground">{estado.sitio?.nombre ?? "Sitio no disponible"}</p>
+        </div>
+        <ChangeSiteButton disabled={estado.recorridoActivo !== null} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -41,8 +40,8 @@ export default async function GuardHomePage() {
           testId="option-completed-rounds"
           icon={ListChecks}
           title="Recorridos completados"
-          description={`${status.completedRoundsCount} en esta jornada`}
-          badgeLabel={String(status.completedRoundsCount)}
+          description={`${estado.recorridosCompletados} en este turno`}
+          badgeLabel={String(estado.recorridosCompletados)}
           badgeVariant="secondary"
         />
         <OptionCard

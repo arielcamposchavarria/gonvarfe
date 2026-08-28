@@ -20,6 +20,11 @@ export async function submitEntryLogAction(
 ): Promise<EntryLogActionState> {
   const guard = await requireGuard();
 
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno || !estado.sitio) {
+    return { error: "No hay un turno activo. Inicie un turno primero." };
+  }
+
   const selectedLocal = formData.get("visitingLocal");
   const visitingLocal =
     selectedLocal === "Otro" ? formData.get("visitingLocalOther") : selectedLocal;
@@ -49,7 +54,7 @@ export async function submitEntryLogAction(
   const photoUrls = await Promise.all(photos.map(fileToDataUrl));
 
   await container.submitEntryLog({
-    siteId: guard.assignedSiteId,
+    sitioId: estado.sitio.id,
     guardId: guard.id,
     date: parsed.data.date,
     entryTime: parsed.data.entryTime,

@@ -19,11 +19,9 @@ const ROLES = [
   { id: "role-3", name: "guard" },
 ];
 
-const SITES = [{ id: "site-1", name: "Plaza Amara" }];
-
 describe("CreateUserForm", () => {
-  it("muestra los campos del formulario y los roles disponibles", () => {
-    render(<CreateUserForm roles={ROLES} sites={SITES} />);
+  it("muestra los campos del formulario y los roles disponibles, sin selector de sitio", () => {
+    render(<CreateUserForm roles={ROLES} />);
 
     expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument();
@@ -32,20 +30,17 @@ describe("CreateUserForm", () => {
     expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
   });
 
-  it("muestra el campo de sitio asignado solo cuando el rol elegido es guard", async () => {
+  it("no muestra un selector de sitio ni siquiera al elegir el rol guard", async () => {
     const user = userEvent.setup();
-    render(<CreateUserForm roles={ROLES} sites={SITES} />);
-
-    await user.selectOptions(screen.getByLabelText(/^rol$/i), "admin");
-    expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
+    render(<CreateUserForm roles={ROLES} />);
 
     await user.selectOptions(screen.getByLabelText(/^rol$/i), "guard");
-    expect(screen.getByLabelText(/sitio asignado/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
   });
 
   it("muestra el error devuelto por la acción cuando el usuario ya existe", async () => {
     const user = userEvent.setup();
-    render(<CreateUserForm roles={ROLES} sites={SITES} />);
+    render(<CreateUserForm roles={ROLES} />);
 
     await user.type(screen.getByLabelText(/nombre completo/i), "Ana Rojas");
     await user.type(screen.getByLabelText(/usuario/i), "existente");

@@ -8,8 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 export default async function AdminGuardsPage() {
-  const [guards, sites] = await Promise.all([container.listGuards(), container.listSites()]);
-  const siteNameById = new Map(sites.map((site) => [site.id, site.name]));
+  const guards = await container.listGuards();
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,9 +28,7 @@ export default async function AdminGuardsPage() {
             <div className="flex items-center justify-between gap-3 p-3 transition-colors hover:bg-surface-hover">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{guard.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {guard.username} · {siteNameById.get(guard.assignedSiteId) ?? guard.assignedSiteId}
-                </p>
+                <p className="truncate text-xs text-muted-foreground">{guard.username}</p>
               </div>
               <Badge variant={guard.isActive ? "success" : "destructive"} className="shrink-0">
                 {guard.isActive ? "Activo" : "Inactivo"}
@@ -47,7 +44,6 @@ export default async function AdminGuardsPage() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Usuario</TableHead>
-              <TableHead>Sitio asignado</TableHead>
               <TableHead>Estado</TableHead>
             </TableRow>
           </TableHeader>
@@ -62,11 +58,6 @@ export default async function AdminGuardsPage() {
                 <TableCell className="p-0">
                   <Link href={`/admin/guards/${guard.id}`} className="block p-3">
                     {guard.username}
-                  </Link>
-                </TableCell>
-                <TableCell className="p-0">
-                  <Link href={`/admin/guards/${guard.id}`} className="block p-3">
-                    {siteNameById.get(guard.assignedSiteId) ?? guard.assignedSiteId}
                   </Link>
                 </TableCell>
                 <TableCell className="p-0">

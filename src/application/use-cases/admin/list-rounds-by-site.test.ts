@@ -1,19 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { listRoundsBySite } from "./list-rounds-by-site";
-import { createMockRoundRepository } from "@/infrastructure/mock/repositories/mock-round-repository";
-import { createMockShiftSessionRepository } from "@/infrastructure/mock/repositories/mock-shift-session-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
 import type { UserRepository } from "@/domain/ports/user-repository";
 import type { GuardUser } from "@/domain/entities/user";
-import type { Round } from "@/domain/entities/round";
-import type { ShiftSession } from "@/domain/entities/shift-session";
+import type { Recorrido } from "@/domain/entities/recorrido";
+import type { Turno } from "@/domain/entities/turno";
 
 const GUARD: GuardUser = {
   id: "guard-1",
   name: "Ana Pérez",
   username: "ana",
   role: "guard",
-  assignedSiteId: "site-1",
   isActive: true,
   createdAt: new Date("2025-01-01"),
 };
@@ -35,67 +34,86 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
   };
 }
 
-function buildRound(overrides: Partial<Round>): Round {
+function buildRecorrido(overrides: Partial<Recorrido>): Recorrido {
   return {
-    id: "round-1",
-    shiftSessionId: "session-1",
-    siteId: "site-1",
-    sequence: 1,
-    startedAt: new Date("2026-01-01T08:00:00Z"),
-    status: "completed",
-    completedAt: new Date("2026-01-01T09:00:00Z"),
-    scans: [],
+    id: "recorrido-1",
+    turnoId: "turno-1",
+    sitioId: "site-1",
+    secuencia: 1,
+    iniciadoEn: new Date("2026-01-01T08:00:00Z"),
+    estado: "completado",
+    completadoEn: new Date("2026-01-01T09:00:00Z"),
+    registros: [],
     ...overrides,
   };
 }
 
-function buildSession(overrides: Partial<ShiftSession>): ShiftSession {
+function buildTurno(overrides: Partial<Turno>): Turno {
   return {
-    id: "session-1",
-    guardId: GUARD.id,
-    siteId: "site-1",
-    startedAt: new Date("2026-01-01T08:00:00Z"),
-    status: "completed",
-    endedAt: null,
+    id: "turno-1",
+    guardiaId: GUARD.id,
+    sitioId: "site-1",
+    iniciadoEn: new Date("2026-01-01T08:00:00Z"),
+    estado: "finalizado",
+    finalizadoEn: null,
     ...overrides,
   };
 }
 
 describe("listRoundsBySite", () => {
   it("ordena los recorridos del sitio del más reciente (o en curso) al más antiguo, con el nombre del guarda", async () => {
-    const roundRepository = createMockRoundRepository();
-    const shiftSessionRepository = createMockShiftSessionRepository();
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn(),
+      porSitio: vi.fn().mockResolvedValue([
+        buildRecorrido({ id: "recorrido-1", secuencia: 1, iniciadoEn: new Date("2026-01-01T08:00:00Z") }),
+        buildRecorrido({
+          id: "recorrido-2",
+          secuencia: 2,
+          iniciadoEn: new Date("2026-01-01T09:00:00Z"),
+          estado: "en-progreso",
+          completadoEn: null,
+        }),
+      ]),
+      porId: vi.fn(),
+    };
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn(),
+      porSitio: vi.fn().mockResolvedValue([buildTurno({})]),
+    };
     const userRepository = createFakeUserRepository([GUARD]);
 
-    await shiftSessionRepository.create(buildSession({}));
-    await roundRepository.create(
-      buildRound({ id: "round-1", sequence: 1, startedAt: new Date("2026-01-01T08:00:00Z") }),
-    );
-    await roundRepository.create(
-      buildRound({
-        id: "round-2",
-        sequence: 2,
-        startedAt: new Date("2026-01-01T09:00:00Z"),
-        status: "in-progress",
-        completedAt: null,
-      }),
-    );
+    const result = await listRoundsBySite({ recorridoRepository, turnoRepository, userRepository }, "site-1");
 
-    const result = await listRoundsBySite({ roundRepository, shiftSessionRepository, userRepository }, "site-1");
-
-    expect(result.map((r) => r.round.id)).toEqual(["round-2", "round-1"]);
+    expect(result.map((r) => r.recorrido.id)).toEqual(["recorrido-2", "recorrido-1"]);
     expect(result[0].guardName).toBe("Ana Pérez");
   });
 
-  it("no incluye recorridos de otros sitios", async () => {
-    const roundRepository = createMockRoundRepository();
-    const shiftSessionRepository = createMockShiftSessionRepository();
+  it("retorna 'Guarda desconocido' si no encuentra el turno correspondiente", async () => {
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn(),
+      porSitio: vi.fn().mockResolvedValue([buildRecorrido({ turnoId: "turno-huerfano" })]),
+      porId: vi.fn(),
+    };
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn(),
+      porSitio: vi.fn().mockResolvedValue([]),
+    };
     const userRepository = createFakeUserRepository([GUARD]);
 
-    await roundRepository.create(buildRound({ id: "round-other", siteId: "site-2" }));
+    const result = await listRoundsBySite({ recorridoRepository, turnoRepository, userRepository }, "site-1");
 
-    const result = await listRoundsBySite({ roundRepository, shiftSessionRepository, userRepository }, "site-1");
-
-    expect(result).toEqual([]);
+    expect(result[0].guardName).toBe("Guarda desconocido");
   });
 });

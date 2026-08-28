@@ -4,11 +4,11 @@ import type { ScannedStationEntry } from "@/application/use-cases/admin/list-gua
 import type { MissedScanEntry } from "@/application/use-cases/admin/list-guard-missed-scans";
 import type { EntryLogWithSite } from "@/application/use-cases/admin/list-guard-entry-logs";
 import type { IncidentLogWithSite } from "@/application/use-cases/admin/list-guard-incident-logs";
-import type { RoundStatus } from "@/domain/entities/round";
+import type { RecorridoEstado } from "@/domain/entities/recorrido";
 
-const ROUND_STATUS_LABEL: Record<RoundStatus, string> = {
-  "in-progress": "En curso",
-  completed: "Completado",
+const ROUND_STATUS_LABEL: Record<RecorridoEstado, string> = {
+  "en-progreso": "En curso",
+  completado: "Completado",
 };
 
 export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition {
@@ -23,14 +23,14 @@ export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition 
       { header: "Estaciones escaneadas", key: "onTime", width: 20 },
       { header: "Estaciones no escaneadas", key: "missed", width: 22 },
     ],
-    rows: rounds.map(({ round, siteName }) => ({
+    rows: rounds.map(({ recorrido, siteName }) => ({
       site: siteName,
-      sequence: round.sequence,
-      status: ROUND_STATUS_LABEL[round.status],
-      startedAt: round.startedAt.toLocaleString(),
-      completedAt: round.completedAt ? round.completedAt.toLocaleString() : "",
-      onTime: round.scans.filter((scan) => scan.status === "on-time").length,
-      missed: round.scans.filter((scan) => scan.status === "missed").length,
+      sequence: recorrido.secuencia,
+      status: ROUND_STATUS_LABEL[recorrido.estado],
+      startedAt: recorrido.iniciadoEn.toLocaleString(),
+      completedAt: recorrido.completadoEn ? recorrido.completadoEn.toLocaleString() : "",
+      onTime: recorrido.registros.filter((registro) => registro.estado === "a-tiempo").length,
+      missed: recorrido.registros.filter((registro) => registro.estado === "perdido").length,
     })),
   };
 }

@@ -1,26 +1,23 @@
-import { createMockSiteRepository } from "./mock/repositories/mock-site-repository";
 import { createHttpSitioRepository } from "./http/http-sitio-repository";
 import { createHttpUserRepository } from "./http/http-user-repository";
 import { createHttpAuthService } from "./http/http-auth-service";
 import { createHttpRoleRepository } from "./http/http-role-repository";
-import { createMockShiftSessionRepository } from "./mock/repositories/mock-shift-session-repository";
-import { createMockRoundRepository } from "./mock/repositories/mock-round-repository";
-import { createMockQrCodeRepository } from "./mock/repositories/mock-qr-code-repository";
-import { createMockEntryLogRepository } from "./mock/repositories/mock-entry-log-repository";
-import { createMockIncidentLogRepository } from "./mock/repositories/mock-incident-log-repository";
-import { createSystemClockService } from "./mock/services/system-clock-service";
+import { createHttpGuardSitioRepository } from "./http/http-guard-sitio-repository";
+import { createHttpTurnoRepository } from "./http/http-turno-repository";
+import { createHttpRecorridoRepository } from "./http/http-recorrido-repository";
+import { createHttpEntryLogRepository } from "./http/http-entry-log-repository";
+import { createHttpIncidentLogRepository } from "./http/http-incident-log-repository";
 
 import { authenticateUser, type AuthenticateUserInput } from "@/application/use-cases/auth/authenticate-user";
-import { startShift } from "@/application/use-cases/guard/start-shift";
-import { scanStation, type ScanStationInput } from "@/application/use-cases/guard/scan-station";
-import { endShift } from "@/application/use-cases/guard/end-shift";
-import { reportMissedScan, type ReportMissedScanInput } from "@/application/use-cases/guard/report-missed-scan";
-import { getShiftStatus } from "@/application/use-cases/guard/get-shift-status";
+import { listSitiosGuardia } from "@/application/use-cases/guard/list-sitios-guardia";
+import { iniciarTurno } from "@/application/use-cases/guard/iniciar-turno";
+import { finalizarTurno } from "@/application/use-cases/guard/finalizar-turno";
+import { obtenerEstadoTurno } from "@/application/use-cases/guard/obtener-estado-turno";
+import { registrarEscaneo } from "@/application/use-cases/guard/registrar-escaneo";
+import { reportarPerdido } from "@/application/use-cases/guard/reportar-perdido";
 import { submitEntryLog, type SubmitEntryLogInput } from "@/application/use-cases/guard/submit-entry-log";
 import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
-import { listSites } from "@/application/use-cases/admin/list-sites";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
-import { getSite } from "@/application/use-cases/admin/get-site";
 import { listRoundsBySite } from "@/application/use-cases/admin/list-rounds-by-site";
 import { getRoundDetail } from "@/application/use-cases/admin/get-round-detail";
 import { listEntryLogsBySite } from "@/application/use-cases/admin/list-entry-logs-by-site";
@@ -46,55 +43,42 @@ import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { CreateUserInput } from "@/domain/ports/user-repository";
-import type { GuardUser } from "@/domain/entities/user";
+import type { EscanearInput } from "@/domain/ports/recorrido-repository";
 import type { DateRange } from "@/lib/date-range";
 
 /**
  * Composition root: único lugar donde se conectan los casos de uso con
- * adaptadores concretos. Al conectar un backend real, solo este archivo
- * cambia (se reemplazan los `createMock*` por adaptadores reales).
- */
-const siteRepository = createMockSiteRepository();
-/**
- * Repositorio de sitios/marcas de superAdmin, respaldado por el backend real
- * (gonvarbe). Deliberadamente separado del `siteRepository` mock de arriba:
- * ese sigue modelando estaciones/QR de recorrido para guardia/admin/rondas,
- * un concepto distinto que el backend real todavía no implementa.
+ * adaptadores concretos. Todos los repositorios están respaldados por el
+ * backend real (gonvarbe) — no quedan adaptadores mock.
  */
 const sitioRepository = createHttpSitioRepository();
 /** Usuarios, roles y autenticación reales contra el backend (gonvarbe). */
 const userRepository = createHttpUserRepository();
 const roleRepository = createHttpRoleRepository();
 const authService = createHttpAuthService();
-const shiftSessionRepository = createMockShiftSessionRepository();
-const roundRepository = createMockRoundRepository();
-const qrCodeRepository = createMockQrCodeRepository();
-const entryLogRepository = createMockEntryLogRepository();
-const incidentLogRepository = createMockIncidentLogRepository();
-const clockService = createSystemClockService();
+/**
+ * Vista de sitios para el rol guard (`GET /sitios/guard`): nunca incluye
+ * `qrCodeId`, a diferencia de `sitioRepository` (usado por admin/superAdmin).
+ */
+const guardSitioRepository = createHttpGuardSitioRepository();
+const turnoRepository = createHttpTurnoRepository();
+const recorridoRepository = createHttpRecorridoRepository();
+const entryLogRepository = createHttpEntryLogRepository();
+const incidentLogRepository = createHttpIncidentLogRepository();
 
 export const container = {
   authenticateUser: (input: AuthenticateUserInput) => authenticateUser({ authService }, input),
 
-  startShift: (guard: GuardUser) =>
-    startShift({ shiftSessionRepository, roundRepository, siteRepository, clockService }, guard),
-
-  scanStation: (input: ScanStationInput) =>
-    scanStation({ shiftSessionRepository, roundRepository, siteRepository, clockService }, input),
-
-  endShift: (guardId: string) =>
-    endShift({ shiftSessionRepository, roundRepository, siteRepository, qrCodeRepository, clockService }, guardId),
-
-  reportMissedScan: (input: ReportMissedScanInput) =>
-    reportMissedScan({ shiftSessionRepository, roundRepository, clockService }, input),
-
-  getShiftStatus: (siteId: string, guardId: string) =>
-    getShiftStatus({ shiftSessionRepository, roundRepository, siteRepository }, siteId, guardId),
+  listSitiosParaGuardia: () => listSitiosGuardia({ guardSitioRepository }),
+  iniciarTurno: (sitioId: string) => iniciarTurno({ turnoRepository }, sitioId),
+  finalizarTurno: () => finalizarTurno({ turnoRepository }),
+  obtenerEstadoTurno: () => obtenerEstadoTurno({ turnoRepository, recorridoRepository, guardSitioRepository }),
+  registrarEscaneo: (input: EscanearInput) => registrarEscaneo({ recorridoRepository }, input),
+  reportarPerdido: (motivo: string) => reportarPerdido({ recorridoRepository }, motivo),
 
   submitEntryLog: (input: SubmitEntryLogInput) => submitEntryLog({ entryLogRepository }, input),
   submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),
 
-  listSites: () => listSites({ siteRepository }),
   listGuards: () => listGuards({ userRepository }),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   listRoles: () => listRoles({ roleRepository }),
@@ -110,41 +94,39 @@ export const container = {
   deactivateMarca: (input: DeactivateMarcaInput) => deactivateMarca({ sitioRepository }, input),
   createLocal: (input: CreateLocalInput) => createLocal({ sitioRepository }, input),
 
-  getSite: (siteId: string) => getSite({ siteRepository }, siteId),
-  listRoundsBySite: (siteId: string) =>
-    listRoundsBySite({ roundRepository, shiftSessionRepository, userRepository }, siteId),
+  listRoundsBySite: (siteId: string) => listRoundsBySite({ recorridoRepository, turnoRepository, userRepository }, siteId),
   getRoundDetail: (siteId: string, roundId: string) =>
-    getRoundDetail({ roundRepository, shiftSessionRepository, siteRepository, userRepository }, siteId, roundId),
+    getRoundDetail({ recorridoRepository, turnoRepository, sitioRepository, userRepository }, siteId, roundId),
   listEntryLogsBySite: (siteId: string) => listEntryLogsBySite({ entryLogRepository, userRepository }, siteId),
   listIncidentLogsBySite: (siteId: string) =>
     listIncidentLogsBySite({ incidentLogRepository, userRepository }, siteId),
 
   getGuardDetail: (guardId: string) =>
     getGuardDetail(
-      { userRepository, siteRepository, shiftSessionRepository, roundRepository, entryLogRepository, incidentLogRepository },
+      { userRepository, sitioRepository, turnoRepository, recorridoRepository, entryLogRepository, incidentLogRepository },
       guardId,
     ),
   listGuardMissedScans: (guardId: string, range?: DateRange) =>
-    listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, guardId, range),
+    listGuardMissedScans({ turnoRepository, recorridoRepository, sitioRepository }, guardId, range),
   listGuardEntryLogs: (guardId: string, range?: DateRange) =>
-    listGuardEntryLogs({ entryLogRepository, siteRepository }, guardId, range),
+    listGuardEntryLogs({ entryLogRepository, sitioRepository }, guardId, range),
   listGuardIncidentLogs: (guardId: string, range?: DateRange) =>
-    listGuardIncidentLogs({ incidentLogRepository, siteRepository }, guardId, range),
+    listGuardIncidentLogs({ incidentLogRepository, sitioRepository }, guardId, range),
   listGuardRounds: (guardId: string, range?: DateRange) =>
-    listGuardRounds({ shiftSessionRepository, roundRepository, siteRepository }, guardId, range),
+    listGuardRounds({ turnoRepository, recorridoRepository, sitioRepository }, guardId, range),
   listGuardScannedStations: (guardId: string, range?: DateRange) =>
-    listGuardScannedStations({ shiftSessionRepository, roundRepository, siteRepository }, guardId, range),
+    listGuardScannedStations({ turnoRepository, recorridoRepository, sitioRepository }, guardId, range),
 
   findUserById: (id: string) => userRepository.findById(id),
 };
 
 // Se exponen para casos donde se necesite un repo crudo fuera de un caso de uso ya envuelto arriba.
 export const repositories = {
-  siteRepository,
+  sitioRepository,
   userRepository,
-  shiftSessionRepository,
-  roundRepository,
-  qrCodeRepository,
+  guardSitioRepository,
+  turnoRepository,
+  recorridoRepository,
   entryLogRepository,
   incidentLogRepository,
 };

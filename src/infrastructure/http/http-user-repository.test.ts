@@ -41,7 +41,7 @@ describe("createHttpUserRepository", () => {
     await expect(repository.findById("no-existe")).resolves.toBeNull();
   });
 
-  it("resuelve el roleId a partir del nombre de rol antes de crear el usuario", async () => {
+  it("resuelve el roleId a partir del nombre de rol antes de crear el usuario, y envía el Bearer token", async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.includes("/roles")) {
         return Promise.resolve(mockFetchResponse([{ id: "role-guard", name: "guard" }]));
@@ -53,7 +53,6 @@ describe("createHttpUserRepository", () => {
           name: "Mario Solano",
           role: "guard",
           isActive: true,
-          assignedSiteId: "site-1",
         }),
       );
     });
@@ -65,19 +64,18 @@ describe("createHttpUserRepository", () => {
       username: "msolano",
       password: "clave123",
       role: "guard",
-      assignedSiteId: "site-1",
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:3002/users",
       expect.objectContaining({
         method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer test-token" },
         body: JSON.stringify({
           username: "msolano",
           name: "Mario Solano",
           password: "clave123",
           roleId: "role-guard",
-          assignedSiteId: "site-1",
         }),
       }),
     );

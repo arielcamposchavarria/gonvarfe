@@ -1,40 +1,45 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, CircleAlert, CircleDashed, LogOut, QrCode } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { QrScanCamera } from "./qr-scan-camera";
 import { ReportMissedDialog } from "./report-missed-dialog";
-import { startShiftAction, scanStationAction, endShiftAction } from "@/app/guard/actions";
+import { registrarEscaneoAction, finalizarTurnoAction } from "@/app/guard/actions";
 import { useNow } from "@/lib/hooks/use-now";
 import { cn } from "@/lib/utils";
-import type { Round } from "@/domain/entities/round";
-import type { StationScanStatus } from "@/domain/entities/station-scan";
-import type { Site } from "@/domain/entities/site";
-import type { ShiftSession } from "@/domain/entities/shift-session";
+import { hasWindowOpened, isWindowExpired } from "@/domain/value-objects/time-window";
+import { NOTIFY_BEFORE_WINDOW_CLOSE_MINUTES } from "@/domain/constants";
+import type { Recorrido } from "@/domain/entities/recorrido";
+import type { RegistroEstado } from "@/domain/entities/registro";
+import type { GuardSitio } from "@/domain/entities/guard-sitio";
 
 export interface RoundScanBoardProps {
-  site: Site;
-  session: ShiftSession | null;
-  activeRound: Round | null;
-  completedRoundsCount: number;
+  sitio: GuardSitio;
+  recorridoActivo: Recorrido | null;
+  recorridosCompletados: number;
 }
 
-const STATUS_LABEL: Record<StationScanStatus, string> = {
-  pending: "Pendiente",
-  "on-time": "Escaneada",
-  missed: "No escaneada",
+const STATUS_LABEL: Record<RegistroEstado, string> = {
+  pendiente: "Pendiente",
+  "a-tiempo": "Escaneada",
+  perdido: "No escaneada",
 };
 
 type ActionResult = { error: string | null };
 
-export function RoundScanBoard({ site, session, activeRound, completedRoundsCount }: RoundScanBoardProps) {
+export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }: RoundScanBoardProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [reportingStationId, setReportingStationId] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isReportingMissed, setIsReportingMissed] = useState(false);
   const now = useNow();
+  const router = useRouter();
 
   function run(action: () => Promise<ActionResult>) {
     setError(null);
@@ -44,109 +49,119 @@ export function RoundScanBoard({ site, session, activeRound, completedRoundsCoun
     });
   }
 
-  if (!session || session.status === "completed") {
-    return (
-      <div className="flex flex-col gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{site.name}</CardTitle>
-            <CardDescription>
-              {session?.status === "completed"
-                ? "Jornada finalizada. Escanee el QR de inicio para comenzar una nueva jornada."
-                : "Escanee el QR de inicio para comenzar su jornada."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button size="lg" className="w-full" onClick={() => run(startShiftAction)} disabled={isPending}>
-              <QrCode className="h-4 w-4" />
-              Escanear QR de inicio
-            </Button>
-          </CardContent>
-        </Card>
-        {error && <ErrorBanner message={error} />}
-      </div>
-    );
+  function handleSkip() {
+    run(() => registrarEscaneoAction({ skip: true }));
   }
 
-  const stations = [...site.stations].sort((a, b) => a.order - b.order);
-  const firstStation = stations[0];
+  function handleDecoded(qrValue: string) {
+    setIsCameraOpen(false);
+    run(() => registrarEscaneoAction({ qrValue, skip: false }));
+  }
+
+  function handleFinalizarTurno() {
+    setError(null);
+    startTransition(async () => {
+      const result = await finalizarTurnoAction();
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.push("/guard/select-site");
+    });
+  }
+
+  const marcaById = new Map(sitio.marcas.map((marca) => [marca.id, marca]));
+  const registros = recorridoActivo ? [...recorridoActivo.registros].sort((a, b) => a.orden - b.orden) : [];
+  const target = registros.find((registro) => registro.estado === "pendiente") ?? null;
+  // Fin del recorrido: la hora ya la cierra el ultimo registro (todos con
+  // la misma duracion, repartida en partes iguales desde iniciadoEn).
+  const finEstimado = registros.length > 0 ? registros[registros.length - 1].cierraEn : null;
+
+  const targetWindow = target ? { opensAt: target.abreEn, closesAt: target.cierraEn } : null;
+  const targetOpen = targetWindow ? hasWindowOpened(targetWindow, new Date(now)) : false;
+  const targetClosingSoon =
+    targetWindow && targetOpen && target && !isWindowExpired(targetWindow, new Date(now))
+      ? target.cierraEn.getTime() - now <= NOTIFY_BEFORE_WINDOW_CLOSE_MINUTES * 60_000
+      : false;
 
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader className="gap-2">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="truncate">{site.name}</CardTitle>
+            <CardTitle className="truncate">{sitio.nombre}</CardTitle>
             <Badge variant="secondary" className="shrink-0">
-              {completedRoundsCount} recorridos
+              {recorridosCompletados} recorridos
             </Badge>
           </div>
-          <CardDescription>Jornada iniciada a las {new Date(session.startedAt).toLocaleTimeString()}</CardDescription>
-          {activeRound && <RoundProgress scans={activeRound.scans} />}
+          {recorridoActivo && (
+            <CardDescription>
+              Recorrido iniciado a las {recorridoActivo.iniciadoEn.toLocaleTimeString()}
+              {finEstimado && ` · Fin estimado ${finEstimado.toLocaleTimeString()}`}
+            </CardDescription>
+          )}
+          {recorridoActivo && <RoundProgress registros={registros} />}
         </CardHeader>
       </Card>
 
-      {!activeRound ? (
+      {!target ? (
         <Card>
           <CardHeader>
-            <CardTitle>Recorrido completado</CardTitle>
+            <CardTitle>{recorridoActivo ? "Recorrido completado" : "Iniciar recorrido"}</CardTitle>
             <CardDescription>
-              Escanee el QR de inicio para comenzar el siguiente recorrido, o el QR de salida si terminó su jornada.
+              {recorridoActivo
+                ? "Este recorrido ya se completó. Continúe con un nuevo recorrido o finalice el turno."
+                : "Escanee la primera marca del sitio para comenzar el recorrido."}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              className="flex-1"
-              onClick={() => run(() => scanStationAction(firstStation.id))}
-              disabled={isPending}
-            >
+            <Button className="flex-1" onClick={() => setIsCameraOpen(true)} disabled={isPending}>
               <QrCode className="h-4 w-4" />
-              Nuevo recorrido
+              Escanear
             </Button>
-            <Button variant="destructive" className="flex-1" onClick={() => run(endShiftAction)} disabled={isPending}>
+            <Button variant="outline" className="flex-1" onClick={handleSkip} disabled={isPending}>
+              Omitir escaneo (demo)
+            </Button>
+            <Button variant="destructive" className="flex-1" onClick={handleFinalizarTurno} disabled={isPending}>
               <LogOut className="h-4 w-4" />
-              Finalizar jornada
+              Finalizar turno
             </Button>
           </CardContent>
         </Card>
       ) : (
         <Card className="divide-y divide-border overflow-hidden">
-          {activeRound.scans.map((scan) => {
-            const station = stations.find((s) => s.id === scan.stationId);
-            const opensAt = new Date(scan.window.opensAt);
-            const canScan = scan.status === "pending" && now >= opensAt.getTime();
+          {registros.map((registro) => {
+            const marca = marcaById.get(registro.marcaId);
+            const isTarget = registro.id === target.id;
             return (
               <div
-                key={scan.id}
-                data-testid={`station-scan-${scan.order}`}
+                key={registro.id}
+                data-testid={`registro-${registro.orden}`}
                 className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <StationStatusIcon status={scan.status} />
+                  <RegistroStatusIcon estado={registro.estado} />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{station?.name ?? scan.stationId}</p>
+                    <p className="truncate text-sm font-medium">{marca?.nombre ?? registro.marcaId}</p>
                     <p className="text-xs text-muted-foreground">
-                      {scan.status === "pending"
-                        ? `Desde las ${opensAt.toLocaleTimeString()}`
-                        : STATUS_LABEL[scan.status]}
+                      {registro.estado === "pendiente"
+                        ? `Desde las ${registro.abreEn.toLocaleTimeString()}`
+                        : STATUS_LABEL[registro.estado]}
                     </p>
+                    {isTarget && targetClosingSoon && (
+                      <p className="text-xs text-danger">Cierra pronto: {registro.cierraEn.toLocaleTimeString()}</p>
+                    )}
                   </div>
                 </div>
-                {scan.status === "pending" && (
-                  <div className="flex gap-2 pl-8 sm:pl-0">
-                    <Button
-                      size="sm"
-                      disabled={!canScan || isPending}
-                      onClick={() => run(() => scanStationAction(scan.stationId))}
-                    >
+                {isTarget && (
+                  <div className="flex flex-wrap gap-2 pl-8 sm:pl-0">
+                    <Button size="sm" disabled={!targetOpen || isPending} onClick={() => setIsCameraOpen(true)}>
                       Escanear
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isPending}
-                      onClick={() => setReportingStationId(scan.stationId)}
-                    >
+                    <Button size="sm" variant="outline" disabled={isPending} onClick={handleSkip}>
+                      Omitir (demo)
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={isPending} onClick={() => setIsReportingMissed(true)}>
                       No pude escanear
                     </Button>
                   </div>
@@ -159,11 +174,21 @@ export function RoundScanBoard({ site, session, activeRound, completedRoundsCoun
 
       {error && <ErrorBanner message={error} />}
 
+      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Escanear código QR</DialogTitle>
+            <DialogDescription>Apunte la cámara al QR de la marca.</DialogDescription>
+          </DialogHeader>
+          {isCameraOpen && <QrScanCamera onDecode={handleDecoded} />}
+        </DialogContent>
+      </Dialog>
+
       <ReportMissedDialog
-        stationId={reportingStationId}
-        onClose={() => setReportingStationId(null)}
+        open={isReportingMissed}
+        onClose={() => setIsReportingMissed(false)}
         onSubmitted={(submitError) => {
-          setReportingStationId(null);
+          setIsReportingMissed(false);
           if (submitError) setError(submitError);
         }}
       />
@@ -171,17 +196,17 @@ export function RoundScanBoard({ site, session, activeRound, completedRoundsCoun
   );
 }
 
-function RoundProgress({ scans }: { scans: Round["scans"] }) {
+function RoundProgress({ registros }: { registros: Recorrido["registros"] }) {
   return (
     <div className="flex gap-1 pt-1">
-      {scans.map((scan) => (
+      {registros.map((registro) => (
         <div
-          key={scan.id}
+          key={registro.id}
           className={cn(
             "h-1.5 flex-1 rounded-full",
-            scan.status === "on-time" && "bg-accent",
-            scan.status === "missed" && "bg-danger",
-            scan.status === "pending" && "bg-border",
+            registro.estado === "a-tiempo" && "bg-accent",
+            registro.estado === "perdido" && "bg-danger",
+            registro.estado === "pendiente" && "bg-border",
           )}
         />
       ))}
@@ -189,9 +214,9 @@ function RoundProgress({ scans }: { scans: Round["scans"] }) {
   );
 }
 
-function StationStatusIcon({ status }: { status: StationScanStatus }) {
-  if (status === "on-time") return <CheckCircle2 className="h-5 w-5 shrink-0 text-accent" />;
-  if (status === "missed") return <CircleAlert className="h-5 w-5 shrink-0 text-danger" />;
+function RegistroStatusIcon({ estado }: { estado: RegistroEstado }) {
+  if (estado === "a-tiempo") return <CheckCircle2 className="h-5 w-5 shrink-0 text-accent" />;
+  if (estado === "perdido") return <CircleAlert className="h-5 w-5 shrink-0 text-danger" />;
   return <CircleDashed className="h-5 w-5 shrink-0 text-muted-foreground" />;
 }
 

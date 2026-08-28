@@ -11,7 +11,7 @@ describe("createSitio", () => {
       nombre: "Plaza Nueva",
       direccion: "San José",
       activo: true,
-      marcas: [{ id: "m1", nombre: "Marca A", qrCodeId: null, activo: true }],
+      marcas: [{ id: "m1", nombre: "Marca A", orden: 1, qrCodeId: null, activo: true }],
       locales: [],
     };
     let receivedInput: CreateSitioInput | null = null;

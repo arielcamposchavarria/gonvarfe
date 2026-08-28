@@ -22,7 +22,6 @@ export async function createUserAction(
     username: formData.get("username"),
     password: formData.get("password"),
     role: formData.get("role"),
-    assignedSiteId: formData.get("assignedSiteId") || undefined,
   });
 
   if (!parsed.success) {

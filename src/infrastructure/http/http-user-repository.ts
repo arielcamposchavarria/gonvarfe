@@ -51,13 +51,12 @@ export function createHttpUserRepository(): UserRepository {
 
       const res = await fetch(`${baseUrl}/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
         body: JSON.stringify({
           username: input.username,
           name: input.name,
           password: input.password,
           roleId: role.id,
-          assignedSiteId: input.assignedSiteId,
         }),
       });
       if (res.status === 409) throw new UsernameTakenError(input.username);

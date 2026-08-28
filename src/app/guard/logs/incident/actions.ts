@@ -18,6 +18,11 @@ export async function submitIncidentLogAction(
 ): Promise<IncidentLogActionState> {
   const guard = await requireGuard();
 
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno || !estado.sitio) {
+    return { error: "No hay un turno activo. Inicie un turno primero." };
+  }
+
   const parsed = incidentLogSchema.safeParse({
     incidentType: formData.get("incidentType"),
     incidentTypeDetail: formData.get("incidentTypeDetail") ?? undefined,
@@ -37,7 +42,7 @@ export async function submitIncidentLogAction(
   const photoUrls = await Promise.all(photos.map(fileToDataUrl));
 
   await container.submitIncidentLog({
-    siteId: guard.assignedSiteId,
+    sitioId: estado.sitio.id,
     guardId: guard.id,
     incidentType: parsed.data.incidentType,
     incidentTypeDetail: parsed.data.incidentType === "Otro" ? (parsed.data.incidentTypeDetail ?? null) : null,

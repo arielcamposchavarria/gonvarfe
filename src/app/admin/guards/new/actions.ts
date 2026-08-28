@@ -21,7 +21,6 @@ export async function createGuardAction(
     name: formData.get("name"),
     username: formData.get("username"),
     password: formData.get("password"),
-    assignedSiteId: formData.get("assignedSiteId"),
   });
 
   if (!parsed.success) {

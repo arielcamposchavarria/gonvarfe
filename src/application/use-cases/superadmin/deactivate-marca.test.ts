@@ -32,7 +32,7 @@ describe("deactivateMarca", () => {
       nombre: "Plaza Amara",
       direccion: "San José",
       activo: true,
-      marcas: [{ id: "m1", nombre: "BAC", qrCodeId: null, activo: true }],
+      marcas: [{ id: "m1", nombre: "BAC", orden: 1, qrCodeId: null, activo: true }],
       locales: [],
     };
     const sitioRepository = createRepository(sitio);

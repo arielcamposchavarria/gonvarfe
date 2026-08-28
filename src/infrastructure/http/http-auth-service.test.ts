@@ -24,7 +24,6 @@ describe("createHttpAuthService", () => {
         name: "Gabriela Vargas",
         role: "superAdmin",
         isActive: true,
-        assignedSiteId: null,
       },
     };
     const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(body));
@@ -51,7 +50,7 @@ describe("createHttpAuthService", () => {
     await expect(authService.authenticate("nadie", "mal")).resolves.toBeNull();
   });
 
-  it("arma un GuardUser con assignedSiteId cuando el rol es guard", async () => {
+  it("arma un GuardUser cuando el rol es guard", async () => {
     const body = {
       accessToken: "signed.jwt.token",
       user: {
@@ -60,7 +59,6 @@ describe("createHttpAuthService", () => {
         name: "Mario Solano",
         role: "guard",
         isActive: true,
-        assignedSiteId: "site-1",
       },
     };
     const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(body));
@@ -69,6 +67,6 @@ describe("createHttpAuthService", () => {
     const authService = createHttpAuthService();
     const result = await authService.authenticate("msolano", "1234");
 
-    expect(result?.user).toMatchObject({ role: "guard", assignedSiteId: "site-1" });
+    expect(result?.user).toMatchObject({ role: "guard" });
   });
 });

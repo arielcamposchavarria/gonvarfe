@@ -10,8 +10,8 @@ export default async function AdminSiteIncidentLogsPage({
   params,
 }: PageProps<"/admin/sites/[siteId]/incident-logs">) {
   const { siteId } = await params;
-  const site = await container.getSite(siteId);
-  if (!site) notFound();
+  const sitio = await container.getSitio(siteId);
+  if (!sitio) notFound();
 
   const incidentLogs = await container.listIncidentLogsBySite(siteId);
 
@@ -23,7 +23,7 @@ export default async function AdminSiteIncidentLogsPage({
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
-          {site.name}
+          {sitio.nombre}
         </Link>
         <h1 className="text-lg font-semibold">Bitácora de incidencias</h1>
       </div>
@@ -43,7 +43,7 @@ export default async function AdminSiteIncidentLogsPage({
                 </Badge>
               </div>
               <CardDescription>
-                {guardName} · {new Date(log.occurredAt).toLocaleString()}
+                {guardName} · {log.occurredAt.toLocaleString()}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">

@@ -1,6 +1,8 @@
 export interface Marca {
   readonly id: string;
   readonly nombre: string;
+  /** Posición fija del recorrido, asignada por el backend al crear la marca (1, 2, 3...). Inmutable. */
+  readonly orden: number;
   readonly qrCodeId: string | null;
   readonly activo: boolean;
 }

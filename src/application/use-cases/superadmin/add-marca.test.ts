@@ -15,7 +15,10 @@ function createRepository(sitio: Sitio | null): SitioRepository {
     deactivate: async () => null,
     addMarca: async (sitioId, nombre) => {
       if (!sitio || sitio.id !== sitioId) return null;
-      return { ...sitio, marcas: [...sitio.marcas, { id: "nueva", nombre, qrCodeId: null, activo: true }] };
+      return {
+        ...sitio,
+        marcas: [...sitio.marcas, { id: "nueva", nombre, orden: sitio.marcas.length + 1, qrCodeId: null, activo: true }],
+      };
     },
     generateMarcaQr: async () => null,
     updateMarca: async () => null,

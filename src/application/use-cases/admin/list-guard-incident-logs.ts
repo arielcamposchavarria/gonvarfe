@@ -1,11 +1,11 @@
 import type { IncidentLogRepository } from "@/domain/ports/incident-log-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
 import type { IncidentLog } from "@/domain/entities/incident-log";
 import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListGuardIncidentLogsDeps {
   incidentLogRepository: IncidentLogRepository;
-  siteRepository: SiteRepository;
+  sitioRepository: SitioRepository;
 }
 
 export interface IncidentLogWithSite {
@@ -20,11 +20,11 @@ export async function listGuardIncidentLogs(
   range: DateRange = {},
 ): Promise<IncidentLogWithSite[]> {
   const logs = await deps.incidentLogRepository.findByGuard(guardId);
-  const sites = await deps.siteRepository.findAll();
-  const siteNameById = new Map(sites.map((site) => [site.id, site.name]));
+  const sitios = await deps.sitioRepository.findAll();
+  const siteNameById = new Map(sitios.map((sitio) => [sitio.id, sitio.nombre]));
 
   return [...logs]
     .filter((log) => isWithinDateRange(log.occurredAt, range))
     .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
-    .map((log) => ({ log, siteName: siteNameById.get(log.siteId) ?? log.siteId }));
+    .map((log) => ({ log, siteName: siteNameById.get(log.sitioId) ?? log.sitioId }));
 }
