@@ -6,35 +6,38 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { reportMissedScanAction } from "@/app/guard/actions";
+import { reportarPerdidoAction } from "@/app/guard/actions";
 
 export interface ReportMissedDialogProps {
-  stationId: string | null;
+  open: boolean;
   onClose: () => void;
   onSubmitted: (error: string | null) => void;
 }
 
-export function ReportMissedDialog({ stationId, onClose, onSubmitted }: ReportMissedDialogProps) {
+/**
+ * El backend siempre resuelve el registro objetivo actual (el pendiente de
+ * menor orden), así que este diálogo no necesita saber a qué marca
+ * corresponde — solo envía el motivo.
+ */
+export function ReportMissedDialog({ open, onClose, onSubmitted }: ReportMissedDialogProps) {
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!stationId) return;
-    const currentStationId = stationId;
     startTransition(async () => {
-      const result = await reportMissedScanAction(currentStationId, reason);
+      const result = await reportarPerdidoAction(reason);
       setReason("");
       onSubmitted(result.error);
     });
   }
 
   return (
-    <Dialog open={stationId !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>No pude escanear esta estación</DialogTitle>
-          <DialogDescription>Indique el motivo. Luego podrá continuar con la siguiente estación.</DialogDescription>
+          <DialogTitle>No pude escanear esta marca</DialogTitle>
+          <DialogDescription>Indique el motivo. Luego podrá continuar con la siguiente marca.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">

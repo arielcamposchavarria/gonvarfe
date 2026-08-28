@@ -4,14 +4,9 @@ export const createSiteSchema = z.object({
   name: z.string().trim().min(1, "Ingrese el nombre del sitio"),
   address: z.string().trim().min(1, "Ingrese la dirección"),
   visitingLocals: z
-    .string()
-    .trim()
-    .transform((value) =>
-      value
-        .split(",")
-        .map((local) => local.trim())
-        .filter((local) => local.length > 0),
-    ),
+    .array(z.string())
+    .transform((values) => values.map((value) => value.trim()).filter((value) => value.length > 0))
+    .default([]),
 });
 
 export type CreateSiteInput = z.infer<typeof createSiteSchema>;

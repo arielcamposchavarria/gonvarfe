@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { container } from "@/infrastructure/container";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createGuardSchema } from "@/lib/validation/create-guard-schema";
-import { UsernameTakenError } from "@/application/use-cases/admin/create-guard";
+import { UsernameTakenError } from "@/domain/ports/user-repository";
 
 export interface CreateGuardActionState {
   error: string | null;
@@ -21,7 +21,6 @@ export async function createGuardAction(
     name: formData.get("name"),
     username: formData.get("username"),
     password: formData.get("password"),
-    assignedSiteId: formData.get("assignedSiteId"),
   });
 
   if (!parsed.success) {
@@ -30,7 +29,7 @@ export async function createGuardAction(
 
   let guardId: string;
   try {
-    const guard = await container.createGuard(parsed.data);
+    const guard = await container.createUser({ ...parsed.data, role: "guard" });
     guardId = guard.id;
   } catch (error) {
     if (error instanceof UsernameTakenError) {

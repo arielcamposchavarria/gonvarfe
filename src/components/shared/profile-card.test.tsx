@@ -9,7 +9,6 @@ const GUARD: GuardUser = {
   name: "Mario Solano",
   username: "guard",
   role: "guard",
-  assignedSiteId: "site-1",
   isActive: true,
   createdAt: new Date("2025-02-01"),
   photoUrl: null,

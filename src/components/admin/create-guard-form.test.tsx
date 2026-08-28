@@ -13,30 +13,23 @@ vi.mock("@/app/admin/guards/new/actions", () => ({
   }),
 }));
 
-const SITES = [
-  { id: "site-1", name: "Plaza Amara" },
-  { id: "site-2", name: "Planta Industrial Norte" },
-];
-
 describe("CreateGuardForm", () => {
-  it("muestra los campos del formulario y los sitios disponibles", () => {
-    render(<CreateGuardForm sites={SITES} />);
+  it("muestra los campos del formulario, sin selector de sitio", () => {
+    render(<CreateGuardForm />);
 
     expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Plaza Amara" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Planta Industrial Norte" })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
   });
 
   it("muestra el error devuelto por la acción cuando el usuario ya existe", async () => {
     const user = userEvent.setup();
-    render(<CreateGuardForm sites={SITES} />);
+    render(<CreateGuardForm />);
 
     await user.type(screen.getByLabelText(/nombre completo/i), "Ana Rojas");
     await user.type(screen.getByLabelText(/usuario/i), "existente");
     await user.type(screen.getByLabelText(/contraseña/i), "clave123");
-    await user.selectOptions(screen.getByLabelText(/sitio asignado/i), "site-1");
     await user.click(screen.getByRole("button", { name: /guardar oficial/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/ya existe/i);

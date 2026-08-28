@@ -4,7 +4,7 @@ import type { PlateNumber } from "../value-objects/plate-number";
 /** Bitácora de reportes de ingreso que llena el guard. */
 export interface EntryLog {
   readonly id: string;
-  readonly siteId: string;
+  readonly sitioId: string;
   readonly guardId: string;
   date: string;
   entryTime: string;

@@ -8,7 +8,7 @@ export interface SubmitEntryLogDeps {
 }
 
 export interface SubmitEntryLogInput {
-  siteId: string;
+  sitioId: string;
   guardId: string;
   date: string;
   entryTime: string;
@@ -26,7 +26,7 @@ export interface SubmitEntryLogInput {
 export async function submitEntryLog(deps: SubmitEntryLogDeps, input: SubmitEntryLogInput): Promise<EntryLog> {
   const log: EntryLog = {
     id: crypto.randomUUID(),
-    siteId: input.siteId,
+    sitioId: input.sitioId,
     guardId: input.guardId,
     date: input.date,
     entryTime: input.entryTime,

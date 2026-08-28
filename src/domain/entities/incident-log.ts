@@ -3,7 +3,7 @@ import type { IncidentType } from "../value-objects/incident-type";
 /** Bitácora de incidencias u otras novedades importantes durante el turno. */
 export interface IncidentLog {
   readonly id: string;
-  readonly siteId: string;
+  readonly sitioId: string;
   readonly guardId: string;
   occurredAt: Date;
   incidentType: IncidentType;

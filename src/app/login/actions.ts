@@ -20,9 +20,9 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
-  let user;
+  let result;
   try {
-    user = await container.authenticateUser(parsed.data);
+    result = await container.authenticateUser(parsed.data);
   } catch (error) {
     if (error instanceof InvalidCredentialsError || error instanceof InactiveUserError) {
       return { error: error.message };
@@ -30,6 +30,6 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
     throw error;
   }
 
-  await createSession(user);
-  redirect(`/${ROLE_PATH_SEGMENT[user.role]}/dashboard`);
+  await createSession(result.accessToken);
+  redirect(`/${ROLE_PATH_SEGMENT[result.user.role]}/dashboard`);
 }

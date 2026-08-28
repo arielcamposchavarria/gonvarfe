@@ -1,21 +1,21 @@
-import type { RoundRepository } from "@/domain/ports/round-repository";
-import type { ShiftSessionRepository } from "@/domain/ports/shift-session-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
 import type { UserRepository } from "@/domain/ports/user-repository";
-import type { Round } from "@/domain/entities/round";
-import type { Site } from "@/domain/entities/site";
+import type { Recorrido } from "@/domain/entities/recorrido";
+import type { Sitio } from "@/domain/entities/sitio";
 
 export interface GetRoundDetailDeps {
-  roundRepository: RoundRepository;
-  shiftSessionRepository: ShiftSessionRepository;
-  siteRepository: SiteRepository;
+  recorridoRepository: RecorridoRepository;
+  turnoRepository: TurnoRepository;
+  sitioRepository: SitioRepository;
   userRepository: UserRepository;
 }
 
 export interface RoundDetail {
-  round: Round;
+  recorrido: Recorrido;
   guardName: string;
-  site: Site;
+  sitio: Sitio;
 }
 
 export async function getRoundDetail(
@@ -23,14 +23,15 @@ export async function getRoundDetail(
   siteId: string,
   roundId: string,
 ): Promise<RoundDetail | null> {
-  const round = await deps.roundRepository.findById(roundId);
-  if (!round || round.siteId !== siteId) return null;
+  const recorrido = await deps.recorridoRepository.porId(roundId);
+  if (!recorrido || recorrido.sitioId !== siteId) return null;
 
-  const site = await deps.siteRepository.findById(siteId);
-  if (!site) return null;
+  const sitio = await deps.sitioRepository.findById(siteId);
+  if (!sitio) return null;
 
-  const session = await deps.shiftSessionRepository.findById(round.shiftSessionId);
-  const guard = session ? await deps.userRepository.findById(session.guardId) : null;
+  const turnos = await deps.turnoRepository.porSitio(siteId);
+  const turno = turnos.find((t) => t.id === recorrido.turnoId) ?? null;
+  const guard = turno ? await deps.userRepository.findById(turno.guardiaId) : null;
 
-  return { round, guardName: guard?.name ?? "Guarda desconocido", site };
+  return { recorrido, guardName: guard?.name ?? "Guarda desconocido", sitio };
 }

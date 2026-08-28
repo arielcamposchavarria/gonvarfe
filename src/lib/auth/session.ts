@@ -1,13 +1,12 @@
 import { cookies } from "next/headers";
-import type { AppUser } from "@/domain/entities/user";
-import { SESSION_COOKIE_NAME, serializeSession, parseSessionCookie, type SessionPayload } from "./session-cookie";
+import { SESSION_COOKIE_NAME, parseSessionCookie, type SessionPayload } from "./session-cookie";
 
-/** Duración de la sesión mock: 12 horas, suficiente para cubrir un turno. */
+/** Debe coincidir con JWT_EXPIRES_IN configurado en el backend (gonvarbe). */
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
-export async function createSession(user: AppUser): Promise<void> {
+export async function createSession(accessToken: string): Promise<void> {
   const store = await cookies();
-  store.set(SESSION_COOKIE_NAME, serializeSession({ userId: user.id, role: user.role }), {
+  store.set(SESSION_COOKIE_NAME, accessToken, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
@@ -23,4 +22,10 @@ export async function destroySession(): Promise<void> {
 export async function getSession(): Promise<SessionPayload | null> {
   const store = await cookies();
   return parseSessionCookie(store.get(SESSION_COOKIE_NAME)?.value);
+}
+
+/** Token crudo para reenviar como `Authorization: Bearer` al backend real. */
+export async function getAccessToken(): Promise<string | null> {
+  const store = await cookies();
+  return store.get(SESSION_COOKIE_NAME)?.value ?? null;
 }

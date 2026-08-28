@@ -1,26 +1,25 @@
 import type { UserRepository } from "@/domain/ports/user-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
-import type { ShiftSessionRepository } from "@/domain/ports/shift-session-repository";
-import type { RoundRepository } from "@/domain/ports/round-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
 import type { EntryLogRepository } from "@/domain/ports/entry-log-repository";
 import type { IncidentLogRepository } from "@/domain/ports/incident-log-repository";
 import type { GuardUser } from "@/domain/entities/user";
-import type { Site } from "@/domain/entities/site";
+import type { Sitio } from "@/domain/entities/sitio";
 
 export interface GetGuardDetailDeps {
   userRepository: UserRepository;
-  siteRepository: SiteRepository;
-  shiftSessionRepository: ShiftSessionRepository;
-  roundRepository: RoundRepository;
+  sitioRepository: SitioRepository;
+  turnoRepository: TurnoRepository;
+  recorridoRepository: RecorridoRepository;
   entryLogRepository: EntryLogRepository;
   incidentLogRepository: IncidentLogRepository;
 }
 
 export interface GuardDetail {
   guard: GuardUser;
-  assignedSite: Site;
-  /** Sitio donde está el guard ahora mismo, o null si no tiene una jornada activa. */
-  currentSite: Site | null;
+  /** Sitio donde está el guard ahora mismo (según su turno más reciente activo), o null si no tiene uno. */
+  currentSite: Sitio | null;
   totals: {
     scansOnTime: number;
     scansMissed: number;
@@ -34,18 +33,13 @@ export async function getGuardDetail(deps: GetGuardDetailDeps, guardId: string):
   const guard = await deps.userRepository.findById(guardId);
   if (!guard || guard.role !== "guard") return null;
 
-  const assignedSite = await deps.siteRepository.findById(guard.assignedSiteId);
-  if (!assignedSite) return null;
+  const turnos = await deps.turnoRepository.porGuardia(guard.id);
+  const activeTurno = turnos.find((turno) => turno.estado === "activo") ?? null;
+  const currentSite = activeTurno ? await deps.sitioRepository.findById(activeTurno.sitioId) : null;
 
-  const activeSession = await deps.shiftSessionRepository.findActiveByGuard(guard.id);
-  const currentSite = activeSession ? await deps.siteRepository.findById(activeSession.siteId) : null;
-
-  const sessions = await deps.shiftSessionRepository.findByGuard(guard.id);
-  const roundsBySession = await Promise.all(
-    sessions.map((session) => deps.roundRepository.findByShiftSession(session.id)),
-  );
-  const rounds = roundsBySession.flat();
-  const scans = rounds.flatMap((round) => round.scans);
+  const recorridosByTurno = await Promise.all(turnos.map((turno) => deps.recorridoRepository.porTurno(turno.id)));
+  const recorridos = recorridosByTurno.flat();
+  const registros = recorridos.flatMap((recorrido) => recorrido.registros);
 
   const [entryLogs, incidentLogs] = await Promise.all([
     deps.entryLogRepository.findByGuard(guard.id),
@@ -54,12 +48,11 @@ export async function getGuardDetail(deps: GetGuardDetailDeps, guardId: string):
 
   return {
     guard,
-    assignedSite,
     currentSite,
     totals: {
-      scansOnTime: scans.filter((scan) => scan.status === "on-time").length,
-      scansMissed: scans.filter((scan) => scan.status === "missed").length,
-      roundsCompleted: rounds.filter((round) => round.status === "completed").length,
+      scansOnTime: registros.filter((registro) => registro.estado === "a-tiempo").length,
+      scansMissed: registros.filter((registro) => registro.estado === "perdido").length,
+      roundsCompleted: recorridos.filter((recorrido) => recorrido.estado === "completado").length,
       entryLogsCount: entryLogs.length,
       incidentLogsCount: incidentLogs.length,
     },

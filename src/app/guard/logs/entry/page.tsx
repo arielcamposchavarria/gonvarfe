@@ -11,8 +11,8 @@ export default async function GuardEntryLogPage() {
   const guard = await container.findUserById(session.userId);
   if (!guard || guard.role !== "guard") redirect("/login");
 
-  const sites = await container.listSites();
-  const site = sites.find((s) => s.id === guard.assignedSiteId);
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno || !estado.sitio) redirect("/guard/select-site");
 
-  return <EntryLogForm visitingLocals={site?.visitingLocals ?? []} />;
+  return <EntryLogForm visitingLocals={estado.sitio.locales.map((local) => local.nombre)} />;
 }

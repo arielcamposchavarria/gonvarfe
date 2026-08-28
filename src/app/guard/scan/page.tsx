@@ -11,14 +11,14 @@ export default async function GuardScanPage() {
   const guard = await container.findUserById(session.userId);
   if (!guard || guard.role !== "guard") redirect("/login");
 
-  const status = await container.getShiftStatus(guard.assignedSiteId, guard.id);
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno || !estado.sitio) redirect("/guard/select-site");
 
   return (
     <RoundScanBoard
-      site={status.site}
-      session={status.session}
-      activeRound={status.activeRound}
-      completedRoundsCount={status.completedRoundsCount}
+      sitio={estado.sitio}
+      recorridoActivo={estado.recorridoActivo}
+      recorridosCompletados={estado.recorridosCompletados}
     />
   );
 }

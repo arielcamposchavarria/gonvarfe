@@ -9,8 +9,8 @@ export default async function AdminSiteEntryLogsPage({
   params,
 }: PageProps<"/admin/sites/[siteId]/entry-logs">) {
   const { siteId } = await params;
-  const site = await container.getSite(siteId);
-  if (!site) notFound();
+  const sitio = await container.getSitio(siteId);
+  if (!sitio) notFound();
 
   const entryLogs = await container.listEntryLogsBySite(siteId);
 
@@ -22,7 +22,7 @@ export default async function AdminSiteEntryLogsPage({
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
-          {site.name}
+          {sitio.nombre}
         </Link>
         <h1 className="text-lg font-semibold">Bitácora de ingresos</h1>
       </div>

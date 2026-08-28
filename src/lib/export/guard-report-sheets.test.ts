@@ -9,45 +9,45 @@ import {
 } from "./guard-report-sheets";
 import { createCedula } from "@/domain/value-objects/cedula";
 import { createPlateNumber } from "@/domain/value-objects/plate-number";
-import type { Round } from "@/domain/entities/round";
+import type { Recorrido } from "@/domain/entities/recorrido";
 import type { EntryLog } from "@/domain/entities/entry-log";
 import type { IncidentLog } from "@/domain/entities/incident-log";
 
-const ROUND: Round = {
-  id: "round-1",
-  shiftSessionId: "session-1",
-  siteId: "site-1",
-  sequence: 2,
-  startedAt: new Date("2026-01-01T08:00:00.000Z"),
-  status: "completed",
-  completedAt: new Date("2026-01-01T09:00:00.000Z"),
-  scans: [
+const RECORRIDO: Recorrido = {
+  id: "recorrido-1",
+  turnoId: "turno-1",
+  sitioId: "site-1",
+  secuencia: 2,
+  iniciadoEn: new Date("2026-01-01T08:00:00.000Z"),
+  estado: "completado",
+  completadoEn: new Date("2026-01-01T09:00:00.000Z"),
+  registros: [
     {
-      id: "scan-1",
-      roundId: "round-1",
-      stationId: "station-1",
-      order: 1,
-      window: { opensAt: new Date(), closesAt: new Date() },
-      status: "on-time",
-      scannedAt: new Date(),
-      missedReport: null,
+      id: "registro-1",
+      marcaId: "marca-1",
+      orden: 1,
+      estado: "a-tiempo",
+      abreEn: new Date(),
+      cierraEn: new Date(),
+      escaneadoEn: new Date(),
+      motivoPerdido: null,
     },
     {
-      id: "scan-2",
-      roundId: "round-1",
-      stationId: "station-2",
-      order: 2,
-      window: { opensAt: new Date(), closesAt: new Date() },
-      status: "missed",
-      scannedAt: null,
-      missedReport: { id: "m-1", stationScanId: "scan-2", reason: "QR dañado", reportedAt: new Date() },
+      id: "registro-2",
+      marcaId: "marca-2",
+      orden: 2,
+      estado: "perdido",
+      abreEn: new Date(),
+      cierraEn: new Date(),
+      escaneadoEn: null,
+      motivoPerdido: "QR dañado",
     },
   ],
 };
 
 describe("buildGuardRoundsSheet", () => {
-  it("resume cada recorrido con su sitio, estado y conteo de estaciones", () => {
-    const sheet = buildGuardRoundsSheet([{ round: ROUND, siteName: "Plaza Amara" }]);
+  it("resume cada recorrido con su sitio, estado y conteo de marcas", () => {
+    const sheet = buildGuardRoundsSheet([{ recorrido: RECORRIDO, siteName: "Plaza Amara" }]);
 
     expect(sheet.name).toBe("Recorridos");
     expect(sheet.rows).toEqual([
@@ -55,8 +55,8 @@ describe("buildGuardRoundsSheet", () => {
         site: "Plaza Amara",
         sequence: 2,
         status: "Completado",
-        startedAt: ROUND.startedAt.toLocaleString(),
-        completedAt: ROUND.completedAt!.toLocaleString(),
+        startedAt: RECORRIDO.iniciadoEn.toLocaleString(),
+        completedAt: RECORRIDO.completadoEn!.toLocaleString(),
         onTime: 1,
         missed: 1,
       },
@@ -103,7 +103,7 @@ describe("buildGuardEntryLogsSheet", () => {
   it("mapea la bitácora de ingresos con el conteo de fotos adjuntas", () => {
     const log: EntryLog = {
       id: "log-1",
-      siteId: "site-1",
+      sitioId: "site-1",
       guardId: "guard-1",
       date: "2026-01-01",
       entryTime: "08:00",
@@ -145,7 +145,7 @@ describe("buildGuardIncidentLogsSheet", () => {
   it("mapea la bitácora de incidencias con el conteo de fotos adjuntas", () => {
     const log: IncidentLog = {
       id: "log-1",
-      siteId: "site-1",
+      sitioId: "site-1",
       guardId: "guard-1",
       occurredAt: new Date("2026-01-01T08:20:00.000Z"),
       incidentType: "Otro",
@@ -174,7 +174,7 @@ describe("buildGuardIncidentLogsSheet", () => {
   it("usa el detalle libre como tipo cuando la incidencia es Otro", () => {
     const log: IncidentLog = {
       id: "log-2",
-      siteId: "site-1",
+      sitioId: "site-1",
       guardId: "guard-1",
       occurredAt: new Date("2026-01-01T08:20:00.000Z"),
       incidentType: "Otro",
