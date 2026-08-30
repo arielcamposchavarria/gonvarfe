@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireGuard } from "@/lib/auth/require-guard";
-import type { EscanearInput } from "@/domain/ports/recorrido-repository";
+import type { EscanearInput, ReportarPerdidoInput } from "@/domain/ports/recorrido-repository";
 
 export interface GuardActionState {
   error: string | null;
@@ -39,10 +39,10 @@ export async function registrarEscaneoAction(input: EscanearInput): Promise<Guar
   return OK;
 }
 
-export async function reportarPerdidoAction(motivo: string): Promise<GuardActionState> {
+export async function reportarPerdidoAction(input: ReportarPerdidoInput): Promise<GuardActionState> {
   await requireGuard();
   try {
-    await container.reportarPerdido(motivo);
+    await container.reportarPerdido(input);
   } catch (error) {
     return toErrorState(error);
   }

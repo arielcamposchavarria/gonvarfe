@@ -33,15 +33,32 @@ describe("reportarPerdido", () => {
   it("envía el motivo recortado al repositorio", async () => {
     const recorridoRepository = buildRecorridoRepository();
 
-    await reportarPerdido({ recorridoRepository }, "  QR dañado, no se puede leer.  ");
+    await reportarPerdido({ recorridoRepository }, { motivo: "  QR dañado, no se puede leer.  " });
 
-    expect(recorridoRepository.reportarPerdido).toHaveBeenCalledWith("QR dañado, no se puede leer.");
+    expect(recorridoRepository.reportarPerdido).toHaveBeenCalledWith(
+      expect.objectContaining({ motivo: "QR dañado, no se puede leer." }),
+    );
   });
 
   it("rechaza un motivo vacío sin llamar al repositorio", async () => {
     const recorridoRepository = buildRecorridoRepository();
 
-    await expect(reportarPerdido({ recorridoRepository }, "   ")).rejects.toThrow(/motivo/i);
+    await expect(reportarPerdido({ recorridoRepository }, { motivo: "   " })).rejects.toThrow(/motivo/i);
     expect(recorridoRepository.reportarPerdido).not.toHaveBeenCalled();
+  });
+
+  it("reenvía fotos y observación junto con el motivo recortado", async () => {
+    const recorridoRepository = buildRecorridoRepository();
+
+    await reportarPerdido(
+      { recorridoRepository },
+      { motivo: "QR dañado", fotos: ["data:image/png;base64,foto1"], observacion: "Sin acceso" },
+    );
+
+    expect(recorridoRepository.reportarPerdido).toHaveBeenCalledWith({
+      motivo: "QR dañado",
+      fotos: ["data:image/png;base64,foto1"],
+      observacion: "Sin acceso",
+    });
   });
 });

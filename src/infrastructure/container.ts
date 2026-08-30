@@ -43,7 +43,7 @@ import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { CreateUserInput } from "@/domain/ports/user-repository";
-import type { EscanearInput } from "@/domain/ports/recorrido-repository";
+import type { EscanearInput, ReportarPerdidoInput } from "@/domain/ports/recorrido-repository";
 import type { DateRange } from "@/lib/date-range";
 
 /**
@@ -74,7 +74,7 @@ export const container = {
   finalizarTurno: () => finalizarTurno({ turnoRepository }),
   obtenerEstadoTurno: () => obtenerEstadoTurno({ turnoRepository, recorridoRepository, guardSitioRepository }),
   registrarEscaneo: (input: EscanearInput) => registrarEscaneo({ recorridoRepository }, input),
-  reportarPerdido: (motivo: string) => reportarPerdido({ recorridoRepository }, motivo),
+  reportarPerdido: (input: ReportarPerdidoInput) => reportarPerdido({ recorridoRepository }, input),
 
   submitEntryLog: (input: SubmitEntryLogInput) => submitEntryLog({ entryLogRepository }, input),
   submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),

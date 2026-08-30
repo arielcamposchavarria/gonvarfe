@@ -106,6 +106,7 @@ describe("RoundScanBoard", () => {
     expect(screen.getByText(/iniciar recorrido/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /omitir escaneo \(demo\)/i }));
+    await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
 
     expect(registrarEscaneoActionMock).toHaveBeenCalledWith({ skip: true });
   });
@@ -129,8 +130,37 @@ describe("RoundScanBoard", () => {
 
     await user.click(scanButton);
     await user.click(screen.getByRole("button", { name: /simular-decodificacion/i }));
+    await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
 
     expect(registrarEscaneoActionMock).toHaveBeenCalledWith({ qrValue: "qr-marca-1", skip: false });
+  });
+
+  it("permite adjuntar una observación antes de confirmar el escaneo, y la envía a la acción", async () => {
+    const recorrido = buildRecorrido([buildRegistro({})]);
+    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /^escanear$/i }));
+    await user.click(screen.getByRole("button", { name: /simular-decodificacion/i }));
+
+    await user.type(await screen.findByLabelText(/observación/i), "Se ve normal, sin novedad");
+    await user.click(screen.getByRole("button", { name: /^confirmar$/i }));
+
+    expect(registrarEscaneoActionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ qrValue: "qr-marca-1", observacion: "Se ve normal, sin novedad" }),
+    );
+  });
+
+  it("al cancelar el diálogo de confirmación, no llama la acción", async () => {
+    const recorrido = buildRecorrido([buildRegistro({})]);
+    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /^escanear$/i }));
+    await user.click(screen.getByRole("button", { name: /simular-decodificacion/i }));
+    await user.click(await screen.findByRole("button", { name: /cancelar/i }));
+
+    expect(registrarEscaneoActionMock).not.toHaveBeenCalled();
   });
 
   it("respeta el orden: solo la marca pendiente de menor orden muestra botones de acción", () => {
@@ -153,6 +183,7 @@ describe("RoundScanBoard", () => {
     render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
 
     await user.click(screen.getByRole("button", { name: /omitir \(demo\)/i }));
+    await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/no corresponde a la marca esperada/i);
   });
