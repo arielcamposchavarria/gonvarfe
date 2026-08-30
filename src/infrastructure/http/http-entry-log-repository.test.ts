@@ -68,6 +68,19 @@ describe("createHttpEntryLogRepository", () => {
     });
   });
 
+  it("no lanza si placa/cédula no calzan con el value object (dato legado o creado fuera del formulario)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse([{ ...BACKEND_LOG, placa: "AB 1234!", cedula: "1-1111-1111" }]),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpEntryLogRepository();
+    const [log] = await repository.findBySite("sitio-1");
+
+    expect(log.plate).toBe("AB 1234!");
+    expect(log.cedula).toBe("1-1111-1111");
+  });
+
   it("consulta GET /bitacora/ingresos/guardia/:guardId", async () => {
     const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse([BACKEND_LOG]));
     vi.stubGlobal("fetch", fetchMock);
