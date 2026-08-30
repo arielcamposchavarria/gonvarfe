@@ -193,7 +193,12 @@ describe("RoundScanBoard", () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
     render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
 
-    expect(screen.getByText(new RegExp(`Recorrido iniciado a las ${recorrido.iniciadoEn.toLocaleTimeString()}`))).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`Fin estimado ${recorrido.registros[0].cierraEn.toLocaleTimeString()}`))).toBeInTheDocument();
+    // toLocaleTimeString() usa un espacio angosto (U+202F) antes de "m.", pero
+    // RTL normaliza los espacios del DOM a " " al comparar: el regex debe
+    // aceptar cualquier espacio en blanco, no el literal.
+    const iniciadoEn = recorrido.iniciadoEn.toLocaleTimeString().replace(/\s+/g, "\\s+");
+    const cierraEn = recorrido.registros[0].cierraEn.toLocaleTimeString().replace(/\s+/g, "\\s+");
+    expect(screen.getByText(new RegExp(`Recorrido iniciado a las ${iniciadoEn}`))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`Fin estimado ${cierraEn}`))).toBeInTheDocument();
   });
 });
