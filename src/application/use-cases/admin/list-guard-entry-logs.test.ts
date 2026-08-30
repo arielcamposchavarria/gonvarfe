@@ -1,31 +1,62 @@
 import { describe, expect, it } from "vitest";
 
 import { listGuardEntryLogs } from "./list-guard-entry-logs";
-import { createMockEntryLogRepository } from "@/infrastructure/mock/repositories/mock-entry-log-repository";
 import { createCedula } from "@/domain/value-objects/cedula";
 import { createPlateNumber } from "@/domain/value-objects/plate-number";
-import type { SiteRepository } from "@/domain/ports/site-repository";
-import type { Site } from "@/domain/entities/site";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
+import type { EntryLogRepository } from "@/domain/ports/entry-log-repository";
+import type { Sitio } from "@/domain/entities/sitio";
 import type { EntryLog } from "@/domain/entities/entry-log";
 
-const SITE: Site = {
-  id: "site-1",
-  name: "Plaza Amara",
-  address: "N/A",
-  isActive: true,
-  startQrCodeId: "qr-start",
-  exitQrCodeId: "qr-exit",
-  stations: [],
-  visitingLocals: [],
-};
+const SITE: Sitio = { id: "site-1", nombre: "Plaza Amara", direccion: "N/A", activo: true, marcas: [], locales: [] };
 
-function createFakeSiteRepository(sites: Site[]): SiteRepository {
+function createFakeSitioRepository(sitios: Sitio[]): SitioRepository {
   return {
     async findAll() {
-      return sites;
+      return sitios;
     },
     async findById(id) {
-      return sites.find((site) => site.id === id) ?? null;
+      return sitios.find((sitio) => sitio.id === id) ?? null;
+    },
+    async create() {
+      throw new Error("No usado en esta prueba.");
+    },
+    async update() {
+      return null;
+    },
+    async deactivate() {
+      return null;
+    },
+    async addMarca() {
+      return null;
+    },
+    async generateMarcaQr() {
+      return null;
+    },
+    async updateMarca() {
+      return null;
+    },
+    async deactivateMarca() {
+      return null;
+    },
+    async createLocal() {
+      return null;
+    },
+  };
+}
+
+function createFakeEntryLogRepository(): EntryLogRepository {
+  const logs: EntryLog[] = [];
+  return {
+    async findBySite(sitioId) {
+      return logs.filter((log) => log.sitioId === sitioId);
+    },
+    async findByGuard(guardId) {
+      return logs.filter((log) => log.guardId === guardId);
+    },
+    async create(log) {
+      logs.push(log);
+      return log;
     },
   };
 }
@@ -33,7 +64,7 @@ function createFakeSiteRepository(sites: Site[]): SiteRepository {
 function buildLog(overrides: Partial<EntryLog>): EntryLog {
   return {
     id: "log-1",
-    siteId: SITE.id,
+    sitioId: SITE.id,
     guardId: "guard-1",
     date: "2026-01-01",
     entryTime: "08:00",
@@ -53,26 +84,41 @@ function buildLog(overrides: Partial<EntryLog>): EntryLog {
 
 describe("listGuardEntryLogs", () => {
   it("ordena la bitácora de ingresos del guard de la más reciente a la más antigua, con el sitio de origen", async () => {
-    const entryLogRepository = createMockEntryLogRepository();
-    const siteRepository = createFakeSiteRepository([SITE]);
+    const entryLogRepository = createFakeEntryLogRepository();
+    const sitioRepository = createFakeSitioRepository([SITE]);
 
     await entryLogRepository.create(buildLog({ id: "log-1", createdAt: new Date("2026-01-01T08:00:00Z") }));
     await entryLogRepository.create(buildLog({ id: "log-2", createdAt: new Date("2026-01-01T10:00:00Z") }));
 
-    const result = await listGuardEntryLogs({ entryLogRepository, siteRepository }, "guard-1");
+    const result = await listGuardEntryLogs({ entryLogRepository, sitioRepository }, "guard-1");
 
     expect(result.map((r) => r.log.id)).toEqual(["log-2", "log-1"]);
     expect(result[0].siteName).toBe("Plaza Amara");
   });
 
   it("no incluye bitácoras de otros guardas", async () => {
-    const entryLogRepository = createMockEntryLogRepository();
-    const siteRepository = createFakeSiteRepository([SITE]);
+    const entryLogRepository = createFakeEntryLogRepository();
+    const sitioRepository = createFakeSitioRepository([SITE]);
 
     await entryLogRepository.create(buildLog({ id: "log-other", guardId: "guard-otro" }));
 
-    const result = await listGuardEntryLogs({ entryLogRepository, siteRepository }, "guard-1");
+    const result = await listGuardEntryLogs({ entryLogRepository, sitioRepository }, "guard-1");
 
     expect(result).toEqual([]);
+  });
+
+  it("filtra por el rango de fechas del ingreso", async () => {
+    const entryLogRepository = createFakeEntryLogRepository();
+    const sitioRepository = createFakeSitioRepository([SITE]);
+
+    await entryLogRepository.create(buildLog({ id: "log-fuera", date: "2025-12-31" }));
+    await entryLogRepository.create(buildLog({ id: "log-dentro", date: "2026-01-05" }));
+
+    const result = await listGuardEntryLogs({ entryLogRepository, sitioRepository }, "guard-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
+
+    expect(result.map((r) => r.log.id)).toEqual(["log-dentro"]);
   });
 });

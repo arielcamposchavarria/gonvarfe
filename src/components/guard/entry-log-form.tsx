@@ -23,6 +23,7 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
   const [state, formAction, isPending] = useActionState(submitEntryLogAction, INITIAL_STATE);
   const [defaultDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [defaultTime] = useState(() => new Date().toTimeString().slice(0, 5));
+  const [visitingLocal, setVisitingLocal] = useState("");
 
   return (
     <div className="flex flex-col gap-3">
@@ -78,7 +79,13 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="visitingLocal">Local que visita</Label>
-                <Select id="visitingLocal" name="visitingLocal" defaultValue="" required>
+                <Select
+                  id="visitingLocal"
+                  name="visitingLocal"
+                  required
+                  value={visitingLocal}
+                  onChange={(event) => setVisitingLocal(event.target.value)}
+                >
                   <option value="" disabled>
                     Seleccione...
                   </option>
@@ -90,6 +97,18 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
                 </Select>
               </div>
             </div>
+
+            {visitingLocal === "Otro" && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="visitingLocalOther">Especifique el local</Label>
+                <Input
+                  id="visitingLocalOther"
+                  name="visitingLocalOther"
+                  placeholder="Escriba el nombre exacto del local"
+                  required
+                />
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="observations">Observaciones</Label>

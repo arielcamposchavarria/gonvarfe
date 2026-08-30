@@ -8,8 +8,8 @@ import { OptionCard } from "@/components/shared/option-card";
 
 export default async function AdminSiteDetailPage({ params }: PageProps<"/admin/sites/[siteId]">) {
   const { siteId } = await params;
-  const site = await container.getSite(siteId);
-  if (!site) notFound();
+  const sitio = await container.getSitio(siteId);
+  if (!sitio) notFound();
 
   const [rounds, entryLogs, incidentLogs] = await Promise.all([
     container.listRoundsBySite(siteId),
@@ -17,27 +17,27 @@ export default async function AdminSiteDetailPage({ params }: PageProps<"/admin/
     container.listIncidentLogsBySite(siteId),
   ]);
 
-  const stations = [...site.stations].sort((a, b) => a.order - b.order);
+  const marcas = [...sitio.marcas].sort((a, b) => a.orden - b.orden);
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">{site.name}</h1>
-          <Badge variant={site.isActive ? "success" : "destructive"}>{site.isActive ? "Activo" : "Inactivo"}</Badge>
+          <h1 className="text-lg font-semibold">{sitio.nombre}</h1>
+          <Badge variant={sitio.activo ? "success" : "destructive"}>{sitio.activo ? "Activo" : "Inactivo"}</Badge>
         </div>
-        <p className="text-sm text-muted-foreground">{site.address}</p>
+        <p className="text-sm text-muted-foreground">{sitio.direccion}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Estaciones del recorrido</CardTitle>
-          <CardDescription>{stations.length} estaciones configuradas.</CardDescription>
+          <CardTitle className="text-base">Marcas del recorrido</CardTitle>
+          <CardDescription>{marcas.length} marcas configuradas.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
-          {stations.map((station) => (
-            <span key={station.id}>
-              {station.order}. {station.name}
+          {marcas.map((marca) => (
+            <span key={marca.id}>
+              {marca.orden}. {marca.nombre}
             </span>
           ))}
         </CardContent>
@@ -45,7 +45,7 @@ export default async function AdminSiteDetailPage({ params }: PageProps<"/admin/
 
       <div className="flex flex-col gap-2">
         <OptionCard
-          href={`/admin/sites/${site.id}/rounds`}
+          href={`/admin/sites/${sitio.id}/rounds`}
           icon={ListChecks}
           title="Recorridos"
           description="Reportes de las vueltas realizadas por los guardas"
@@ -53,7 +53,7 @@ export default async function AdminSiteDetailPage({ params }: PageProps<"/admin/
           badgeVariant="secondary"
         />
         <OptionCard
-          href={`/admin/sites/${site.id}/entry-logs`}
+          href={`/admin/sites/${sitio.id}/entry-logs`}
           icon={ClipboardList}
           title="Bitácora de ingresos"
           description="Registro de visitas y vehículos"
@@ -61,7 +61,7 @@ export default async function AdminSiteDetailPage({ params }: PageProps<"/admin/
           badgeVariant="secondary"
         />
         <OptionCard
-          href={`/admin/sites/${site.id}/incident-logs`}
+          href={`/admin/sites/${sitio.id}/incident-logs`}
           icon={ShieldAlert}
           title="Bitácora de incidencias"
           description="Novedades reportadas durante los turnos"

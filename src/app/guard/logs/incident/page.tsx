@@ -11,5 +11,8 @@ export default async function GuardIncidentLogPage() {
   const guard = await container.findUserById(session.userId);
   if (!guard || guard.role !== "guard") redirect("/login");
 
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno) redirect("/guard/select-site");
+
   return <IncidentLogForm />;
 }

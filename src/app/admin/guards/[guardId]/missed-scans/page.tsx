@@ -5,15 +5,25 @@ import { ChevronLeft, CircleAlert } from "lucide-react";
 import { container } from "@/infrastructure/container";
 import { Card } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 
 export default async function AdminGuardMissedScansPage({
   params,
+  searchParams,
 }: PageProps<"/admin/guards/[guardId]/missed-scans">) {
   const { guardId } = await params;
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const missedScans = await container.listGuardMissedScans(guardId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const missedScans = await container.listGuardMissedScans(
+    guardId,
+    parseDateRangeParams({ from: fromParam, to: toParam }),
+  );
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,8 +38,14 @@ export default async function AdminGuardMissedScansPage({
           </Link>
           <h1 className="text-lg font-semibold">QR no escaneados</h1>
         </div>
-        <ExportButton href={`/admin/guards/${guardId}/missed-scans/export`} />
+        <ExportButton
+          href={`/admin/guards/${guardId}/missed-scans/export${exportQuery}`}
+          excelLabel="Descargar Justificación"
+          pdfLabel="Descargar Justificación (PDF)"
+        />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {missedScans.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard no tiene estaciones sin escanear.</p>
@@ -44,7 +60,7 @@ export default async function AdminGuardMissedScansPage({
               <p className="text-xs text-muted-foreground">
                 {entry.siteName} · Recorrido #{entry.roundSequence} · {new Date(entry.reportedAt).toLocaleString()}
               </p>
-              <p className="text-sm text-danger">Motivo: {entry.reason}</p>
+              <p className="text-sm text-danger">Justificación: {entry.reason}</p>
             </div>
           </div>
         ))}

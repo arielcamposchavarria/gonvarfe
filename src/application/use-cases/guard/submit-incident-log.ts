@@ -7,9 +7,10 @@ export interface SubmitIncidentLogDeps {
 }
 
 export interface SubmitIncidentLogInput {
-  siteId: string;
+  sitioId: string;
   guardId: string;
   incidentType: IncidentType;
+  incidentTypeDetail: string | null;
   locationZone: string;
   description: string;
   photoUrls: string[];
@@ -21,10 +22,11 @@ export async function submitIncidentLog(
 ): Promise<IncidentLog> {
   const log: IncidentLog = {
     id: crypto.randomUUID(),
-    siteId: input.siteId,
+    sitioId: input.sitioId,
     guardId: input.guardId,
     occurredAt: new Date(),
     incidentType: input.incidentType,
+    incidentTypeDetail: input.incidentTypeDetail,
     locationZone: input.locationZone,
     description: input.description,
     photoUrls: input.photoUrls,

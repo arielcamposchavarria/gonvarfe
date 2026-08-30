@@ -1,31 +1,35 @@
-import type { ShiftSessionRepository } from "@/domain/ports/shift-session-repository";
-import type { RoundRepository } from "@/domain/ports/round-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
-import type { Round } from "@/domain/entities/round";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
+import type { Recorrido } from "@/domain/entities/recorrido";
+import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListGuardRoundsDeps {
-  shiftSessionRepository: ShiftSessionRepository;
-  roundRepository: RoundRepository;
-  siteRepository: SiteRepository;
+  turnoRepository: TurnoRepository;
+  recorridoRepository: RecorridoRepository;
+  sitioRepository: SitioRepository;
 }
 
 export interface RoundWithSite {
-  round: Round;
+  recorrido: Recorrido;
   siteName: string;
 }
 
-/** Recorridos de un guard a través de todas sus jornadas, del más reciente (o en curso) al más antiguo. */
-export async function listGuardRounds(deps: ListGuardRoundsDeps, guardId: string): Promise<RoundWithSite[]> {
-  const sessions = await deps.shiftSessionRepository.findByGuard(guardId);
-  const roundsBySession = await Promise.all(
-    sessions.map((session) => deps.roundRepository.findByShiftSession(session.id)),
-  );
-  const rounds = roundsBySession.flat();
+/** Recorridos de un guard a través de todos sus turnos, del más reciente (o en curso) al más antiguo. */
+export async function listGuardRounds(
+  deps: ListGuardRoundsDeps,
+  guardId: string,
+  range: DateRange = {},
+): Promise<RoundWithSite[]> {
+  const turnos = await deps.turnoRepository.porGuardia(guardId);
+  const recorridosByTurno = await Promise.all(turnos.map((turno) => deps.recorridoRepository.porTurno(turno.id)));
+  const recorridos = recorridosByTurno.flat();
 
-  const sites = await deps.siteRepository.findAll();
-  const siteNameById = new Map(sites.map((site) => [site.id, site.name]));
+  const sitios = await deps.sitioRepository.findAll();
+  const siteNameById = new Map(sitios.map((sitio) => [sitio.id, sitio.nombre]));
 
-  return [...rounds]
-    .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
-    .map((round) => ({ round, siteName: siteNameById.get(round.siteId) ?? round.siteId }));
+  return [...recorridos]
+    .filter((recorrido) => isWithinDateRange(recorrido.iniciadoEn, range))
+    .sort((a, b) => b.iniciadoEn.getTime() - a.iniciadoEn.getTime())
+    .map((recorrido) => ({ recorrido, siteName: siteNameById.get(recorrido.sitioId) ?? recorrido.sitioId }));
 }

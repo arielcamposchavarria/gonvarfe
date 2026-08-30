@@ -1,11 +1,12 @@
-import type { ShiftSessionRepository } from "@/domain/ports/shift-session-repository";
-import type { RoundRepository } from "@/domain/ports/round-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
+import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListGuardMissedScansDeps {
-  shiftSessionRepository: ShiftSessionRepository;
-  roundRepository: RoundRepository;
-  siteRepository: SiteRepository;
+  turnoRepository: TurnoRepository;
+  recorridoRepository: RecorridoRepository;
+  sitioRepository: SitioRepository;
 }
 
 export interface MissedScanEntry {
@@ -16,34 +17,39 @@ export interface MissedScanEntry {
   reportedAt: Date;
 }
 
-/** Estaciones que el guard no pudo escanear, con el motivo reportado, de la más reciente a la más antigua. */
+/**
+ * Marcas que el guard no pudo escanear, con el motivo reportado, de la más
+ * reciente a la más antigua. El backend no persiste el instante exacto en
+ * que se reportó el motivo, así que se usa el cierre de la ventana
+ * (`cierraEn`) como referencia temporal más cercana disponible.
+ */
 export async function listGuardMissedScans(
   deps: ListGuardMissedScansDeps,
   guardId: string,
+  range: DateRange = {},
 ): Promise<MissedScanEntry[]> {
-  const sessions = await deps.shiftSessionRepository.findByGuard(guardId);
-  const roundsBySession = await Promise.all(
-    sessions.map((session) => deps.roundRepository.findByShiftSession(session.id)),
-  );
-  const rounds = roundsBySession.flat();
+  const turnos = await deps.turnoRepository.porGuardia(guardId);
+  const recorridosByTurno = await Promise.all(turnos.map((turno) => deps.recorridoRepository.porTurno(turno.id)));
+  const recorridos = recorridosByTurno.flat();
 
-  const sites = await deps.siteRepository.findAll();
-  const siteById = new Map(sites.map((site) => [site.id, site]));
+  const sitios = await deps.sitioRepository.findAll();
+  const sitioById = new Map(sitios.map((sitio) => [sitio.id, sitio]));
 
   const entries: MissedScanEntry[] = [];
-  for (const round of rounds) {
-    const site = siteById.get(round.siteId);
-    const stationById = new Map((site?.stations ?? []).map((station) => [station.id, station]));
+  for (const recorrido of recorridos) {
+    const sitio = sitioById.get(recorrido.sitioId);
+    const marcaById = new Map((sitio?.marcas ?? []).map((marca) => [marca.id, marca]));
 
-    for (const scan of round.scans) {
-      if (scan.status !== "missed" || !scan.missedReport) continue;
-      const station = stationById.get(scan.stationId);
+    for (const registro of recorrido.registros) {
+      if (registro.estado !== "perdido" || !registro.motivoPerdido) continue;
+      if (!isWithinDateRange(registro.cierraEn, range)) continue;
+      const marca = marcaById.get(registro.marcaId);
       entries.push({
-        siteName: site?.name ?? round.siteId,
-        stationName: station?.name ?? scan.stationId,
-        roundSequence: round.sequence,
-        reason: scan.missedReport.reason,
-        reportedAt: scan.missedReport.reportedAt,
+        siteName: sitio?.nombre ?? recorrido.sitioId,
+        stationName: marca?.nombre ?? registro.marcaId,
+        roundSequence: recorrido.secuencia,
+        reason: registro.motivoPerdido,
+        reportedAt: registro.cierraEn,
       });
     }
   }

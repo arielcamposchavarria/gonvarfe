@@ -1,108 +1,132 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { listGuardMissedScans } from "./list-guard-missed-scans";
-import { createMockRoundRepository } from "@/infrastructure/mock/repositories/mock-round-repository";
-import { createMockShiftSessionRepository } from "@/infrastructure/mock/repositories/mock-shift-session-repository";
-import type { SiteRepository } from "@/domain/ports/site-repository";
-import type { Site } from "@/domain/entities/site";
-import type { Round } from "@/domain/entities/round";
-import type { ShiftSession } from "@/domain/entities/shift-session";
-import type { StationScan } from "@/domain/entities/station-scan";
-import { createTimeWindow } from "@/domain/value-objects/time-window";
+import type { TurnoRepository } from "@/domain/ports/turno-repository";
+import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type { SitioRepository } from "@/domain/ports/sitio-repository";
+import type { Recorrido } from "@/domain/entities/recorrido";
+import type { Registro } from "@/domain/entities/registro";
+import type { Turno } from "@/domain/entities/turno";
+import type { Sitio } from "@/domain/entities/sitio";
 
-const SITE: Site = {
+const SITE: Sitio = {
   id: "site-1",
-  name: "Plaza Amara",
-  address: "N/A",
-  isActive: true,
-  startQrCodeId: "qr-start",
-  exitQrCodeId: "qr-exit",
-  stations: [
-    { id: "station-1", siteId: "site-1", name: "Entrada principal", order: 1, qrCodeId: "qr-1" },
-    { id: "station-2", siteId: "site-1", name: "Área de carga", order: 2, qrCodeId: "qr-2" },
+  nombre: "Plaza Amara",
+  direccion: "N/A",
+  activo: true,
+  marcas: [
+    { id: "marca-1", nombre: "Entrada principal", orden: 1, qrCodeId: null, activo: true },
+    { id: "marca-2", nombre: "Área de carga", orden: 2, qrCodeId: null, activo: true },
   ],
-  visitingLocals: [],
+  locales: [],
 };
 
-function createFakeSiteRepository(sites: Site[]): SiteRepository {
+function createFakeSitioRepository(sitios: Sitio[]): SitioRepository {
   return {
     async findAll() {
-      return sites;
+      return sitios;
     },
     async findById(id) {
-      return sites.find((site) => site.id === id) ?? null;
+      return sitios.find((sitio) => sitio.id === id) ?? null;
+    },
+    async create() {
+      throw new Error("No usado en esta prueba.");
+    },
+    async update() {
+      return null;
+    },
+    async deactivate() {
+      return null;
+    },
+    async addMarca() {
+      return null;
+    },
+    async generateMarcaQr() {
+      return null;
+    },
+    async updateMarca() {
+      return null;
+    },
+    async deactivateMarca() {
+      return null;
+    },
+    async createLocal() {
+      return null;
     },
   };
 }
 
-function buildScan(overrides: Partial<StationScan>): StationScan {
+function buildRegistro(overrides: Partial<Registro>): Registro {
   return {
     id: crypto.randomUUID(),
-    roundId: "round-1",
-    stationId: "station-1",
-    order: 1,
-    window: createTimeWindow(new Date("2026-01-01T08:00:00Z"), 5),
-    status: "on-time",
-    scannedAt: new Date("2026-01-01T08:01:00Z"),
-    missedReport: null,
+    marcaId: "marca-1",
+    orden: 1,
+    estado: "a-tiempo",
+    abreEn: new Date("2026-01-01T08:00:00Z"),
+    cierraEn: new Date("2026-01-01T08:02:00Z"),
+    escaneadoEn: new Date("2026-01-01T08:01:00Z"),
+    motivoPerdido: null,
     ...overrides,
   };
 }
 
-function buildRound(overrides: Partial<Round>): Round {
+function buildRecorrido(overrides: Partial<Recorrido>): Recorrido {
   return {
-    id: "round-1",
-    shiftSessionId: "session-1",
-    siteId: SITE.id,
-    sequence: 1,
-    startedAt: new Date("2026-01-01T08:00:00Z"),
-    status: "completed",
-    completedAt: new Date("2026-01-01T09:00:00Z"),
-    scans: [],
+    id: "recorrido-1",
+    turnoId: "turno-1",
+    sitioId: SITE.id,
+    secuencia: 1,
+    iniciadoEn: new Date("2026-01-01T08:00:00Z"),
+    estado: "completado",
+    completadoEn: new Date("2026-01-01T09:00:00Z"),
+    registros: [],
     ...overrides,
   };
 }
 
-function buildSession(overrides: Partial<ShiftSession>): ShiftSession {
-  return {
-    id: "session-1",
-    guardId: "guard-1",
-    siteId: SITE.id,
-    startedAt: new Date("2026-01-01T08:00:00Z"),
-    status: "completed",
-    endedAt: new Date("2026-01-01T09:00:00Z"),
-    ...overrides,
-  };
-}
+const TURNO: Turno = {
+  id: "turno-1",
+  guardiaId: "guard-1",
+  sitioId: SITE.id,
+  iniciadoEn: new Date("2026-01-01T08:00:00Z"),
+  estado: "finalizado",
+  finalizadoEn: new Date("2026-01-01T09:00:00Z"),
+};
 
 describe("listGuardMissedScans", () => {
-  it("devuelve las estaciones no escaneadas con su motivo, sitio y estación, de la más reciente a la más antigua", async () => {
-    const roundRepository = createMockRoundRepository();
-    const shiftSessionRepository = createMockShiftSessionRepository();
-    const siteRepository = createFakeSiteRepository([SITE]);
+  it("devuelve las marcas no escaneadas con su motivo, sitio y marca, de la más reciente a la más antigua", async () => {
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn().mockResolvedValue([TURNO]),
+      porSitio: vi.fn(),
+    };
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn().mockResolvedValue([
+        buildRecorrido({
+          registros: [
+            buildRegistro({ id: "r1", marcaId: "marca-1", estado: "a-tiempo" }),
+            buildRegistro({
+              id: "r2",
+              marcaId: "marca-2",
+              estado: "perdido",
+              escaneadoEn: null,
+              cierraEn: new Date("2026-01-01T08:15:00Z"),
+              motivoPerdido: "QR dañado, no se puede leer.",
+            }),
+          ],
+        }),
+      ]),
+      porSitio: vi.fn(),
+      porId: vi.fn(),
+    };
+    const sitioRepository = createFakeSitioRepository([SITE]);
 
-    await shiftSessionRepository.create(buildSession({}));
-    await roundRepository.create(
-      buildRound({
-        scans: [
-          buildScan({ id: "scan-1", status: "on-time" }),
-          buildScan({
-            id: "scan-2",
-            stationId: "station-2",
-            status: "missed",
-            scannedAt: null,
-            missedReport: {
-              id: "missed-1",
-              stationScanId: "scan-2",
-              reason: "QR dañado, no se puede leer.",
-              reportedAt: new Date("2026-01-01T08:15:00Z"),
-            },
-          }),
-        ],
-      }),
-    );
-
-    const result = await listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, "guard-1");
+    const result = await listGuardMissedScans({ turnoRepository, recorridoRepository, sitioRepository }, "guard-1");
 
     expect(result).toEqual([
       {
@@ -115,26 +139,49 @@ describe("listGuardMissedScans", () => {
     ]);
   });
 
-  it("no incluye recorridos de otros guardas", async () => {
-    const roundRepository = createMockRoundRepository();
-    const shiftSessionRepository = createMockShiftSessionRepository();
-    const siteRepository = createFakeSiteRepository([SITE]);
+  it("filtra por el rango de fechas del cierre de ventana", async () => {
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn().mockResolvedValue([TURNO]),
+      porSitio: vi.fn(),
+    };
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn().mockResolvedValue([
+        buildRecorrido({
+          registros: [
+            buildRegistro({
+              id: "r-fuera",
+              estado: "perdido",
+              escaneadoEn: null,
+              cierraEn: new Date("2025-12-31T08:00:00Z"),
+              motivoPerdido: "Fuera de rango",
+            }),
+            buildRegistro({
+              id: "r-dentro",
+              marcaId: "marca-2",
+              estado: "perdido",
+              escaneadoEn: null,
+              cierraEn: new Date("2026-01-05T08:00:00Z"),
+              motivoPerdido: "Dentro de rango",
+            }),
+          ],
+        }),
+      ]),
+      porSitio: vi.fn(),
+      porId: vi.fn(),
+    };
+    const sitioRepository = createFakeSitioRepository([SITE]);
 
-    await shiftSessionRepository.create(buildSession({ guardId: "guard-otro" }));
-    await roundRepository.create(
-      buildRound({
-        shiftSessionId: "session-1",
-        scans: [
-          buildScan({
-            status: "missed",
-            missedReport: { id: "missed-1", stationScanId: "scan-1", reason: "N/A", reportedAt: new Date() },
-          }),
-        ],
-      }),
-    );
+    const result = await listGuardMissedScans({ turnoRepository, recorridoRepository, sitioRepository }, "guard-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
 
-    const result = await listGuardMissedScans({ roundRepository, shiftSessionRepository, siteRepository }, "guard-1");
-
-    expect(result).toEqual([]);
+    expect(result.map((entry) => entry.reason)).toEqual(["Dentro de rango"]);
   });
 });

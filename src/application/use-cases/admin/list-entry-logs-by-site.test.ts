@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { listEntryLogsBySite } from "./list-entry-logs-by-site";
-import { createMockEntryLogRepository } from "@/infrastructure/mock/repositories/mock-entry-log-repository";
 import { createCedula } from "@/domain/value-objects/cedula";
 import { createPlateNumber } from "@/domain/value-objects/plate-number";
 import type { UserRepository } from "@/domain/ports/user-repository";
+import type { EntryLogRepository } from "@/domain/ports/entry-log-repository";
 import type { GuardUser } from "@/domain/entities/user";
 import type { EntryLog } from "@/domain/entities/entry-log";
 
@@ -13,7 +13,6 @@ const GUARD: GuardUser = {
   name: "Ana Pérez",
   username: "ana",
   role: "guard",
-  assignedSiteId: "site-1",
   isActive: true,
   createdAt: new Date("2025-01-01"),
 };
@@ -26,11 +25,27 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
     async findById(id) {
       return users.find((user) => user.id === id) ?? null;
     },
-    async findByUsername(username) {
-      return users.find((user) => user.username === username) ?? null;
-    },
     async findByRole(role) {
       return users.filter((user) => user.role === role);
+    },
+    async create() {
+      throw new Error("No usado en esta prueba.");
+    },
+  };
+}
+
+function createFakeEntryLogRepository(): EntryLogRepository {
+  const logs: EntryLog[] = [];
+  return {
+    async findBySite(sitioId) {
+      return logs.filter((log) => log.sitioId === sitioId);
+    },
+    async findByGuard(guardId) {
+      return logs.filter((log) => log.guardId === guardId);
+    },
+    async create(log) {
+      logs.push(log);
+      return log;
     },
   };
 }
@@ -38,7 +53,7 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
 function buildLog(overrides: Partial<EntryLog>): EntryLog {
   return {
     id: "log-1",
-    siteId: "site-1",
+    sitioId: "site-1",
     guardId: GUARD.id,
     date: "2026-01-01",
     entryTime: "08:00",
@@ -58,7 +73,7 @@ function buildLog(overrides: Partial<EntryLog>): EntryLog {
 
 describe("listEntryLogsBySite", () => {
   it("ordena la bitácora de ingresos del sitio de la más reciente a la más antigua, con el nombre del guarda", async () => {
-    const entryLogRepository = createMockEntryLogRepository();
+    const entryLogRepository = createFakeEntryLogRepository();
     const userRepository = createFakeUserRepository([GUARD]);
 
     await entryLogRepository.create(buildLog({ id: "log-1", createdAt: new Date("2026-01-01T08:00:00Z") }));
@@ -71,10 +86,10 @@ describe("listEntryLogsBySite", () => {
   });
 
   it("no incluye bitácoras de otros sitios", async () => {
-    const entryLogRepository = createMockEntryLogRepository();
+    const entryLogRepository = createFakeEntryLogRepository();
     const userRepository = createFakeUserRepository([GUARD]);
 
-    await entryLogRepository.create(buildLog({ id: "log-other", siteId: "site-2" }));
+    await entryLogRepository.create(buildLog({ id: "log-other", sitioId: "site-2" }));
 
     const result = await listEntryLogsBySite({ entryLogRepository, userRepository }, "site-1");
 

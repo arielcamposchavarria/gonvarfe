@@ -1,12 +1,14 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { container } from "@/infrastructure/container";
-import { buildXlsxResponse, slugifyFilename } from "@/lib/export/xlsx";
+import { slugifyFilename } from "@/lib/export/xlsx";
+import { parseReportFormat, buildReportResponse } from "@/lib/export/report-response";
 import { buildGuardScannedStationsSheet } from "@/lib/export/guard-report-sheets";
+import { parseDateRangeParams } from "@/lib/date-range";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: RouteContext<"/admin/guards/[guardId]/scanned-stations/export">,
 ) {
   try {
@@ -19,10 +21,12 @@ export async function GET(
   const detail = await container.getGuardDetail(guardId);
   if (!detail) return new Response("Guard no encontrado.", { status: 404 });
 
-  const scannedStations = await container.listGuardScannedStations(guardId);
+  const range = parseDateRangeParams(new URL(request.url).searchParams);
+  const scannedStations = await container.listGuardScannedStations(guardId, range);
 
-  return buildXlsxResponse(
+  return buildReportResponse(
+    parseReportFormat(request),
     [buildGuardScannedStationsSheet(scannedStations)],
-    `${slugifyFilename(detail.guard.name)}-qr-escaneados.xlsx`,
+    `${slugifyFilename(detail.guard.name)}-qr-escaneados`,
   );
 }

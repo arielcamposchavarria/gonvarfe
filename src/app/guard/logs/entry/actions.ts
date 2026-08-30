@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { container } from "@/infrastructure/container";
-import { requireGuard } from "@/app/guard/actions";
+import { requireGuard } from "@/lib/auth/require-guard";
 import { entryLogSchema } from "@/lib/validation/entry-log-schema";
 import { createCedula } from "@/domain/value-objects/cedula";
 import { createPlateNumber } from "@/domain/value-objects/plate-number";
@@ -20,6 +20,15 @@ export async function submitEntryLogAction(
 ): Promise<EntryLogActionState> {
   const guard = await requireGuard();
 
+  const estado = await container.obtenerEstadoTurno();
+  if (!estado.turno || !estado.sitio) {
+    return { error: "No hay un turno activo. Inicie un turno primero." };
+  }
+
+  const selectedLocal = formData.get("visitingLocal");
+  const visitingLocal =
+    selectedLocal === "Otro" ? formData.get("visitingLocalOther") : selectedLocal;
+
   const parsed = entryLogSchema.safeParse({
     date: formData.get("date"),
     entryTime: formData.get("entryTime"),
@@ -29,7 +38,7 @@ export async function submitEntryLogAction(
     cedula: formData.get("cedula"),
     company: formData.get("company"),
     reason: formData.get("reason"),
-    visitingLocal: formData.get("visitingLocal"),
+    visitingLocal,
     observations: formData.get("observations"),
   });
 
@@ -45,7 +54,7 @@ export async function submitEntryLogAction(
   const photoUrls = await Promise.all(photos.map(fileToDataUrl));
 
   await container.submitEntryLog({
-    siteId: guard.assignedSiteId,
+    sitioId: estado.sitio.id,
     guardId: guard.id,
     date: parsed.data.date,
     entryTime: parsed.data.entryTime,

@@ -29,4 +29,23 @@ describe("incidentLogSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rechaza tipo Otro sin especificar el detalle", () => {
+    const result = incidentLogSchema.safeParse({
+      incidentType: "Otro",
+      locationZone: "Parqueo principal",
+      description: "Descripción",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("acepta tipo Otro con el detalle especificado", () => {
+    const result = incidentLogSchema.safeParse({
+      incidentType: "Otro",
+      incidentTypeDetail: "Fuga de agua",
+      locationZone: "Parqueo principal",
+      description: "Descripción",
+    });
+    expect(result.success).toBe(true);
+  });
 });

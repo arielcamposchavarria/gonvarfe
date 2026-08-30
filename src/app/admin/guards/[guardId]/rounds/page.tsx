@@ -6,19 +6,28 @@ import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
-import type { RoundStatus } from "@/domain/entities/round";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
+import type { RecorridoEstado } from "@/domain/entities/recorrido";
 
-const STATUS_LABEL: Record<RoundStatus, string> = {
-  "in-progress": "En curso",
-  completed: "Completado",
+const STATUS_LABEL: Record<RecorridoEstado, string> = {
+  "en-progreso": "En curso",
+  completado: "Completado",
 };
 
-export default async function AdminGuardRoundsPage({ params }: PageProps<"/admin/guards/[guardId]/rounds">) {
+export default async function AdminGuardRoundsPage({
+  params,
+  searchParams,
+}: PageProps<"/admin/guards/[guardId]/rounds">) {
   const { guardId } = await params;
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const rounds = await container.listGuardRounds(guardId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const rounds = await container.listGuardRounds(guardId, parseDateRangeParams({ from: fromParam, to: toParam }));
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,34 +42,36 @@ export default async function AdminGuardRoundsPage({ params }: PageProps<"/admin
           </Link>
           <h1 className="text-lg font-semibold">Recorridos</h1>
         </div>
-        <ExportButton href={`/admin/guards/${guardId}/rounds/export`} />
+        <ExportButton href={`/admin/guards/${guardId}/rounds/export${exportQuery}`} />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {rounds.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard todavía no tiene recorridos registrados.</p>
       )}
 
       <div className="flex flex-col gap-2">
-        {rounds.map(({ round, siteName }) => {
-          const missed = round.scans.filter((scan) => scan.status === "missed").length;
-          const onTime = round.scans.filter((scan) => scan.status === "on-time").length;
+        {rounds.map(({ recorrido, siteName }) => {
+          const missed = recorrido.registros.filter((registro) => registro.estado === "perdido").length;
+          const onTime = recorrido.registros.filter((registro) => registro.estado === "a-tiempo").length;
 
           return (
-            <Link key={round.id} href={`/admin/sites/${round.siteId}/rounds/${round.id}`} className="block">
+            <Link key={recorrido.id} href={`/admin/sites/${recorrido.sitioId}/rounds/${recorrido.id}`} className="block">
               <Card className="transition-colors hover:bg-surface-hover">
                 <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <CardTitle className="text-base">Recorrido #{round.sequence}</CardTitle>
-                      <Badge variant={round.status === "in-progress" ? "success" : "secondary"}>
-                        {STATUS_LABEL[round.status]}
+                      <CardTitle className="text-base">Recorrido #{recorrido.secuencia}</CardTitle>
+                      <Badge variant={recorrido.estado === "en-progreso" ? "success" : "secondary"}>
+                        {STATUS_LABEL[recorrido.estado]}
                       </Badge>
                     </div>
                     <CardDescription>
-                      {siteName} · Iniciado {new Date(round.startedAt).toLocaleString()}
+                      {siteName} · Iniciado {recorrido.iniciadoEn.toLocaleString()}
                     </CardDescription>
                     <CardDescription>
-                      {onTime}/{round.scans.length} estaciones escaneadas
+                      {onTime}/{recorrido.registros.length} marcas escaneadas
                       {missed > 0 && ` · ${missed} no escaneadas`}
                     </CardDescription>
                   </div>

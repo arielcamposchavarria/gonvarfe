@@ -1,12 +1,14 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { container } from "@/infrastructure/container";
-import { buildXlsxResponse, slugifyFilename } from "@/lib/export/xlsx";
+import { slugifyFilename } from "@/lib/export/xlsx";
+import { parseReportFormat, buildReportResponse } from "@/lib/export/report-response";
 import { buildGuardIncidentLogsSheet } from "@/lib/export/guard-report-sheets";
+import { parseDateRangeParams } from "@/lib/date-range";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: RouteContext<"/admin/guards/[guardId]/incident-logs/export">,
 ) {
   try {
@@ -19,10 +21,12 @@ export async function GET(
   const detail = await container.getGuardDetail(guardId);
   if (!detail) return new Response("Guard no encontrado.", { status: 404 });
 
-  const incidentLogs = await container.listGuardIncidentLogs(guardId);
+  const range = parseDateRangeParams(new URL(request.url).searchParams);
+  const incidentLogs = await container.listGuardIncidentLogs(guardId, range);
 
-  return buildXlsxResponse(
+  return buildReportResponse(
+    parseReportFormat(request),
     [buildGuardIncidentLogsSheet(incidentLogs)],
-    `${slugifyFilename(detail.guard.name)}-bitacora-incidencias.xlsx`,
+    `${slugifyFilename(detail.guard.name)}-bitacora-incidencias`,
   );
 }

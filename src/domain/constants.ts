@@ -1,6 +1,9 @@
 /**
- * Un recorrido siempre dura 1 hora, repartida en partes iguales entre las
- * estaciones del sitio (la cantidad de estaciones varía por sitio).
+ * Un recorrido siempre dura 1 hora a partir del momento exacto en que se
+ * escanea (o se salta) el primer QR, repartida en partes iguales entre las
+ * estaciones del sitio (la cantidad de estaciones varía por sitio). El
+ * reparto real lo calcula el backend (fuente de verdad); esta constante solo
+ * documenta la regla para quien lea la UI.
  */
 export const ROUND_DURATION_MINUTES = 60;
 

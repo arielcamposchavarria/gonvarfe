@@ -5,7 +5,7 @@ import { container } from "@/infrastructure/container";
 import { createSession } from "@/lib/auth/session";
 import { loginSchema } from "@/lib/validation/login-schema";
 import { ROLE_PATH_SEGMENT } from "@/domain/value-objects/role";
-import { InvalidCredentialsError } from "@/application/use-cases/auth/authenticate-user";
+import { InvalidCredentialsError, InactiveUserError } from "@/application/use-cases/auth/authenticate-user";
 
 export interface LoginActionState {
   error: string | null;
@@ -20,14 +20,16 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
-  let user;
+  let result;
   try {
-    user = await container.authenticateUser(parsed.data);
+    result = await container.authenticateUser(parsed.data);
   } catch (error) {
-    if (error instanceof InvalidCredentialsError) return { error: error.message };
+    if (error instanceof InvalidCredentialsError || error instanceof InactiveUserError) {
+      return { error: error.message };
+    }
     throw error;
   }
 
-  await createSession(user);
-  redirect(`/${ROLE_PATH_SEGMENT[user.role]}/dashboard`);
+  await createSession(result.accessToken);
+  redirect(`/${ROLE_PATH_SEGMENT[result.user.role]}/dashboard`);
 }

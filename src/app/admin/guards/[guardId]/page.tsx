@@ -12,7 +12,7 @@ export default async function AdminGuardDetailPage({ params }: PageProps<"/admin
   const detail = await container.getGuardDetail(guardId);
   if (!detail) notFound();
 
-  const { guard, assignedSite, currentSite, totals } = detail;
+  const { guard, currentSite, totals } = detail;
 
   return (
     <div className="flex flex-col gap-4">
@@ -24,11 +24,13 @@ export default async function AdminGuardDetailPage({ params }: PageProps<"/admin
               {guard.isActive ? "Activo" : "Inactivo"}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {guard.username} · Sitio asignado: {assignedSite.name}
-          </p>
+          <p className="text-sm text-muted-foreground">{guard.username}</p>
         </div>
-        <ExportButton href={`/admin/guards/${guard.id}/export`} label="Exportar todo" />
+        <ExportButton
+          href={`/admin/guards/${guard.id}/export`}
+          excelLabel="Excel: todo"
+          pdfLabel="PDF: todo"
+        />
       </div>
 
       <Card>
@@ -37,7 +39,7 @@ export default async function AdminGuardDetailPage({ params }: PageProps<"/admin
           <CardDescription>
             {currentSite ? (
               <>
-                Actualmente en <span className="font-medium text-foreground">{currentSite.name}</span>
+                Actualmente en <span className="font-medium text-foreground">{currentSite.nombre}</span>
               </>
             ) : (
               "No ha iniciado turno"
@@ -51,7 +53,7 @@ export default async function AdminGuardDetailPage({ params }: PageProps<"/admin
           href={`/admin/guards/${guard.id}/scanned-stations`}
           icon={QrCode}
           title="QR escaneados a tiempo"
-          description="Estaciones escaneadas dentro de su ventana"
+          description="Marcas escaneadas dentro de su ventana"
           badgeLabel={String(totals.scansOnTime)}
           badgeVariant="secondary"
         />
@@ -67,7 +69,7 @@ export default async function AdminGuardDetailPage({ params }: PageProps<"/admin
           href={`/admin/guards/${guard.id}/missed-scans`}
           icon={CircleAlert}
           title="QR no escaneados"
-          description="Estaciones no escaneadas y su motivo"
+          description="Marcas no escaneadas y su motivo"
           badgeLabel={String(totals.scansMissed)}
           badgeVariant="secondary"
         />

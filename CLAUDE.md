@@ -19,10 +19,14 @@ Este proyecto usa arquitectura hexagonal (puertos y adaptadores). La dirección 
 
 - **Regla obligatoria**: todo cambio que agregue o modifique comportamiento debe incluir o actualizar sus pruebas en el mismo cambio. Un cambio sin sus pruebas correspondientes no se considera terminado.
 - Unitarias/componentes con **Vitest** + React Testing Library. Casos de uso del dominio (ventanas de tiempo, reglas de negocio) y componentes con lógica no trivial siempre deben tener prueba.
-- End-to-end con **Playwright** (carpeta `e2e/`), especialmente para flujos de seguridad: control de acceso por rol, usuarios desactivados que no pueden iniciar sesión, y ventanas de tiempo de escaneo de estaciones. Priorizar estos casos sobre cobertura visual.
+- No hay end-to-end (Playwright se retiró: dependía de loguearse contra el backend real, y no hay una base de datos efímera para CI). Cubrir flujos de seguridad (control de acceso por rol, usuarios desactivados, ventanas de tiempo de escaneo) con pruebas unitarias/de casos de uso en su lugar.
 - Los tests unitarios/componentes viven junto al archivo que prueban (`archivo.ts` + `archivo.test.ts`), no en una carpeta paralela.
-- Comandos: `npm run test` (unitarias), `npm run test:coverage`, `npm run e2e` (Playwright, levanta el servidor de dev automáticamente).
+- Comandos: `npm run test` (unitarias), `npm run test:coverage`.
 
 # CI
 
-Cada PR corre lint, typecheck, tests unitarios, build y e2e (ver `.github/workflows/ci.yml`), además de CodeQL y dependency review. Un PR no debe mergearse con checks en rojo.
+Cada PR corre lint, typecheck, tests unitarios y build (ver `.github/workflows/ci.yml`), además de CodeQL y dependency review. Un PR no debe mergearse con checks en rojo.
+
+# No modificar datos de la base de datos
+
+El backend real (gonvarbe) usa la base de datos de Railway, no una de prueba local. **No crear, editar ni borrar registros contra el backend real** (llamadas sueltas a los endpoints solo para "probar y limpiar después", scripts ad hoc, etc.) sin permiso explícito del usuario para esa acción puntual — esto aplica incluso a datos que Claude mismo haya creado momentos antes en la misma conversación: pedir confirmación antes de borrarlos. Para verificar un flujo, preferir los tests (Vitest/Playwright) o pedirle al usuario que cree/borre los datos de prueba él mismo.
