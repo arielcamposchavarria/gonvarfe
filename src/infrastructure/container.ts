@@ -16,6 +16,8 @@ import { obtenerEstadoTurno } from "@/application/use-cases/guard/obtener-estado
 import { registrarEscaneo } from "@/application/use-cases/guard/registrar-escaneo";
 import { reportarPerdido } from "@/application/use-cases/guard/reportar-perdido";
 import { submitEntryLog, type SubmitEntryLogInput } from "@/application/use-cases/guard/submit-entry-log";
+import { registrarSalidaEntryLog } from "@/application/use-cases/guard/registrar-salida-entry-log";
+import { listMyEntryLogs } from "@/application/use-cases/guard/list-my-entry-logs";
 import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
 import { listRoundsBySite } from "@/application/use-cases/admin/list-rounds-by-site";
@@ -77,6 +79,8 @@ export const container = {
   reportarPerdido: (input: ReportarPerdidoInput) => reportarPerdido({ recorridoRepository }, input),
 
   submitEntryLog: (input: SubmitEntryLogInput) => submitEntryLog({ entryLogRepository }, input),
+  registrarSalidaEntryLog: (logId: string) => registrarSalidaEntryLog({ entryLogRepository }, logId),
+  listMyEntryLogs: (guardId: string) => listMyEntryLogs({ entryLogRepository }, guardId),
   submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),
 
   listGuards: () => listGuards({ userRepository }),

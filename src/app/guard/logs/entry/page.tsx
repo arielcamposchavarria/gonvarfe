@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
 import { EntryLogForm } from "@/components/guard/entry-log-form";
+import { OpenEntryLogs } from "@/components/guard/open-entry-logs";
 
 export default async function GuardEntryLogPage() {
   const session = await getSession();
@@ -14,5 +15,13 @@ export default async function GuardEntryLogPage() {
   const estado = await container.obtenerEstadoTurno();
   if (!estado.turno || !estado.sitio) redirect("/guard/select-site");
 
-  return <EntryLogForm visitingLocals={estado.sitio.locales.map((local) => local.nombre)} />;
+  const logs = await container.listMyEntryLogs(guard.id);
+  const openLogs = logs.filter((log) => log.exitTime === null);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <OpenEntryLogs logs={openLogs} />
+      <EntryLogForm visitingLocals={estado.sitio.locales.map((local) => local.nombre)} />
+    </div>
+  );
 }

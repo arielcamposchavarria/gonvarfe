@@ -11,7 +11,7 @@ interface BackendEntryLog {
   guardiaId: string;
   fecha: string;
   horaEntrada: string;
-  horaSalida: string;
+  horaSalida: string | null;
   placa: string;
   nombreConductor: string;
   cedula: string;
@@ -96,8 +96,6 @@ export function createHttpEntryLogRepository(): EntryLogRepository {
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
         body: JSON.stringify({
           fecha: log.date,
-          horaEntrada: log.entryTime,
-          horaSalida: log.exitTime,
           placa: log.plate,
           nombreConductor: log.driverName,
           cedula: log.cedula,
@@ -109,6 +107,15 @@ export function createHttpEntryLogRepository(): EntryLogRepository {
         }),
       });
       if (!res.ok) throw new Error("No se pudo registrar el ingreso.");
+      return mapEntryLog((await res.json()) as BackendEntryLog);
+    },
+
+    async registrarSalida(logId) {
+      const res = await fetch(`${baseUrl}/bitacora/ingresos/${logId}/salida`, {
+        method: "PATCH",
+        headers: await authHeaders(),
+      });
+      if (!res.ok) throw new Error("No se pudo registrar la salida.");
       return mapEntryLog((await res.json()) as BackendEntryLog);
     },
   };

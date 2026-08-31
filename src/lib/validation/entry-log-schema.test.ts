@@ -4,8 +4,6 @@ import { entryLogSchema } from "./entry-log-schema";
 
 const VALID_INPUT = {
   date: "2026-08-19",
-  entryTime: "08:00",
-  exitTime: "08:15",
   plate: "ABC123",
   driverName: "Juan Pérez",
   cedula: "123456789",

@@ -47,6 +47,11 @@ function createFakeEntryLogRepository(): EntryLogRepository {
       logs.push(log);
       return log;
     },
+    async registrarSalida(logId) {
+      const log = logs.find((entry) => entry.id === logId);
+      if (!log) throw new Error("No existe.");
+      return log;
+    },
   };
 }
 

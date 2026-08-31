@@ -11,8 +11,6 @@ export interface SubmitEntryLogInput {
   sitioId: string;
   guardId: string;
   date: string;
-  entryTime: string;
-  exitTime: string;
   plate: PlateNumber;
   driverName: string;
   cedula: Cedula;
@@ -29,8 +27,10 @@ export async function submitEntryLog(deps: SubmitEntryLogDeps, input: SubmitEntr
     sitioId: input.sitioId,
     guardId: input.guardId,
     date: input.date,
-    entryTime: input.entryTime,
-    exitTime: input.exitTime,
+    // El servidor genera horaEntrada y deja horaSalida en null al crear;
+    // estos valores se descartan y se reemplazan por la respuesta real.
+    entryTime: "",
+    exitTime: null,
     plate: input.plate,
     driverName: input.driverName,
     cedula: input.cedula,

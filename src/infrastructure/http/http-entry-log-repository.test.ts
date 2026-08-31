@@ -123,8 +123,6 @@ describe("createHttpEntryLogRepository", () => {
         method: "POST",
         body: JSON.stringify({
           fecha: "2026-01-01",
-          horaEntrada: "08:00",
-          horaSalida: "08:15",
           placa: "ABC123",
           nombreConductor: "Juan Pérez",
           cedula: "123456789",
@@ -136,5 +134,19 @@ describe("createHttpEntryLogRepository", () => {
         }),
       }),
     );
+  });
+
+  it("registra la salida con PATCH /bitacora/ingresos/:id/salida", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse({ ...BACKEND_LOG, horaSalida: "09:00" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpEntryLogRepository();
+    const log = await repository.registrarSalida("log-1");
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/bitacora/ingresos/log-1/salida", {
+      method: "PATCH",
+      headers: { Authorization: "Bearer test-token" },
+    });
+    expect(log.exitTime).toBe("09:00");
   });
 });
