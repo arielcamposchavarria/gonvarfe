@@ -62,7 +62,7 @@ describe("createHttpUserRepository", () => {
     const user = await repository.create({
       name: "Mario Solano",
       username: "msolano",
-      password: "clave123",
+      email: "msolano@example.com",
       role: "guard",
     });
 
@@ -74,7 +74,7 @@ describe("createHttpUserRepository", () => {
         body: JSON.stringify({
           username: "msolano",
           name: "Mario Solano",
-          password: "clave123",
+          email: "msolano@example.com",
           roleId: "role-guard",
         }),
       }),
@@ -136,7 +136,7 @@ describe("createHttpUserRepository", () => {
 
     const repository = createHttpUserRepository();
     await expect(
-      repository.create({ name: "Dup", username: "dup", password: "clave123", role: "admin" }),
+      repository.create({ name: "Dup", username: "dup", email: "dup@example.com", role: "admin" }),
     ).rejects.toBeInstanceOf(UsernameTakenError);
   });
 });

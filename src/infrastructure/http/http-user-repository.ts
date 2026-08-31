@@ -55,7 +55,7 @@ export function createHttpUserRepository(): UserRepository {
         body: JSON.stringify({
           username: input.username,
           name: input.name,
-          password: input.password,
+          email: input.email,
           roleId: role.id,
         }),
       });

@@ -1,6 +1,7 @@
 import type { EntryLogRepository } from "@/domain/ports/entry-log-repository";
 import type { UserRepository } from "@/domain/ports/user-repository";
 import type { EntryLog } from "@/domain/entities/entry-log";
+import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListEntryLogsBySiteDeps {
   entryLogRepository: EntryLogRepository;
@@ -16,9 +17,12 @@ export interface EntryLogWithGuard {
 export async function listEntryLogsBySite(
   deps: ListEntryLogsBySiteDeps,
   siteId: string,
+  range: DateRange = {},
 ): Promise<EntryLogWithGuard[]> {
   const logs = await deps.entryLogRepository.findBySite(siteId);
-  const sorted = [...logs].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const sorted = [...logs]
+    .filter((log) => isWithinDateRange(log.createdAt, range))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return Promise.all(
     sorted.map(async (log) => {

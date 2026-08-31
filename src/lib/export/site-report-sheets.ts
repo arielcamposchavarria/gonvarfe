@@ -1,9 +1,7 @@
 import type { SheetDefinition } from "./xlsx";
-import type { RoundWithSite } from "@/application/use-cases/admin/list-guard-rounds";
-import type { ScannedStationEntry } from "@/application/use-cases/admin/list-guard-scanned-stations";
-import type { MissedScanEntry } from "@/application/use-cases/admin/list-guard-missed-scans";
-import type { EntryLogWithSite } from "@/application/use-cases/admin/list-guard-entry-logs";
-import type { IncidentLogWithSite } from "@/application/use-cases/admin/list-guard-incident-logs";
+import type { RoundWithGuard } from "@/application/use-cases/admin/list-rounds-by-site";
+import type { EntryLogWithGuard } from "@/application/use-cases/admin/list-entry-logs-by-site";
+import type { IncidentLogWithGuard } from "@/application/use-cases/admin/list-incident-logs-by-site";
 import type { RecorridoEstado } from "@/domain/entities/recorrido";
 
 const ROUND_STATUS_LABEL: Record<RecorridoEstado, string> = {
@@ -11,11 +9,12 @@ const ROUND_STATUS_LABEL: Record<RecorridoEstado, string> = {
   completado: "Completado",
 };
 
-export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition {
+/** Espejo de buildGuardRoundsSheet, pero con columna "Guarda" en vez de "Sitio" (ya escopado a un sitio). */
+export function buildSiteRoundsSheet(rounds: RoundWithGuard[]): SheetDefinition {
   return {
     name: "Recorridos",
     columns: [
-      { header: "Sitio", key: "site" },
+      { header: "Guarda", key: "guard", width: 26 },
       { header: "Turno iniciado", key: "turnoStartedAt", width: 20 },
       { header: "Recorrido #", key: "sequence", width: 14 },
       { header: "Estado", key: "status" },
@@ -24,8 +23,8 @@ export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition 
       { header: "Estaciones escaneadas", key: "onTime", width: 20 },
       { header: "Estaciones no escaneadas", key: "missed", width: 22 },
     ],
-    rows: rounds.map(({ recorrido, siteName, turnoIniciadoEn }) => ({
-      site: siteName,
+    rows: rounds.map(({ recorrido, guardName, turnoIniciadoEn }) => ({
+      guard: guardName,
       turnoStartedAt: turnoIniciadoEn.toLocaleString(),
       sequence: recorrido.secuencia,
       status: ROUND_STATUS_LABEL[recorrido.estado],
@@ -37,49 +36,11 @@ export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition 
   };
 }
 
-export function buildGuardScannedStationsSheet(entries: ScannedStationEntry[]): SheetDefinition {
-  return {
-    name: "QR escaneados",
-    columns: [
-      { header: "Sitio", key: "site" },
-      { header: "Estación", key: "station", width: 30 },
-      { header: "Recorrido #", key: "round", width: 14 },
-      { header: "Escaneado", key: "scannedAt" },
-    ],
-    rows: entries.map((entry) => ({
-      site: entry.siteName,
-      station: entry.stationName,
-      round: entry.roundSequence,
-      scannedAt: entry.scannedAt.toLocaleString(),
-    })),
-  };
-}
-
-export function buildGuardMissedScansSheet(entries: MissedScanEntry[]): SheetDefinition {
-  return {
-    name: "QR no escaneados",
-    columns: [
-      { header: "Sitio", key: "site" },
-      { header: "Estación", key: "station", width: 30 },
-      { header: "Recorrido #", key: "round", width: 14 },
-      { header: "Reportado", key: "reportedAt" },
-      { header: "Justificación", key: "reason", width: 40 },
-    ],
-    rows: entries.map((entry) => ({
-      site: entry.siteName,
-      station: entry.stationName,
-      round: entry.roundSequence,
-      reportedAt: entry.reportedAt.toLocaleString(),
-      reason: entry.reason,
-    })),
-  };
-}
-
-export function buildGuardEntryLogsSheet(entries: EntryLogWithSite[]): SheetDefinition {
+export function buildSiteEntryLogsSheet(entries: EntryLogWithGuard[]): SheetDefinition {
   return {
     name: "Bitácora de ingresos",
     columns: [
-      { header: "Sitio", key: "site" },
+      { header: "Guarda", key: "guard", width: 26 },
       { header: "Fecha", key: "date" },
       { header: "Hora de ingreso", key: "entryTime" },
       { header: "Hora de salida", key: "exitTime" },
@@ -92,8 +53,8 @@ export function buildGuardEntryLogsSheet(entries: EntryLogWithSite[]): SheetDefi
       { header: "Observaciones", key: "observations", width: 30 },
       { header: "Fotos adjuntas", key: "photoCount", width: 14 },
     ],
-    rows: entries.map(({ log, siteName }) => ({
-      site: siteName,
+    rows: entries.map(({ log, guardName }) => ({
+      guard: guardName,
       date: log.date,
       entryTime: log.entryTime,
       exitTime: log.exitTime,
@@ -109,19 +70,19 @@ export function buildGuardEntryLogsSheet(entries: EntryLogWithSite[]): SheetDefi
   };
 }
 
-export function buildGuardIncidentLogsSheet(entries: IncidentLogWithSite[]): SheetDefinition {
+export function buildSiteIncidentLogsSheet(entries: IncidentLogWithGuard[]): SheetDefinition {
   return {
     name: "Bitácora de incidencias",
     columns: [
-      { header: "Sitio", key: "site" },
+      { header: "Guarda", key: "guard", width: 26 },
       { header: "Fecha", key: "occurredAt" },
       { header: "Tipo", key: "incidentType", width: 26 },
       { header: "Zona", key: "locationZone", width: 24 },
       { header: "Descripción", key: "description", width: 40 },
       { header: "Fotos adjuntas", key: "photoCount", width: 14 },
     ],
-    rows: entries.map(({ log, siteName }) => ({
-      site: siteName,
+    rows: entries.map(({ log, guardName }) => ({
+      guard: guardName,
       occurredAt: log.occurredAt.toLocaleString(),
       incidentType: log.incidentType === "Otro" && log.incidentTypeDetail ? log.incidentTypeDetail : log.incidentType,
       locationZone: log.locationZone,

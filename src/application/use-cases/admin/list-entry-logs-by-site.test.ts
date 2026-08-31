@@ -103,4 +103,19 @@ describe("listEntryLogsBySite", () => {
 
     expect(result).toEqual([]);
   });
+
+  it("filtra por el rango de fechas de creación", async () => {
+    const entryLogRepository = createFakeEntryLogRepository();
+    const userRepository = createFakeUserRepository([GUARD]);
+
+    await entryLogRepository.create(buildLog({ id: "log-fuera", createdAt: new Date("2025-12-31T08:00:00Z") }));
+    await entryLogRepository.create(buildLog({ id: "log-dentro", createdAt: new Date("2026-01-05T08:00:00Z") }));
+
+    const result = await listEntryLogsBySite({ entryLogRepository, userRepository }, "site-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
+
+    expect(result.map((r) => r.log.id)).toEqual(["log-dentro"]);
+  });
 });

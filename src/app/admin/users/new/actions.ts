@@ -4,33 +4,32 @@ import { redirect } from "next/navigation";
 
 import { container } from "@/infrastructure/container";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { createGuardSchema } from "@/lib/validation/create-guard-schema";
+import { createUserSchema } from "@/lib/validation/create-user-schema";
 import { UsernameTakenError } from "@/domain/ports/user-repository";
 
-export interface CreateGuardActionState {
+export interface CreateUserActionState {
   error: string | null;
 }
 
-export async function createGuardAction(
-  _prevState: CreateGuardActionState,
+export async function createUserAction(
+  _prevState: CreateUserActionState,
   formData: FormData,
-): Promise<CreateGuardActionState> {
+): Promise<CreateUserActionState> {
   await requireAdmin();
 
-  const parsed = createGuardSchema.safeParse({
+  const parsed = createUserSchema.safeParse({
     name: formData.get("name"),
     username: formData.get("username"),
-    password: formData.get("password"),
+    email: formData.get("email"),
+    role: formData.get("role"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
 
-  let guardId: string;
   try {
-    const guard = await container.createUser({ ...parsed.data, role: "guard" });
-    guardId = guard.id;
+    await container.createUser(parsed.data);
   } catch (error) {
     if (error instanceof UsernameTakenError) {
       return { error: error.message };
@@ -38,5 +37,5 @@ export async function createGuardAction(
     throw error;
   }
 
-  redirect(`/admin/guards/${guardId}`);
+  redirect("/admin/users");
 }

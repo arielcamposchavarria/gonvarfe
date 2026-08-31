@@ -1,6 +1,7 @@
 import type { IncidentLogRepository } from "@/domain/ports/incident-log-repository";
 import type { UserRepository } from "@/domain/ports/user-repository";
 import type { IncidentLog } from "@/domain/entities/incident-log";
+import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListIncidentLogsBySiteDeps {
   incidentLogRepository: IncidentLogRepository;
@@ -16,9 +17,12 @@ export interface IncidentLogWithGuard {
 export async function listIncidentLogsBySite(
   deps: ListIncidentLogsBySiteDeps,
   siteId: string,
+  range: DateRange = {},
 ): Promise<IncidentLogWithGuard[]> {
   const logs = await deps.incidentLogRepository.findBySite(siteId);
-  const sorted = [...logs].sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
+  const sorted = [...logs]
+    .filter((log) => isWithinDateRange(log.occurredAt, range))
+    .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
 
   return Promise.all(
     sorted.map(async (log) => {

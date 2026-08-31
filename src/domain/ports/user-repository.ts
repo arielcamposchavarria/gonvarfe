@@ -4,7 +4,7 @@ import type { Role } from "../value-objects/role";
 export interface CreateUserInput {
   name: string;
   username: string;
-  password: string;
+  email: string;
   role: Role;
 }
 

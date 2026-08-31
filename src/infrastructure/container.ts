@@ -1,6 +1,7 @@
 import { createHttpSitioRepository } from "./http/http-sitio-repository";
 import { createHttpUserRepository } from "./http/http-user-repository";
 import { createHttpAuthService } from "./http/http-auth-service";
+import { createHttpRecoveryService } from "./http/http-recovery-service";
 import { createHttpRoleRepository } from "./http/http-role-repository";
 import { createHttpGuardSitioRepository } from "./http/http-guard-sitio-repository";
 import { createHttpTurnoRepository } from "./http/http-turno-repository";
@@ -9,6 +10,9 @@ import { createHttpEntryLogRepository } from "./http/http-entry-log-repository";
 import { createHttpIncidentLogRepository } from "./http/http-incident-log-repository";
 
 import { authenticateUser, type AuthenticateUserInput } from "@/application/use-cases/auth/authenticate-user";
+import { requestRecoveryCode, type RequestRecoveryCodeInput } from "@/application/use-cases/auth/request-recovery-code";
+import { verifyRecoveryCode, type VerifyRecoveryCodeInput } from "@/application/use-cases/auth/verify-recovery-code";
+import { resetPasswordWithCode, type ResetPasswordWithCodeInput } from "@/application/use-cases/auth/reset-password-with-code";
 import { listSitiosGuardia } from "@/application/use-cases/guard/list-sitios-guardia";
 import { iniciarTurno } from "@/application/use-cases/guard/iniciar-turno";
 import { finalizarTurno } from "@/application/use-cases/guard/finalizar-turno";
@@ -20,6 +24,7 @@ import { registrarSalidaEntryLog } from "@/application/use-cases/guard/registrar
 import { listMyEntryLogs } from "@/application/use-cases/guard/list-my-entry-logs";
 import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
+import { listManageableUsers } from "@/application/use-cases/admin/list-manageable-users";
 import { listRoundsBySite } from "@/application/use-cases/admin/list-rounds-by-site";
 import { getRoundDetail } from "@/application/use-cases/admin/get-round-detail";
 import { listEntryLogsBySite } from "@/application/use-cases/admin/list-entry-logs-by-site";
@@ -59,6 +64,7 @@ const sitioRepository = createHttpSitioRepository();
 const userRepository = createHttpUserRepository();
 const roleRepository = createHttpRoleRepository();
 const authService = createHttpAuthService();
+const recoveryService = createHttpRecoveryService();
 /**
  * Vista de sitios para el rol guard (`GET /sitios/guard`): nunca incluye
  * `qrCodeId`, a diferencia de `sitioRepository` (usado por admin/superAdmin).
@@ -71,6 +77,9 @@ const incidentLogRepository = createHttpIncidentLogRepository();
 
 export const container = {
   authenticateUser: (input: AuthenticateUserInput) => authenticateUser({ authService }, input),
+  requestRecoveryCode: (input: RequestRecoveryCodeInput) => requestRecoveryCode({ recoveryService }, input),
+  verifyRecoveryCode: (input: VerifyRecoveryCodeInput) => verifyRecoveryCode({ recoveryService }, input),
+  resetPasswordWithCode: (input: ResetPasswordWithCodeInput) => resetPasswordWithCode({ recoveryService }, input),
 
   listSitiosParaGuardia: () => listSitiosGuardia({ guardSitioRepository }),
   iniciarTurno: (sitioId: string) => iniciarTurno({ turnoRepository }, sitioId),
@@ -85,6 +94,7 @@ export const container = {
   submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),
 
   listGuards: () => listGuards({ userRepository }),
+  listManageableUsers: () => listManageableUsers({ userRepository }),
   assignGuardSite: (input: AssignGuardSiteInput) => assignGuardSite({ userRepository }, input),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   listRoles: () => listRoles({ roleRepository }),
@@ -100,12 +110,14 @@ export const container = {
   deactivateMarca: (input: DeactivateMarcaInput) => deactivateMarca({ sitioRepository }, input),
   createLocal: (input: CreateLocalInput) => createLocal({ sitioRepository }, input),
 
-  listRoundsBySite: (siteId: string) => listRoundsBySite({ recorridoRepository, turnoRepository, userRepository }, siteId),
+  listRoundsBySite: (siteId: string, range?: DateRange) =>
+    listRoundsBySite({ recorridoRepository, turnoRepository, userRepository }, siteId, range),
   getRoundDetail: (siteId: string, roundId: string) =>
     getRoundDetail({ recorridoRepository, turnoRepository, sitioRepository, userRepository }, siteId, roundId),
-  listEntryLogsBySite: (siteId: string) => listEntryLogsBySite({ entryLogRepository, userRepository }, siteId),
-  listIncidentLogsBySite: (siteId: string) =>
-    listIncidentLogsBySite({ incidentLogRepository, userRepository }, siteId),
+  listEntryLogsBySite: (siteId: string, range?: DateRange) =>
+    listEntryLogsBySite({ entryLogRepository, userRepository }, siteId, range),
+  listIncidentLogsBySite: (siteId: string, range?: DateRange) =>
+    listIncidentLogsBySite({ incidentLogRepository, userRepository }, siteId, range),
 
   getGuardDetail: (guardId: string) =>
     getGuardDetail(

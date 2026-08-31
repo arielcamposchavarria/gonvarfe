@@ -125,6 +125,8 @@ describe("getRoundDetail", () => {
     expect(detail?.recorrido.id).toBe(RECORRIDO.id);
     expect(detail?.sitio.id).toBe(SITE.id);
     expect(detail?.guardName).toBe("Ana Pérez");
+    expect(detail?.turnoId).toBe(TURNO.id);
+    expect(detail?.turnoIniciadoEn).toEqual(TURNO.iniciadoEn);
   });
 
   it("devuelve null si el recorrido no existe o pertenece a otro sitio", async () => {

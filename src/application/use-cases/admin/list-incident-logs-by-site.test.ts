@@ -91,4 +91,19 @@ describe("listIncidentLogsBySite", () => {
 
     expect(result).toEqual([]);
   });
+
+  it("filtra por el rango de fechas en que ocurrió la incidencia", async () => {
+    const incidentLogRepository = createFakeIncidentLogRepository();
+    const userRepository = createFakeUserRepository([GUARD]);
+
+    await incidentLogRepository.create(buildLog({ id: "log-fuera", occurredAt: new Date("2025-12-31T08:00:00Z") }));
+    await incidentLogRepository.create(buildLog({ id: "log-dentro", occurredAt: new Date("2026-01-05T08:00:00Z") }));
+
+    const result = await listIncidentLogsBySite({ incidentLogRepository, userRepository }, "site-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
+
+    expect(result.map((r) => r.log.id)).toEqual(["log-dentro"]);
+  });
 });

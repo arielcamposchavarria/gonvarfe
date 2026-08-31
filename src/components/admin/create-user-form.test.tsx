@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import { CreateUserForm } from "./create-user-form";
 
-vi.mock("@/app/superadmin/dashboard/new/actions", () => ({
+vi.mock("@/app/admin/users/new/actions", () => ({
   createUserAction: vi.fn(async (_prevState: { error: string | null }, formData: FormData) => {
     if (formData.get("username") === "existente") {
       return { error: 'El usuario "existente" ya existe.' };
@@ -14,29 +14,27 @@ vi.mock("@/app/superadmin/dashboard/new/actions", () => ({
 }));
 
 const ROLES = [
-  { id: "role-1", name: "superAdmin" },
   { id: "role-2", name: "admin" },
   { id: "role-3", name: "guard" },
 ];
 
-describe("CreateUserForm", () => {
-  it("muestra los campos del formulario y los roles disponibles, sin selector de sitio ni de contraseña", () => {
+describe("CreateUserForm (admin)", () => {
+  it("muestra los campos del formulario, con roles admin/guard y sin superAdmin", () => {
     render(<CreateUserForm roles={ROLES} />);
 
     expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/correo electrónico/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^rol$/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/contraseña/i)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/super administrador/i)).not.toBeInTheDocument();
   });
 
-  it("no muestra un selector de sitio ni siquiera al elegir el rol guard", async () => {
+  it("permite elegir el rol admin", async () => {
     const user = userEvent.setup();
     render(<CreateUserForm roles={ROLES} />);
 
-    await user.selectOptions(screen.getByLabelText(/^rol$/i), "guard");
-    expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/^rol$/i), "admin");
+    expect((screen.getByLabelText(/^rol$/i) as HTMLSelectElement).value).toBe("admin");
   });
 
   it("muestra el error devuelto por la acción cuando el usuario ya existe", async () => {

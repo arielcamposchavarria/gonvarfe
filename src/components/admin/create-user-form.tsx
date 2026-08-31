@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
-import { createUserAction, type CreateUserActionState } from "@/app/superadmin/dashboard/new/actions";
+import { createUserAction, type CreateUserActionState } from "@/app/admin/users/new/actions";
 import { ROLE_LABELS, type Role } from "@/domain/value-objects/role";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export function CreateUserForm({ roles }: CreateUserFormProps) {
   return (
     <div className="flex flex-col gap-3">
       <Link
-        href="/superadmin/dashboard"
+        href="/admin/users"
         className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ChevronLeft className="h-4 w-4" />

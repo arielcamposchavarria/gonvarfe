@@ -26,7 +26,7 @@ export default async function AdminRoundDetailPage({
   const detail = await container.getRoundDetail(siteId, roundId);
   if (!detail) notFound();
 
-  const { recorrido, guardName, sitio } = detail;
+  const { recorrido, guardName, sitio, turnoIniciadoEn } = detail;
   const marcas = new Map(sitio.marcas.map((marca) => [marca.id, marca]));
   const registros = [...recorrido.registros].sort((a, b) => a.orden - b.orden);
 
@@ -49,6 +49,9 @@ export default async function AdminRoundDetailPage({
         <p className="text-sm text-muted-foreground">
           {guardName} · {sitio.nombre}
         </p>
+        {turnoIniciadoEn && (
+          <p className="text-sm text-muted-foreground">Turno del {turnoIniciadoEn.toLocaleDateString()}</p>
+        )}
         <p className="text-sm text-muted-foreground">
           Iniciado {recorrido.iniciadoEn.toLocaleString()}
           {recorrido.completadoEn && ` · Finalizado ${recorrido.completadoEn.toLocaleString()}`}

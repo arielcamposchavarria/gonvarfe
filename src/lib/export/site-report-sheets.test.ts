@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  buildGuardRoundsSheet,
-  buildGuardScannedStationsSheet,
-  buildGuardMissedScansSheet,
-  buildGuardEntryLogsSheet,
-  buildGuardIncidentLogsSheet,
-} from "./guard-report-sheets";
+import { buildSiteRoundsSheet, buildSiteEntryLogsSheet, buildSiteIncidentLogsSheet } from "./site-report-sheets";
 import { createCedula } from "@/domain/value-objects/cedula";
 import { createPlateNumber } from "@/domain/value-objects/plate-number";
 import type { Recorrido } from "@/domain/entities/recorrido";
@@ -47,16 +41,19 @@ const RECORRIDO: Recorrido = {
 
 const TURNO_INICIADO_EN = new Date("2026-01-01T07:30:00.000Z");
 
-describe("buildGuardRoundsSheet", () => {
-  it("resume cada recorrido con su sitio, turno, estado y conteo de marcas", () => {
-    const sheet = buildGuardRoundsSheet([
-      { recorrido: RECORRIDO, siteName: "Plaza Amara", turnoId: "turno-1", turnoIniciadoEn: TURNO_INICIADO_EN },
+describe("buildSiteRoundsSheet", () => {
+  it("resume cada recorrido del sitio con el guarda, el turno, estado y conteo de marcas", () => {
+    const sheet = buildSiteRoundsSheet([
+      { recorrido: RECORRIDO, guardName: "Ana Pérez", turnoId: "turno-1", turnoIniciadoEn: TURNO_INICIADO_EN },
     ]);
 
     expect(sheet.name).toBe("Recorridos");
+    expect(sheet.columns.map((c) => c.header)).toEqual(
+      expect.arrayContaining(["Guarda", "Turno iniciado"]),
+    );
     expect(sheet.rows).toEqual([
       {
-        site: "Plaza Amara",
+        guard: "Ana Pérez",
         turnoStartedAt: TURNO_INICIADO_EN.toLocaleString(),
         sequence: 2,
         status: "Completado",
@@ -69,43 +66,8 @@ describe("buildGuardRoundsSheet", () => {
   });
 });
 
-describe("buildGuardScannedStationsSheet", () => {
-  it("mapea cada escaneo a tiempo a una fila", () => {
-    const scannedAt = new Date("2026-01-01T08:05:00.000Z");
-    const sheet = buildGuardScannedStationsSheet([
-      { siteName: "Plaza Amara", stationName: "Entrada principal", roundSequence: 1, scannedAt },
-    ]);
-
-    expect(sheet.name).toBe("QR escaneados");
-    expect(sheet.rows).toEqual([
-      { site: "Plaza Amara", station: "Entrada principal", round: 1, scannedAt: scannedAt.toLocaleString() },
-    ]);
-  });
-});
-
-describe("buildGuardMissedScansSheet", () => {
-  it("incluye el motivo reportado", () => {
-    const reportedAt = new Date("2026-01-01T08:10:00.000Z");
-    const sheet = buildGuardMissedScansSheet([
-      { siteName: "Plaza Amara", stationName: "Área de carga", roundSequence: 1, reason: "QR dañado", reportedAt },
-    ]);
-
-    expect(sheet.name).toBe("QR no escaneados");
-    expect(sheet.columns.map((c) => c.header)).toEqual(["Sitio", "Estación", "Recorrido #", "Reportado", "Justificación"]);
-    expect(sheet.rows).toEqual([
-      {
-        site: "Plaza Amara",
-        station: "Área de carga",
-        round: 1,
-        reportedAt: reportedAt.toLocaleString(),
-        reason: "QR dañado",
-      },
-    ]);
-  });
-});
-
-describe("buildGuardEntryLogsSheet", () => {
-  it("mapea la bitácora de ingresos con el conteo de fotos adjuntas", () => {
+describe("buildSiteEntryLogsSheet", () => {
+  it("mapea la bitácora de ingresos del sitio con el nombre del guarda y el conteo de fotos", () => {
     const log: EntryLog = {
       id: "log-1",
       sitioId: "site-1",
@@ -124,12 +86,12 @@ describe("buildGuardEntryLogsSheet", () => {
       createdAt: new Date(),
     };
 
-    const sheet = buildGuardEntryLogsSheet([{ log, siteName: "Plaza Amara" }]);
+    const sheet = buildSiteEntryLogsSheet([{ log, guardName: "Ana Pérez" }]);
 
     expect(sheet.name).toBe("Bitácora de ingresos");
     expect(sheet.rows).toEqual([
       {
-        site: "Plaza Amara",
+        guard: "Ana Pérez",
         date: "2026-01-01",
         entryTime: "08:00",
         exitTime: "08:15",
@@ -146,39 +108,10 @@ describe("buildGuardEntryLogsSheet", () => {
   });
 });
 
-describe("buildGuardIncidentLogsSheet", () => {
-  it("mapea la bitácora de incidencias con el conteo de fotos adjuntas", () => {
+describe("buildSiteIncidentLogsSheet", () => {
+  it("mapea la bitácora de incidencias del sitio con el nombre del guarda", () => {
     const log: IncidentLog = {
       id: "log-1",
-      sitioId: "site-1",
-      guardId: "guard-1",
-      occurredAt: new Date("2026-01-01T08:20:00.000Z"),
-      incidentType: "Otro",
-      incidentTypeDetail: null,
-      locationZone: "Entrada",
-      description: "Sin novedad",
-      photoUrls: [],
-      createdAt: new Date(),
-    };
-
-    const sheet = buildGuardIncidentLogsSheet([{ log, siteName: "Plaza Amara" }]);
-
-    expect(sheet.name).toBe("Bitácora de incidencias");
-    expect(sheet.rows).toEqual([
-      {
-        site: "Plaza Amara",
-        occurredAt: log.occurredAt.toLocaleString(),
-        incidentType: "Otro",
-        locationZone: "Entrada",
-        description: "Sin novedad",
-        photoCount: 0,
-      },
-    ]);
-  });
-
-  it("usa el detalle libre como tipo cuando la incidencia es Otro", () => {
-    const log: IncidentLog = {
-      id: "log-2",
       sitioId: "site-1",
       guardId: "guard-1",
       occurredAt: new Date("2026-01-01T08:20:00.000Z"),
@@ -190,8 +123,18 @@ describe("buildGuardIncidentLogsSheet", () => {
       createdAt: new Date(),
     };
 
-    const sheet = buildGuardIncidentLogsSheet([{ log, siteName: "Plaza Amara" }]);
+    const sheet = buildSiteIncidentLogsSheet([{ log, guardName: "Ana Pérez" }]);
 
-    expect(sheet.rows[0].incidentType).toBe("Fuga de agua en el parqueo");
+    expect(sheet.name).toBe("Bitácora de incidencias");
+    expect(sheet.rows).toEqual([
+      {
+        guard: "Ana Pérez",
+        occurredAt: log.occurredAt.toLocaleString(),
+        incidentType: "Fuga de agua en el parqueo",
+        locationZone: "Entrada",
+        description: "Sin novedad",
+        photoCount: 0,
+      },
+    ]);
   });
 });

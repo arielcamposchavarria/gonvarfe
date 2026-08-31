@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Building2, ListChecks, ShieldCheck, UserRound } from "lucide-react";
+import { Building2, ListChecks, ShieldCheck, Users, UserRound } from "lucide-react";
 
 import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
@@ -9,6 +9,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/sitios", label: "Sitios", icon: Building2 },
   { href: "/admin/dashboard", label: "Rondas", icon: ListChecks },
   { href: "/admin/guards", label: "Guardas", icon: ShieldCheck },
+  { href: "/admin/users", label: "Usuarios", icon: Users },
   { href: "/admin/profile", label: "Perfil", icon: UserRound },
 ];
 

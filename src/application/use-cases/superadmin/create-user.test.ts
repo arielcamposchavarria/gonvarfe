@@ -54,7 +54,7 @@ describe("createUser", () => {
 
     const user = await createUser(
       { userRepository },
-      { name: "Nueva Admin", username: "nueva-admin", password: "clave123", role: "admin" },
+      { name: "Nueva Admin", username: "nueva-admin", email: "nueva-admin@example.com", role: "admin" },
     );
 
     expect(user.username).toBe("nueva-admin");
@@ -66,7 +66,7 @@ describe("createUser", () => {
 
     const user = await createUser(
       { userRepository },
-      { name: "Nuevo Oficial", username: "nuevo-oficial", password: "clave123", role: "guard" },
+      { name: "Nuevo Oficial", username: "nuevo-oficial", email: "nuevo-oficial@example.com", role: "guard" },
     );
 
     expect(user.role).toBe("guard");
@@ -86,7 +86,7 @@ describe("createUser", () => {
     await expect(
       createUser(
         { userRepository },
-        { name: "Otro", username: "duplicado", password: "clave123", role: "admin" },
+        { name: "Otro", username: "duplicado", email: "otro@example.com", role: "admin" },
       ),
     ).rejects.toBeInstanceOf(UsernameTakenError);
   });
