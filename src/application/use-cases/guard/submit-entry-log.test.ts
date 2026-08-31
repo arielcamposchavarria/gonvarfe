@@ -19,6 +19,11 @@ function createFakeEntryLogRepository(): EntryLogRepository {
       logs.push(log);
       return log;
     },
+    async registrarSalida(logId) {
+      const log = logs.find((entry) => entry.id === logId);
+      if (!log) throw new Error("No existe.");
+      return log;
+    },
   };
 }
 
@@ -32,8 +37,6 @@ describe("submitEntryLog", () => {
         sitioId: "sitio-1",
         guardId: "guard-1",
         date: "2026-08-19",
-        entryTime: "08:00",
-        exitTime: "08:15",
         plate: createPlateNumber("ABC123"),
         driverName: "Juan Pérez",
         cedula: createCedula("123456789"),
@@ -48,6 +51,9 @@ describe("submitEntryLog", () => {
     expect(log.id).toBeTruthy();
     expect(log.sitioId).toBe("sitio-1");
     expect(log.visitingLocal).toBe("BAC");
+    // horaEntrada/horaSalida los pone el backend real; el placeholder local
+    // no debe confundirse con un ingreso ya cerrado.
+    expect(log.exitTime).toBeNull();
     await expect(entryLogRepository.findBySite("sitio-1")).resolves.toEqual([log]);
   });
 });

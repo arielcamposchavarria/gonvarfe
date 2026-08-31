@@ -107,12 +107,52 @@ describe("createHttpRecorridoRepository", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const repository = createHttpRecorridoRepository();
-    await repository.reportarPerdido("QR dañado");
+    await repository.reportarPerdido({ motivo: "QR dañado" });
 
     expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/recorridos/reportar-perdido", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer test-token" },
       body: JSON.stringify({ motivo: "QR dañado" }),
+    });
+  });
+
+  it("envía fotos y observación al escanear, y los mapea de vuelta en el registro", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse({
+        ...BACKEND_RECORRIDO,
+        registros: [{ ...BACKEND_RECORRIDO.registros[0], fotos: ["data:image/png;base64,foto1"], observacion: "Vidrio roto" }],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpRecorridoRepository();
+    const result = await repository.escanear({
+      qrValue: "qr-abc",
+      skip: false,
+      fotos: ["data:image/png;base64,foto1"],
+      observacion: "Vidrio roto",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/recorridos/escanear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer test-token" },
+      body: JSON.stringify({ qrValue: "qr-abc", skip: false, fotos: ["data:image/png;base64,foto1"], observacion: "Vidrio roto" }),
+    });
+    expect(result.registros[0].fotos).toEqual(["data:image/png;base64,foto1"]);
+    expect(result.registros[0].observacion).toBe("Vidrio roto");
+  });
+
+  it("envía fotos y observación al reportar perdido", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(BACKEND_RECORRIDO));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpRecorridoRepository();
+    await repository.reportarPerdido({ motivo: "QR dañado", fotos: ["data:image/png;base64,foto1"], observacion: "Sin acceso" });
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/recorridos/reportar-perdido", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer test-token" },
+      body: JSON.stringify({ motivo: "QR dañado", fotos: ["data:image/png;base64,foto1"], observacion: "Sin acceso" }),
     });
   });
 

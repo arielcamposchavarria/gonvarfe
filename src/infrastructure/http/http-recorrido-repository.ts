@@ -1,4 +1,8 @@
-import type { EscanearInput, RecorridoRepository } from "@/domain/ports/recorrido-repository";
+import type {
+  EscanearInput,
+  RecorridoRepository,
+  ReportarPerdidoInput,
+} from "@/domain/ports/recorrido-repository";
 import type { Recorrido, RecorridoEstado } from "@/domain/entities/recorrido";
 import type { RegistroEstado } from "@/domain/entities/registro";
 import { getAccessToken } from "@/lib/auth/session";
@@ -12,6 +16,8 @@ interface BackendRegistro {
   cierraEn: string;
   escaneadoEn: string | null;
   motivoPerdido: string | null;
+  fotos: string[] | null;
+  observacion: string | null;
 }
 
 interface BackendRecorrido {
@@ -44,6 +50,8 @@ function mapRecorrido(dto: BackendRecorrido): Recorrido {
       cierraEn: new Date(registro.cierraEn),
       escaneadoEn: registro.escaneadoEn ? new Date(registro.escaneadoEn) : null,
       motivoPerdido: registro.motivoPerdido,
+      fotos: registro.fotos,
+      observacion: registro.observacion,
     })),
   };
 }
@@ -89,7 +97,12 @@ export function createHttpRecorridoRepository(): RecorridoRepository {
       const res = await fetch(`${baseUrl}/recorridos/escanear`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        body: JSON.stringify({ qrValue: input.qrValue, skip: input.skip }),
+        body: JSON.stringify({
+          qrValue: input.qrValue,
+          skip: input.skip,
+          fotos: input.fotos,
+          observacion: input.observacion,
+        }),
       });
       if (res.status === 404) throw new Error("No hay un turno activo. Inicie un turno primero.");
       if (res.status === 409) return throwConflict(res);
@@ -97,11 +110,15 @@ export function createHttpRecorridoRepository(): RecorridoRepository {
       return mapRecorrido((await res.json()) as BackendRecorrido);
     },
 
-    async reportarPerdido(motivo: string) {
+    async reportarPerdido(input: ReportarPerdidoInput) {
       const res = await fetch(`${baseUrl}/recorridos/reportar-perdido`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        body: JSON.stringify({ motivo }),
+        body: JSON.stringify({
+          motivo: input.motivo,
+          fotos: input.fotos,
+          observacion: input.observacion,
+        }),
       });
       if (res.status === 404) throw new Error("No hay un turno activo. Inicie un turno primero.");
       if (res.status === 409) return throwConflict(res);

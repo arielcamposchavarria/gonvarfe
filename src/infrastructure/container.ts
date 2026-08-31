@@ -16,6 +16,8 @@ import { obtenerEstadoTurno } from "@/application/use-cases/guard/obtener-estado
 import { registrarEscaneo } from "@/application/use-cases/guard/registrar-escaneo";
 import { reportarPerdido } from "@/application/use-cases/guard/reportar-perdido";
 import { submitEntryLog, type SubmitEntryLogInput } from "@/application/use-cases/guard/submit-entry-log";
+import { registrarSalidaEntryLog } from "@/application/use-cases/guard/registrar-salida-entry-log";
+import { listMyEntryLogs } from "@/application/use-cases/guard/list-my-entry-logs";
 import { submitIncidentLog, type SubmitIncidentLogInput } from "@/application/use-cases/guard/submit-incident-log";
 import { listGuards } from "@/application/use-cases/admin/list-guards";
 import { listRoundsBySite } from "@/application/use-cases/admin/list-rounds-by-site";
@@ -41,9 +43,10 @@ import { deactivateMarca, type DeactivateMarcaInput } from "@/application/use-ca
 import { createLocal, type CreateLocalInput } from "@/application/use-cases/admin/create-local";
 import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
+import { assignGuardSite, type AssignGuardSiteInput } from "@/application/use-cases/superadmin/assign-guard-site";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { CreateUserInput } from "@/domain/ports/user-repository";
-import type { EscanearInput } from "@/domain/ports/recorrido-repository";
+import type { EscanearInput, ReportarPerdidoInput } from "@/domain/ports/recorrido-repository";
 import type { DateRange } from "@/lib/date-range";
 
 /**
@@ -74,12 +77,15 @@ export const container = {
   finalizarTurno: () => finalizarTurno({ turnoRepository }),
   obtenerEstadoTurno: () => obtenerEstadoTurno({ turnoRepository, recorridoRepository, guardSitioRepository }),
   registrarEscaneo: (input: EscanearInput) => registrarEscaneo({ recorridoRepository }, input),
-  reportarPerdido: (motivo: string) => reportarPerdido({ recorridoRepository }, motivo),
+  reportarPerdido: (input: ReportarPerdidoInput) => reportarPerdido({ recorridoRepository }, input),
 
   submitEntryLog: (input: SubmitEntryLogInput) => submitEntryLog({ entryLogRepository }, input),
+  registrarSalidaEntryLog: (logId: string) => registrarSalidaEntryLog({ entryLogRepository }, logId),
+  listMyEntryLogs: (guardId: string) => listMyEntryLogs({ entryLogRepository }, guardId),
   submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),
 
   listGuards: () => listGuards({ userRepository }),
+  assignGuardSite: (input: AssignGuardSiteInput) => assignGuardSite({ userRepository }, input),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),

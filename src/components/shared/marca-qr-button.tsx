@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { downloadDataUrl, qrFileName, svgToPngDataUrl } from "@/lib/qr/svg-to-png";
+
+const QR_EXPORT_SIZE = 512;
 
 export interface MarcaQrButtonProps {
   sitioId: string;
@@ -21,6 +24,18 @@ export function MarcaQrButton({ sitioId, marca, generateQrAction }: MarcaQrButto
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  async function handleDownload() {
+    if (!svgRef.current) return;
+    setError(null);
+    try {
+      const dataUrl = await svgToPngDataUrl(svgRef.current, QR_EXPORT_SIZE);
+      downloadDataUrl(dataUrl, qrFileName(marca.nombre));
+    } catch {
+      setError("No se pudo descargar el QR.");
+    }
+  }
 
   function handleClick() {
     if (qrCodeId) {
@@ -53,9 +68,14 @@ export function MarcaQrButton({ sitioId, marca, generateQrAction }: MarcaQrButto
             <DialogDescription>Código único para esta marca.</DialogDescription>
           </DialogHeader>
           {qrCodeId && (
-            <div className="flex justify-center py-2">
-              <QRCodeSVG value={qrCodeId} size={192} />
-            </div>
+            <>
+              <div className="flex justify-center py-2">
+                <QRCodeSVG ref={svgRef} value={qrCodeId} size={192} />
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={handleDownload}>
+                Descargar
+              </Button>
+            </>
           )}
         </DialogContent>
       </Dialog>

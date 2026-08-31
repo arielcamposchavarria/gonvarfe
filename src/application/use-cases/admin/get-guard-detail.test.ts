@@ -84,6 +84,9 @@ function createFakeUserRepository(users: AppUser[]): UserRepository {
     async create() {
       throw new Error("No usado en esta prueba.");
     },
+    async assignSite() {
+      throw new Error("No usado en esta prueba.");
+    },
   };
 }
 
@@ -218,6 +221,7 @@ describe("getGuardDetail", () => {
       findBySite: vi.fn(),
       findByGuard: vi.fn().mockResolvedValue([entryLog]),
       create: vi.fn(),
+      registrarSalida: vi.fn(),
     };
     const incidentLogRepository: IncidentLogRepository = {
       findBySite: vi.fn(),
@@ -258,7 +262,12 @@ describe("getGuardDetail", () => {
       porSitio: vi.fn(),
       porId: vi.fn(),
     };
-    const entryLogRepository: EntryLogRepository = { findBySite: vi.fn(), findByGuard: vi.fn().mockResolvedValue([]), create: vi.fn() };
+    const entryLogRepository: EntryLogRepository = {
+      findBySite: vi.fn(),
+      findByGuard: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      registrarSalida: vi.fn(),
+    };
     const incidentLogRepository: IncidentLogRepository = {
       findBySite: vi.fn(),
       findByGuard: vi.fn().mockResolvedValue([]),
@@ -298,7 +307,12 @@ describe("getGuardDetail", () => {
       porSitio: vi.fn(),
       porId: vi.fn(),
     };
-    const entryLogRepository: EntryLogRepository = { findBySite: vi.fn(), findByGuard: vi.fn(), create: vi.fn() };
+    const entryLogRepository: EntryLogRepository = {
+      findBySite: vi.fn(),
+      findByGuard: vi.fn(),
+      create: vi.fn(),
+      registrarSalida: vi.fn(),
+    };
     const incidentLogRepository: IncidentLogRepository = { findBySite: vi.fn(), findByGuard: vi.fn(), create: vi.fn() };
     const sitioRepository = createFakeSitioRepository([SITE_1]);
     const admin: AppUser = {

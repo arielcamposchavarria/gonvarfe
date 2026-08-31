@@ -15,6 +15,11 @@ export default async function GuardSelectSitePage() {
   if (estado.turno) redirect("/guard/dashboard");
 
   const sitios = await container.listSitiosParaGuardia();
+  // Un solo sitio vigente por guardia: si el superAdmin le asignó uno, no
+  // elige entre todos los sitios activos, solo ve el suyo.
+  const visibleSitios = guard.assignedSiteId
+    ? sitios.filter((sitio) => sitio.id === guard.assignedSiteId)
+    : sitios;
 
-  return <SelectSiteForm sitios={sitios} />;
+  return <SelectSiteForm sitios={visibleSitios} />;
 }

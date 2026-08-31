@@ -82,6 +82,49 @@ describe("createHttpUserRepository", () => {
     expect(user.role).toBe("guard");
   });
 
+  it("mapea sitioAsignadoId a assignedSiteId al leer un guard", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse({
+        id: "guard-1",
+        username: "msolano",
+        name: "Mario Solano",
+        role: "guard",
+        isActive: true,
+        sitioAsignadoId: "sitio-1",
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    const user = await repository.findById("guard-1");
+
+    expect(user).toMatchObject({ role: "guard", assignedSiteId: "sitio-1" });
+  });
+
+  it("asigna el sitio con PATCH /users/:id/sitio, enviando null para desasignar", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse({
+        id: "guard-1",
+        username: "msolano",
+        name: "Mario Solano",
+        role: "guard",
+        isActive: true,
+        sitioAsignadoId: null,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    const user = await repository.assignSite("guard-1", null);
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/users/guard-1/sitio", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer test-token" },
+      body: JSON.stringify({ sitioId: null }),
+    });
+    expect(user).toMatchObject({ assignedSiteId: null });
+  });
+
   it("lanza UsernameTakenError si el backend responde 409", async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.includes("/roles")) {
