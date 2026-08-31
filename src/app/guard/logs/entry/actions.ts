@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireGuard } from "@/lib/auth/require-guard";
@@ -31,8 +32,6 @@ export async function submitEntryLogAction(
 
   const parsed = entryLogSchema.safeParse({
     date: formData.get("date"),
-    entryTime: formData.get("entryTime"),
-    exitTime: formData.get("exitTime"),
     plate: formData.get("plate"),
     driverName: formData.get("driverName"),
     cedula: formData.get("cedula"),
@@ -57,8 +56,6 @@ export async function submitEntryLogAction(
     sitioId: estado.sitio.id,
     guardId: guard.id,
     date: parsed.data.date,
-    entryTime: parsed.data.entryTime,
-    exitTime: parsed.data.exitTime,
     plate: createPlateNumber(parsed.data.plate),
     driverName: parsed.data.driverName,
     cedula: createCedula(parsed.data.cedula),
@@ -70,4 +67,19 @@ export async function submitEntryLogAction(
   });
 
   redirect("/guard/dashboard");
+}
+
+export interface RegistrarSalidaActionState {
+  error: string | null;
+}
+
+export async function registrarSalidaAction(logId: string): Promise<RegistrarSalidaActionState> {
+  await requireGuard();
+  try {
+    await container.registrarSalidaEntryLog(logId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Ocurrió un error inesperado." };
+  }
+  revalidatePath("/guard/logs/entry");
+  return { error: null };
 }

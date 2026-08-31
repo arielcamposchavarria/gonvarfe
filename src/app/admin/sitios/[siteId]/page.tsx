@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { CreateLocalForm } from "@/components/admin/create-local-form";
 import { AddMarcaForm } from "@/components/shared/add-marca-form";
 import { MarcaQrButton } from "@/components/shared/marca-qr-button";
+import { DownloadAllQrButton } from "@/components/shared/download-all-qr-button";
 import { EditSiteForm } from "@/components/shared/edit-site-form";
 import { DeactivateSiteButton } from "@/components/shared/deactivate-site-button";
 import { EditMarcaForm } from "@/components/shared/edit-marca-form";
@@ -48,8 +49,15 @@ export default async function AdminSitioDetailPage({ params }: PageProps<"/admin
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Marcas</CardTitle>
-          <CardDescription>Cada marca puede tener un código QR único.</CardDescription>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">Marcas</CardTitle>
+              <CardDescription>Cada marca puede tener un código QR único.</CardDescription>
+            </div>
+            {sitio.marcas.length > 0 && (
+              <DownloadAllQrButton sitioId={sitio.id} marcas={sitio.marcas} generateQrAction={generateMarcaQrAction} />
+            )}
+          </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {sitio.marcas.length === 0 ? (

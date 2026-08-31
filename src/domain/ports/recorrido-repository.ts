@@ -4,13 +4,23 @@ export interface EscanearInput {
   /** Ausente cuando `skip` es true (modo demo). */
   qrValue?: string;
   skip: boolean;
+  /** Fotos adjuntas a la marca resuelta (opcional, máximo MAX_LOG_IMAGES). */
+  fotos?: string[];
+  /** Observación opcional sobre la marca resuelta. */
+  observacion?: string;
+}
+
+export interface ReportarPerdidoInput {
+  motivo: string;
+  fotos?: string[];
+  observacion?: string;
 }
 
 export interface RecorridoRepository {
   /** POST /recorridos/escanear — el servidor decide a cuál registro corresponde, nunca el cliente. */
   escanear(input: EscanearInput): Promise<Recorrido>;
   /** POST /recorridos/reportar-perdido */
-  reportarPerdido(motivo: string): Promise<Recorrido>;
+  reportarPerdido(input: ReportarPerdidoInput): Promise<Recorrido>;
   /** GET /recorridos/activo */
   activo(): Promise<Recorrido | null>;
   /** GET /recorridos/turno/:turnoId */

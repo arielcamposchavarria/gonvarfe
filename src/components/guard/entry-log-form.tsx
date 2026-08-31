@@ -22,7 +22,6 @@ const INITIAL_STATE: EntryLogActionState = { error: null };
 export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
   const [state, formAction, isPending] = useActionState(submitEntryLogAction, INITIAL_STATE);
   const [defaultDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [defaultTime] = useState(() => new Date().toTimeString().slice(0, 5));
   const [visitingLocal, setVisitingLocal] = useState("");
 
   return (
@@ -43,16 +42,6 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
               <div className="flex flex-col gap-2">
                 <Label htmlFor="date">Fecha</Label>
                 <Input id="date" name="date" type="date" defaultValue={defaultDate} required />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="entryTime">Hora ingreso</Label>
-                  <Input id="entryTime" name="entryTime" type="time" defaultValue={defaultTime} required />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="exitTime">Hora salida</Label>
-                  <Input id="exitTime" name="exitTime" type="time" defaultValue={defaultTime} required />
-                </div>
               </div>
 
               <div className="flex flex-col gap-2">

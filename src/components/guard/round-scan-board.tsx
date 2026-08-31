@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { QrScanCamera } from "./qr-scan-camera";
 import { ReportMissedDialog } from "./report-missed-dialog";
+import { ConfirmScanDialog } from "./confirm-scan-dialog";
 import { registrarEscaneoAction, finalizarTurnoAction } from "@/app/guard/actions";
+import type { EscanearInput } from "@/domain/ports/recorrido-repository";
 import { useNow } from "@/lib/hooks/use-now";
 import { cn } from "@/lib/utils";
 import { hasWindowOpened, isWindowExpired } from "@/domain/value-objects/time-window";
@@ -38,6 +40,7 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
   const [error, setError] = useState<string | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isReportingMissed, setIsReportingMissed] = useState(false);
+  const [pendingScan, setPendingScan] = useState<EscanearInput | null>(null);
   const now = useNow();
   const router = useRouter();
 
@@ -50,12 +53,23 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
   }
 
   function handleSkip() {
-    run(() => registrarEscaneoAction({ skip: true }));
+    setPendingScan({ skip: true });
   }
 
   function handleDecoded(qrValue: string) {
     setIsCameraOpen(false);
-    run(() => registrarEscaneoAction({ qrValue, skip: false }));
+    setPendingScan({ qrValue, skip: false });
+  }
+
+  function handleConfirmScan(extra: { fotos: string[]; observacion: string }) {
+    if (!pendingScan) return;
+    const input: EscanearInput = {
+      ...pendingScan,
+      fotos: extra.fotos.length > 0 ? extra.fotos : undefined,
+      observacion: extra.observacion.trim() || undefined,
+    };
+    setPendingScan(null);
+    run(() => registrarEscaneoAction(input));
   }
 
   function handleFinalizarTurno() {
@@ -191,6 +205,13 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
           setIsReportingMissed(false);
           if (submitError) setError(submitError);
         }}
+      />
+
+      <ConfirmScanDialog
+        open={pendingScan !== null}
+        onCancel={() => setPendingScan(null)}
+        onConfirm={handleConfirmScan}
+        isPending={isPending}
       />
     </div>
   );

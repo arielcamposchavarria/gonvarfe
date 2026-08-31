@@ -4,8 +4,6 @@ import { isValidPlateNumber } from "@/domain/value-objects/plate-number";
 
 export const entryLogSchema = z.object({
   date: z.string().trim().min(1, "Seleccione la fecha"),
-  entryTime: z.string().trim().min(1, "Ingrese la hora de ingreso"),
-  exitTime: z.string().trim().min(1, "Ingrese la hora de salida"),
   plate: z
     .string()
     .trim()

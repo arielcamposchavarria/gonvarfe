@@ -31,6 +31,9 @@ function createFakeUserRepository(users: GuardUser[]): UserRepository {
     async create() {
       throw new Error("No usado en esta prueba.");
     },
+    async assignSite() {
+      throw new Error("No usado en esta prueba.");
+    },
   };
 }
 
@@ -45,6 +48,11 @@ function createFakeEntryLogRepository(): EntryLogRepository {
     },
     async create(log) {
       logs.push(log);
+      return log;
+    },
+    async registrarSalida(logId) {
+      const log = logs.find((entry) => entry.id === logId);
+      if (!log) throw new Error("No existe.");
       return log;
     },
   };

@@ -7,8 +7,10 @@ export interface EntryLog {
   readonly sitioId: string;
   readonly guardId: string;
   date: string;
+  /** Generada por el servidor al crear el registro; el guard no la escribe. */
   entryTime: string;
-  exitTime: string;
+  /** Null hasta que el guard registra la salida (endpoint separado). */
+  exitTime: string | null;
   plate: PlateNumber;
   driverName: string;
   cedula: Cedula;

@@ -15,4 +15,6 @@ export interface Registro {
   readonly cierraEn: Date;
   escaneadoEn: Date | null;
   motivoPerdido: string | null;
+  fotos?: string[] | null;
+  observacion?: string | null;
 }

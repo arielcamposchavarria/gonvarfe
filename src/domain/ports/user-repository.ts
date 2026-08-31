@@ -20,4 +20,6 @@ export interface UserRepository {
   findById(id: string): Promise<AppUser | null>;
   findByRole(role: Role): Promise<AppUser[]>;
   create(input: CreateUserInput): Promise<AppUser>;
+  /** Solo aplica a guards; null desasigna el sitio vigente. */
+  assignSite(guardId: string, siteId: string | null): Promise<AppUser>;
 }

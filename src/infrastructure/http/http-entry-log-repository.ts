@@ -1,7 +1,7 @@
 import type { EntryLogRepository } from "@/domain/ports/entry-log-repository";
 import type { EntryLog } from "@/domain/entities/entry-log";
-import { createCedula } from "@/domain/value-objects/cedula";
-import { createPlateNumber } from "@/domain/value-objects/plate-number";
+import { createCedula, type Cedula } from "@/domain/value-objects/cedula";
+import { createPlateNumber, type PlateNumber } from "@/domain/value-objects/plate-number";
 import { getAccessToken } from "@/lib/auth/session";
 
 interface BackendEntryLog {
@@ -11,7 +11,7 @@ interface BackendEntryLog {
   guardiaId: string;
   fecha: string;
   horaEntrada: string;
-  horaSalida: string;
+  horaSalida: string | null;
   placa: string;
   nombreConductor: string;
   cedula: string;
@@ -23,6 +23,25 @@ interface BackendEntryLog {
   createdAt: string;
 }
 
+// El backend no impone el formato estricto de placa/cédula (solo largo
+// máximo): un registro legado o creado fuera del formulario del guard puede
+// no calzar con el value object. No dejar que eso tumbe el reporte completo.
+function safePlateNumber(value: string): PlateNumber {
+  try {
+    return createPlateNumber(value);
+  } catch {
+    return value.trim().toUpperCase() as PlateNumber;
+  }
+}
+
+function safeCedula(value: string): Cedula {
+  try {
+    return createCedula(value);
+  } catch {
+    return value.trim() as Cedula;
+  }
+}
+
 function mapEntryLog(dto: BackendEntryLog): EntryLog {
   return {
     id: dto.id,
@@ -31,9 +50,9 @@ function mapEntryLog(dto: BackendEntryLog): EntryLog {
     date: dto.fecha,
     entryTime: dto.horaEntrada,
     exitTime: dto.horaSalida,
-    plate: createPlateNumber(dto.placa),
+    plate: safePlateNumber(dto.placa),
     driverName: dto.nombreConductor,
-    cedula: createCedula(dto.cedula),
+    cedula: safeCedula(dto.cedula),
     company: dto.empresa,
     reason: dto.motivo,
     visitingLocal: dto.localVisitado,
@@ -77,8 +96,6 @@ export function createHttpEntryLogRepository(): EntryLogRepository {
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
         body: JSON.stringify({
           fecha: log.date,
-          horaEntrada: log.entryTime,
-          horaSalida: log.exitTime,
           placa: log.plate,
           nombreConductor: log.driverName,
           cedula: log.cedula,
@@ -90,6 +107,15 @@ export function createHttpEntryLogRepository(): EntryLogRepository {
         }),
       });
       if (!res.ok) throw new Error("No se pudo registrar el ingreso.");
+      return mapEntryLog((await res.json()) as BackendEntryLog);
+    },
+
+    async registrarSalida(logId) {
+      const res = await fetch(`${baseUrl}/bitacora/ingresos/${logId}/salida`, {
+        method: "PATCH",
+        headers: await authHeaders(),
+      });
+      if (!res.ok) throw new Error("No se pudo registrar la salida.");
       return mapEntryLog((await res.json()) as BackendEntryLog);
     },
   };
