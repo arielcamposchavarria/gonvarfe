@@ -63,5 +63,15 @@ export function createHttpUserRepository(): UserRepository {
       if (!res.ok) throw new Error("No se pudo crear el usuario.");
       return buildAppUser((await res.json()) as BackendUser);
     },
+
+    async assignSite(guardId, siteId) {
+      const res = await fetch(`${baseUrl}/users/${guardId}/sitio`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ sitioId: siteId }),
+      });
+      if (!res.ok) throw new Error("No se pudo asignar el sitio.");
+      return buildAppUser((await res.json()) as BackendUser);
+    },
   };
 }

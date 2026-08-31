@@ -84,6 +84,9 @@ function createFakeUserRepository(users: AppUser[]): UserRepository {
     async create() {
       throw new Error("No usado en esta prueba.");
     },
+    async assignSite() {
+      throw new Error("No usado en esta prueba.");
+    },
   };
 }
 

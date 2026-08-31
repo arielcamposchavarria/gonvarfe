@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Building2, UserRound, Users } from "lucide-react";
+import { Building2, Shield, UserRound, Users } from "lucide-react";
 
 import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
@@ -8,6 +8,7 @@ import { AppShell, type NavItem } from "@/components/shared/app-shell";
 const NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/dashboard", label: "Usuarios", icon: Users },
   { href: "/superadmin/sites", label: "Sitios", icon: Building2 },
+  { href: "/superadmin/guards", label: "Guardias", icon: Shield },
   { href: "/superadmin/profile", label: "Perfil", icon: UserRound },
 ];
 

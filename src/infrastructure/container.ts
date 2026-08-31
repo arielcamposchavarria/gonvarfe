@@ -43,6 +43,7 @@ import { deactivateMarca, type DeactivateMarcaInput } from "@/application/use-ca
 import { createLocal, type CreateLocalInput } from "@/application/use-cases/admin/create-local";
 import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
+import { assignGuardSite, type AssignGuardSiteInput } from "@/application/use-cases/superadmin/assign-guard-site";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { CreateUserInput } from "@/domain/ports/user-repository";
 import type { EscanearInput, ReportarPerdidoInput } from "@/domain/ports/recorrido-repository";
@@ -84,6 +85,7 @@ export const container = {
   submitIncidentLog: (input: SubmitIncidentLogInput) => submitIncidentLog({ incidentLogRepository }, input),
 
   listGuards: () => listGuards({ userRepository }),
+  assignGuardSite: (input: AssignGuardSiteInput) => assignGuardSite({ userRepository }, input),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),
