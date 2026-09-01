@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
-import { requireSuperAdmin } from "@/lib/auth/require-super-admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export interface AssignGuardSiteActionState {
   error: string | null;
@@ -13,7 +13,7 @@ export async function assignGuardSiteAction(
   _prevState: AssignGuardSiteActionState,
   formData: FormData,
 ): Promise<AssignGuardSiteActionState> {
-  await requireSuperAdmin();
+  await requireAdmin();
 
   const guardId = formData.get("guardId");
   if (typeof guardId !== "string" || !guardId) {
@@ -29,6 +29,6 @@ export async function assignGuardSiteAction(
     return { error: error instanceof Error ? error.message : "Ocurrió un error inesperado." };
   }
 
-  revalidatePath("/superadmin/guards");
+  revalidatePath("/admin/guards");
   return { error: null };
 }
