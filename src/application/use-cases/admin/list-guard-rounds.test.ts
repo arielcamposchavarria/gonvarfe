@@ -111,22 +111,26 @@ describe("listGuardRounds", () => {
     expect(result[1].siteName).toBe("Plaza Amara");
   });
 
-  it("filtra por el rango de fechas de inicio del recorrido", async () => {
+  it("filtra por el rango de fechas de INICIO DEL TURNO, no del recorrido individual", async () => {
     const turnoRepository: TurnoRepository = {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
-      porGuardia: vi.fn().mockResolvedValue([buildTurno({})]),
+      porGuardia: vi.fn().mockResolvedValue([
+        buildTurno({ id: "turno-fuera", iniciadoEn: new Date("2025-12-31T08:00:00Z") }),
+        buildTurno({ id: "turno-dentro", iniciadoEn: new Date("2026-01-05T08:00:00Z") }),
+      ]),
       porSitio: vi.fn(),
     };
     const recorridoRepository: RecorridoRepository = {
       escanear: vi.fn(),
       reportarPerdido: vi.fn(),
       activo: vi.fn(),
-      porTurno: vi.fn().mockResolvedValue([
-        buildRecorrido({ id: "recorrido-fuera", iniciadoEn: new Date("2025-12-31T08:00:00Z") }),
-        buildRecorrido({ id: "recorrido-dentro", iniciadoEn: new Date("2026-01-05T08:00:00Z") }),
-      ]),
+      porTurno: vi.fn().mockImplementation(async (turnoId: string) =>
+        turnoId === "turno-fuera"
+          ? [buildRecorrido({ id: "recorrido-fuera", turnoId: "turno-fuera", iniciadoEn: new Date("2025-12-31T08:00:00Z") })]
+          : [buildRecorrido({ id: "recorrido-dentro", turnoId: "turno-dentro", iniciadoEn: new Date("2026-01-05T08:00:00Z") })],
+      ),
       porSitio: vi.fn(),
       porId: vi.fn(),
     };
@@ -138,5 +142,34 @@ describe("listGuardRounds", () => {
     });
 
     expect(result.map((r) => r.recorrido.id)).toEqual(["recorrido-dentro"]);
+  });
+
+  it("mantiene junto un turno completo aunque uno de sus recorridos haya arrancado pasada la medianoche", async () => {
+    const turnoRepository: TurnoRepository = {
+      activo: vi.fn(),
+      iniciar: vi.fn(),
+      finalizar: vi.fn(),
+      porGuardia: vi.fn().mockResolvedValue([buildTurno({ id: "turno-medianoche", iniciadoEn: new Date("2025-12-31T23:50:00Z") })]),
+      porSitio: vi.fn(),
+    };
+    const recorridoRepository: RecorridoRepository = {
+      escanear: vi.fn(),
+      reportarPerdido: vi.fn(),
+      activo: vi.fn(),
+      porTurno: vi.fn().mockResolvedValue([
+        buildRecorrido({ id: "recorrido-1", turnoId: "turno-medianoche", iniciadoEn: new Date("2025-12-31T23:50:00Z") }),
+        buildRecorrido({ id: "recorrido-2", turnoId: "turno-medianoche", iniciadoEn: new Date("2026-01-01T00:30:00Z") }),
+      ]),
+      porSitio: vi.fn(),
+      porId: vi.fn(),
+    };
+    const sitioRepository = createFakeSitioRepository([SITE_1]);
+
+    const result = await listGuardRounds({ turnoRepository, recorridoRepository, sitioRepository }, "guard-1", {
+      from: new Date("2026-01-01T00:00:00"),
+      to: new Date("2026-01-31T23:59:59"),
+    });
+
+    expect(result).toEqual([]);
   });
 });

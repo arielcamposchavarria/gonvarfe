@@ -7,7 +7,7 @@ describe("createUserSchema", () => {
     const result = createUserSchema.safeParse({
       name: "Ana Rojas",
       username: "ana.rojas",
-      password: "clave123",
+      email: "ana.rojas@example.com",
       role: "guard",
     });
     expect(result.success).toBe(true);
@@ -17,7 +17,7 @@ describe("createUserSchema", () => {
     const result = createUserSchema.safeParse({
       name: "Luis Herrera",
       username: "luis.herrera",
-      password: "clave123",
+      email: "luis.herrera@example.com",
       role: "admin",
     });
     expect(result.success).toBe(true);
@@ -27,17 +27,17 @@ describe("createUserSchema", () => {
     const result = createUserSchema.safeParse({
       name: "Ana Rojas",
       username: "ana.rojas",
-      password: "clave123",
+      email: "ana.rojas@example.com",
       role: "inventado",
     });
     expect(result.success).toBe(false);
   });
 
-  it("rechaza una contraseña demasiado corta", () => {
+  it("rechaza un correo inválido", () => {
     const result = createUserSchema.safeParse({
       name: "Ana Rojas",
       username: "ana.rojas",
-      password: "123",
+      email: "no-es-un-correo",
       role: "guard",
     });
     expect(result.success).toBe(false);

@@ -20,7 +20,7 @@ export interface GuardUser extends BaseUser {
   role: "guard";
   /** Foto de referencia asignada por el admin; el guard no puede modificarla. */
   photoUrl?: string | null;
-  /** Sitio vigente asignado por el superAdmin; null si no tiene ninguno. */
+  /** Sitio vigente asignado por el admin; null si no tiene ninguno. */
   assignedSiteId?: string | null;
 }
 

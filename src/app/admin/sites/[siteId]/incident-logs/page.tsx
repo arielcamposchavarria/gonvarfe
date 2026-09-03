@@ -5,28 +5,44 @@ import { ChevronLeft } from "lucide-react";
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { ExportButton } from "@/components/shared/export-button";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 
 export default async function AdminSiteIncidentLogsPage({
   params,
+  searchParams,
 }: PageProps<"/admin/sites/[siteId]/incident-logs">) {
   const { siteId } = await params;
   const sitio = await container.getSitio(siteId);
   if (!sitio) notFound();
 
-  const incidentLogs = await container.listIncidentLogsBySite(siteId);
+  const { from, to } = await searchParams;
+  const fromParam = firstDateParam(from);
+  const toParam = firstDateParam(to);
+  const incidentLogs = await container.listIncidentLogsBySite(
+    siteId,
+    parseDateRangeParams({ from: fromParam, to: toParam }),
+  );
+  const exportQuery = buildDateRangeQuery({ from: fromParam, to: toParam });
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href={`/admin/sites/${siteId}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {sitio.nombre}
-        </Link>
-        <h1 className="text-lg font-semibold">Bitácora de incidencias</h1>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <Link
+            href={`/admin/sites/${siteId}`}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {sitio.nombre}
+          </Link>
+          <h1 className="text-lg font-semibold">Bitácora de incidencias</h1>
+        </div>
+        <ExportButton href={`/admin/sites/${siteId}/incident-logs/export${exportQuery}`} />
       </div>
+
+      <DateRangeFilter from={fromParam} to={toParam} />
 
       {incidentLogs.length === 0 && (
         <p className="text-sm text-muted-foreground">Todavía no hay incidencias reportadas en este sitio.</p>

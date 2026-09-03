@@ -20,13 +20,14 @@ const ROLES = [
 ];
 
 describe("CreateUserForm", () => {
-  it("muestra los campos del formulario y los roles disponibles, sin selector de sitio", () => {
+  it("muestra los campos del formulario y los roles disponibles, sin selector de sitio ni de contraseña", () => {
     render(<CreateUserForm roles={ROLES} />);
 
     expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/correo electrónico/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^rol$/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/contraseña/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/sitio asignado/i)).not.toBeInTheDocument();
   });
 
@@ -44,7 +45,7 @@ describe("CreateUserForm", () => {
 
     await user.type(screen.getByLabelText(/nombre completo/i), "Ana Rojas");
     await user.type(screen.getByLabelText(/usuario/i), "existente");
-    await user.type(screen.getByLabelText(/contraseña/i), "clave123");
+    await user.type(screen.getByLabelText(/correo electrónico/i), "ana.rojas@example.com");
     await user.selectOptions(screen.getByLabelText(/^rol$/i), "admin");
     await user.click(screen.getByRole("button", { name: /guardar usuario/i }));
 

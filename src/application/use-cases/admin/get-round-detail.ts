@@ -16,6 +16,9 @@ export interface RoundDetail {
   recorrido: Recorrido;
   guardName: string;
   sitio: Sitio;
+  /** Turno al que pertenece este recorrido — null solo si el turno ya no existe (dato huérfano). */
+  turnoId: string;
+  turnoIniciadoEn: Date | null;
 }
 
 export async function getRoundDetail(
@@ -33,5 +36,11 @@ export async function getRoundDetail(
   const turno = turnos.find((t) => t.id === recorrido.turnoId) ?? null;
   const guard = turno ? await deps.userRepository.findById(turno.guardiaId) : null;
 
-  return { recorrido, guardName: guard?.name ?? "Guarda desconocido", sitio };
+  return {
+    recorrido,
+    guardName: guard?.name ?? "Guarda desconocido",
+    sitio,
+    turnoId: recorrido.turnoId,
+    turnoIniciadoEn: turno?.iniciadoEn ?? null,
+  };
 }

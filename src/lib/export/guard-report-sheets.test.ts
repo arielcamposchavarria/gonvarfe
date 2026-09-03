@@ -45,14 +45,19 @@ const RECORRIDO: Recorrido = {
   ],
 };
 
+const TURNO_INICIADO_EN = new Date("2026-01-01T07:30:00.000Z");
+
 describe("buildGuardRoundsSheet", () => {
-  it("resume cada recorrido con su sitio, estado y conteo de marcas", () => {
-    const sheet = buildGuardRoundsSheet([{ recorrido: RECORRIDO, siteName: "Plaza Amara" }]);
+  it("resume cada recorrido con su sitio, turno, estado y conteo de marcas", () => {
+    const sheet = buildGuardRoundsSheet([
+      { recorrido: RECORRIDO, siteName: "Plaza Amara", turnoId: "turno-1", turnoIniciadoEn: TURNO_INICIADO_EN },
+    ]);
 
     expect(sheet.name).toBe("Recorridos");
     expect(sheet.rows).toEqual([
       {
         site: "Plaza Amara",
+        turnoStartedAt: TURNO_INICIADO_EN.toLocaleString(),
         sequence: 2,
         status: "Completado",
         startedAt: RECORRIDO.iniciadoEn.toLocaleString(),

@@ -16,6 +16,7 @@ export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition 
     name: "Recorridos",
     columns: [
       { header: "Sitio", key: "site" },
+      { header: "Turno iniciado", key: "turnoStartedAt", width: 20 },
       { header: "Recorrido #", key: "sequence", width: 14 },
       { header: "Estado", key: "status" },
       { header: "Iniciado", key: "startedAt" },
@@ -23,8 +24,9 @@ export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition 
       { header: "Estaciones escaneadas", key: "onTime", width: 20 },
       { header: "Estaciones no escaneadas", key: "missed", width: 22 },
     ],
-    rows: rounds.map(({ recorrido, siteName }) => ({
+    rows: rounds.map(({ recorrido, siteName, turnoIniciadoEn }) => ({
       site: siteName,
+      turnoStartedAt: turnoIniciadoEn.toLocaleString(),
       sequence: recorrido.secuencia,
       status: ROUND_STATUS_LABEL[recorrido.estado],
       startedAt: recorrido.iniciadoEn.toLocaleString(),

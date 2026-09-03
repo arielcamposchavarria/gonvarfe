@@ -4,7 +4,6 @@ import { ClipboardList, ListChecks, QrCode, ShieldAlert, UserRound } from "lucid
 import { getSession } from "@/lib/auth/session";
 import { container } from "@/infrastructure/container";
 import { OptionCard } from "@/components/shared/option-card";
-import { ChangeSiteButton } from "@/components/guard/change-site-button";
 
 export default async function GuardHomePage() {
   const session = await getSession();
@@ -20,12 +19,9 @@ export default async function GuardHomePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold">Hola, {guard.name.split(" ")[0]}</h1>
-          <p className="text-sm text-muted-foreground">{estado.sitio?.nombre ?? "Sitio no disponible"}</p>
-        </div>
-        <ChangeSiteButton disabled={estado.recorridoActivo !== null} />
+      <div>
+        <h1 className="text-lg font-semibold">Hola, {guard.name.split(" ")[0]}</h1>
+        <p className="text-sm text-muted-foreground">{estado.sitio?.nombre ?? "Sitio no disponible"}</p>
       </div>
 
       <div className="flex flex-col gap-2">

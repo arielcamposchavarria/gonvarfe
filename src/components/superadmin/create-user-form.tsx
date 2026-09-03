@@ -34,7 +34,10 @@ export function CreateUserForm({ roles }: CreateUserFormProps) {
       <Card className="max-w-md">
         <CardHeader>
           <CardTitle>Nuevo usuario</CardTitle>
-          <CardDescription>Crea un usuario y asígnale un rol.</CardDescription>
+          <CardDescription>
+            Crea un usuario y asígnale un rol. Se enviará una contraseña temporal al correo
+            ingresado.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="flex flex-col gap-4">
@@ -49,8 +52,8 @@ export function CreateUserForm({ roles }: CreateUserFormProps) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" name="password" type="password" required />
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input id="email" name="email" type="email" required />
             </div>
 
             <div className="flex flex-col gap-2">

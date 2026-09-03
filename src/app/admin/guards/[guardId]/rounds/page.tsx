@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { ExportButton } from "@/components/shared/export-button";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
+import { groupRoundsByTurno } from "@/lib/group-rounds-by-turno";
 import type { RecorridoEstado } from "@/domain/entities/recorrido";
 
 const STATUS_LABEL: Record<RecorridoEstado, string> = {
@@ -46,41 +47,57 @@ export default async function AdminGuardRoundsPage({
       </div>
 
       <DateRangeFilter from={fromParam} to={toParam} />
+      <p className="-mt-2 text-xs text-muted-foreground">El filtro de fechas aplica sobre el día en que inició cada turno.</p>
 
       {rounds.length === 0 && (
         <p className="text-sm text-muted-foreground">Este guard todavía no tiene recorridos registrados.</p>
       )}
 
-      <div className="flex flex-col gap-2">
-        {rounds.map(({ recorrido, siteName }) => {
-          const missed = recorrido.registros.filter((registro) => registro.estado === "perdido").length;
-          const onTime = recorrido.registros.filter((registro) => registro.estado === "a-tiempo").length;
+      <div className="flex flex-col gap-4">
+        {groupRoundsByTurno(rounds).map((group) => (
+          <div key={group.turnoId} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              Turno del {group.turnoIniciadoEn.toLocaleDateString()} · {group.items[0].siteName}
+              <Badge variant="secondary">{group.items.length} recorridos</Badge>
+            </div>
+            <div className="flex flex-col gap-2 pl-6">
+              {group.items.map(({ recorrido, siteName }) => {
+                const missed = recorrido.registros.filter((registro) => registro.estado === "perdido").length;
+                const onTime = recorrido.registros.filter((registro) => registro.estado === "a-tiempo").length;
 
-          return (
-            <Link key={recorrido.id} href={`/admin/sites/${recorrido.sitioId}/rounds/${recorrido.id}`} className="block">
-              <Card className="transition-colors hover:bg-surface-hover">
-                <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-base">Recorrido #{recorrido.secuencia}</CardTitle>
-                      <Badge variant={recorrido.estado === "en-progreso" ? "success" : "secondary"}>
-                        {STATUS_LABEL[recorrido.estado]}
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      {siteName} · Iniciado {recorrido.iniciadoEn.toLocaleString()}
-                    </CardDescription>
-                    <CardDescription>
-                      {onTime}/{recorrido.registros.length} marcas escaneadas
-                      {missed > 0 && ` · ${missed} no escaneadas`}
-                    </CardDescription>
-                  </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </CardHeader>
-              </Card>
-            </Link>
-          );
-        })}
+                return (
+                  <Link
+                    key={recorrido.id}
+                    href={`/admin/sites/${recorrido.sitioId}/rounds/${recorrido.id}`}
+                    className="block"
+                  >
+                    <Card className="transition-colors hover:bg-surface-hover">
+                      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base">Recorrido #{recorrido.secuencia}</CardTitle>
+                            <Badge variant={recorrido.estado === "en-progreso" ? "success" : "secondary"}>
+                              {STATUS_LABEL[recorrido.estado]}
+                            </Badge>
+                          </div>
+                          <CardDescription>
+                            {siteName} · Iniciado {recorrido.iniciadoEn.toLocaleString()}
+                          </CardDescription>
+                          <CardDescription>
+                            {onTime}/{recorrido.registros.length} marcas escaneadas
+                            {missed > 0 && ` · ${missed} no escaneadas`}
+                          </CardDescription>
+                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

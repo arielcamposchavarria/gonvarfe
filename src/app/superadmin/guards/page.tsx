@@ -1,8 +1,6 @@
 import { container } from "@/infrastructure/container";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { AssignGuardSiteForm } from "@/components/superadmin/assign-guard-site-form";
-import { assignGuardSiteAction } from "./actions";
 
 export default async function SuperAdminGuardsPage() {
   const [guards, sitios] = await Promise.all([container.listGuards(), container.listSitios()]);
@@ -21,7 +19,6 @@ export default async function SuperAdminGuardsPage() {
                 {guard.assignedSiteId ? sitioById.get(guard.assignedSiteId) ?? "Sitio desconocido" : "Sin sitio asignado"}
               </p>
             </div>
-            <AssignGuardSiteForm guard={guard} sitios={sitios} action={assignGuardSiteAction} />
           </div>
         ))}
       </Card>
@@ -33,7 +30,6 @@ export default async function SuperAdminGuardsPage() {
               <TableHead>Nombre</TableHead>
               <TableHead>Usuario</TableHead>
               <TableHead>Sitio asignado</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -43,9 +39,6 @@ export default async function SuperAdminGuardsPage() {
                 <TableCell>{guard.username}</TableCell>
                 <TableCell>
                   {guard.assignedSiteId ? sitioById.get(guard.assignedSiteId) ?? "Sitio desconocido" : "Sin sitio asignado"}
-                </TableCell>
-                <TableCell>
-                  <AssignGuardSiteForm guard={guard} sitios={sitios} action={assignGuardSiteAction} />
                 </TableCell>
               </TableRow>
             ))}

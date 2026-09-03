@@ -31,5 +31,12 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
   }
 
   await createSession(result.accessToken);
+
+  // Un guardia sin sitio asignado nunca llega al dashboard: se le informa
+  // apenas termina de loguear en vez de dejarlo entrar y rebotarlo después.
+  if (result.user.role === "guard" && !result.user.assignedSiteId) {
+    redirect("/guard/select-site");
+  }
+
   redirect(`/${ROLE_PATH_SEGMENT[result.user.role]}/dashboard`);
 }
