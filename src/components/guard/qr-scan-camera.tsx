@@ -19,6 +19,15 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
   const scannerRef = useRef<QrScanner | null>(null);
   const [state, setState] = useState<CameraState>("starting");
 
+  // Ref en vez de dependencia directa: si `onDecode` cambia de identidad en
+  // cada render del padre (p. ej. porque un hook como `useNow` lo hace tickear
+  // cada segundo) no queremos reiniciar la cámara — eso apagaba/prendía el
+  // stream de video constantemente e impedía escanear en dispositivos reales.
+  const onDecodeRef = useRef(onDecode);
+  useEffect(() => {
+    onDecodeRef.current = onDecode;
+  }, [onDecode]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -34,7 +43,7 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
       const scanner = new QrScanner(
         videoRef.current,
         (result) => {
-          if (!cancelled) onDecode(result.data);
+          if (!cancelled) onDecodeRef.current(result.data);
         },
         { returnDetailedScanResult: true },
       );
@@ -63,7 +72,7 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
       scannerRef.current?.destroy();
       scannerRef.current = null;
     };
-  }, [onDecode]);
+  }, []);
 
   return (
     <div className="flex flex-col items-center gap-2">
