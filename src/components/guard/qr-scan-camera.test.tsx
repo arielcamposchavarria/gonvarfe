@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 
 interface MockDecodeResult {
   data: string;
@@ -79,5 +80,38 @@ describe("QrScanCamera", () => {
 
     expect(stopMock).toHaveBeenCalled();
     expect(destroyMock).toHaveBeenCalled();
+  });
+
+  it("no reinicia la cámara si el padre le pasa un onDecode con nueva identidad en cada render", async () => {
+    // Regresión: un padre que re-renderiza seguido (p. ej. por un reloj con
+    // useNow) y recrea `onDecode` en cada render no debe hacer que la cámara
+    // se apague y prenda — eso rompía el escaneo en dispositivos reales.
+    const decodedValues: string[] = [];
+
+    function Wrapper() {
+      const [tick, setTick] = useState(0);
+      return (
+        <>
+          <button onClick={() => setTick((t) => t + 1)}>tick</button>
+          <QrScanCamera onDecode={(value) => decodedValues.push(`${value}-${tick}`)} />
+        </>
+      );
+    }
+
+    const { rerender } = render(<Wrapper />);
+    await waitFor(() => expect(instances).toHaveLength(1));
+
+    rerender(<Wrapper />);
+    screen.getByText("tick").click();
+    rerender(<Wrapper />);
+
+    // Sigue siendo la misma instancia del scanner: no se reinició.
+    expect(instances).toHaveLength(1);
+    expect(stopMock).not.toHaveBeenCalled();
+    expect(startMock).toHaveBeenCalledTimes(1);
+
+    // Y usa la versión más reciente del callback.
+    instances[0].onDecodeCallback({ data: "qr-xyz" });
+    expect(decodedValues).toEqual(["qr-xyz-1"]);
   });
 });
