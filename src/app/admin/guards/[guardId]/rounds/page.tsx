@@ -9,6 +9,7 @@ import { ExportButton } from "@/components/shared/export-button";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 import { groupRoundsByTurno } from "@/lib/group-rounds-by-turno";
+import { formatDateCR, formatDateTimeCR } from "@/lib/format-date";
 import type { RecorridoEstado } from "@/domain/entities/recorrido";
 
 const STATUS_LABEL: Record<RecorridoEstado, string> = {
@@ -58,7 +59,7 @@ export default async function AdminGuardRoundsPage({
           <div key={group.turnoId} className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              Turno del {group.turnoIniciadoEn.toLocaleDateString()} · {group.items[0].siteName}
+              Turno del {formatDateCR(group.turnoIniciadoEn)} · {group.items[0].siteName}
               <Badge variant="secondary">{group.items.length} recorridos</Badge>
             </div>
             <div className="flex flex-col gap-2 pl-6">
@@ -82,7 +83,7 @@ export default async function AdminGuardRoundsPage({
                             </Badge>
                           </div>
                           <CardDescription>
-                            {siteName} · Iniciado {recorrido.iniciadoEn.toLocaleString()}
+                            {siteName} · Iniciado {formatDateTimeCR(recorrido.iniciadoEn)}
                           </CardDescription>
                           <CardDescription>
                             {onTime}/{recorrido.registros.length} marcas escaneadas
