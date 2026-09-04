@@ -93,8 +93,12 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
 
   const targetWindow = target ? { opensAt: target.abreEn, closesAt: target.cierraEn } : null;
   const targetOpen = targetWindow ? hasWindowOpened(targetWindow, new Date(now)) : false;
+  // El servidor es quien realmente bloquea el escaneo vencido (rechaza con
+  // VentanaCerradaException); esto solo evita el viaje al servidor y guía
+  // al guard hacia "No pude escanear", la única acción que queda disponible.
+  const targetExpired = targetWindow ? isWindowExpired(targetWindow, new Date(now)) : false;
   const targetClosingSoon =
-    targetWindow && targetOpen && target && !isWindowExpired(targetWindow, new Date(now))
+    targetWindow && targetOpen && target && !targetExpired
       ? target.cierraEn.getTime() - now <= NOTIFY_BEFORE_WINDOW_CLOSE_MINUTES * 60_000
       : false;
 
@@ -159,20 +163,29 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
                     <p className="truncate text-sm font-medium">{marca?.nombre ?? registro.marcaId}</p>
                     <p className="text-xs text-muted-foreground">
                       {registro.estado === "pendiente"
-                        ? `Desde las ${registro.abreEn.toLocaleTimeString()}`
+                        ? isTarget && targetExpired
+                          ? `Venció a las ${registro.cierraEn.toLocaleTimeString()}`
+                          : `Desde las ${registro.abreEn.toLocaleTimeString()}`
                         : STATUS_LABEL[registro.estado]}
                     </p>
                     {isTarget && targetClosingSoon && (
                       <p className="text-xs text-danger">Cierra pronto: {registro.cierraEn.toLocaleTimeString()}</p>
                     )}
+                    {isTarget && targetExpired && (
+                      <p className="text-xs text-danger">Tiempo vencido: repórtela como no escaneada.</p>
+                    )}
                   </div>
                 </div>
                 {isTarget && (
                   <div className="flex flex-wrap gap-2 pl-8 sm:pl-0">
-                    <Button size="sm" disabled={!targetOpen || isPending} onClick={() => setIsCameraOpen(true)}>
+                    <Button
+                      size="sm"
+                      disabled={!targetOpen || targetExpired || isPending}
+                      onClick={() => setIsCameraOpen(true)}
+                    >
                       Escanear
                     </Button>
-                    <Button size="sm" variant="outline" disabled={isPending} onClick={handleSkip}>
+                    <Button size="sm" variant="outline" disabled={targetExpired || isPending} onClick={handleSkip}>
                       Omitir (demo)
                     </Button>
                     <Button size="sm" variant="outline" disabled={isPending} onClick={() => setIsReportingMissed(true)}>

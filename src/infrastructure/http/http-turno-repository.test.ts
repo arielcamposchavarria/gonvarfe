@@ -99,6 +99,28 @@ describe("createHttpTurnoRepository", () => {
     await expect(repository.finalizar("turno-1")).rejects.toThrow(/recorrido en curso/i);
   });
 
+  it("llama PATCH /turnos/:id/forzar-finalizar", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse({ ...BACKEND_TURNO, estado: "finalizado" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpTurnoRepository();
+    const result = await repository.forzarFinalizar("turno-1");
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/turnos/turno-1/forzar-finalizar", {
+      method: "PATCH",
+      headers: { Authorization: "Bearer test-token" },
+    });
+    expect(result.estado).toBe("finalizado");
+  });
+
+  it("lanza un error legible en español si el turno ya estaba finalizado (409)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(null, 409));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpTurnoRepository();
+    await expect(repository.forzarFinalizar("turno-1")).rejects.toThrow(/ya está finalizado/i);
+  });
+
   it("consulta GET /turnos/guardia/:id para reportes", async () => {
     const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse([BACKEND_TURNO]));
     vi.stubGlobal("fetch", fetchMock);

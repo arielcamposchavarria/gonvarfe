@@ -110,6 +110,7 @@ describe("getRoundDetail", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn().mockResolvedValue([TURNO]),
     };
@@ -142,6 +143,7 @@ describe("getRoundDetail", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn().mockResolvedValue([TURNO]),
     };

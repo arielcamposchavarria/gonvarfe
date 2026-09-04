@@ -122,6 +122,7 @@ describe("getGuardDetail", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([
         buildTurno({ id: "turno-1", estado: "finalizado" }),
         buildTurno({ id: "turno-2", sitioId: SITE_2.id, estado: "activo", finalizadoEn: null }),
@@ -251,6 +252,7 @@ describe("getGuardDetail", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([]),
       porSitio: vi.fn(),
     };
@@ -296,6 +298,7 @@ describe("getGuardDetail", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([]),
       porSitio: vi.fn(),
     };

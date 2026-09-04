@@ -62,6 +62,17 @@ export function createHttpTurnoRepository(): TurnoRepository {
       return mapTurno((await res.json()) as BackendTurno);
     },
 
+    async forzarFinalizar(turnoId) {
+      const res = await fetch(`${baseUrl}/turnos/${turnoId}/forzar-finalizar`, {
+        method: "PATCH",
+        headers: await authHeaders(),
+      });
+      if (res.status === 409) throw new Error("Este turno ya está finalizado.");
+      if (res.status === 404) throw new Error("No se encontró el turno.");
+      if (!res.ok) throw new Error("No se pudo finalizar el turno.");
+      return mapTurno((await res.json()) as BackendTurno);
+    },
+
     async porGuardia(guardiaId) {
       const res = await fetch(`${baseUrl}/turnos/guardia/${guardiaId}`, {
         headers: await authHeaders(),

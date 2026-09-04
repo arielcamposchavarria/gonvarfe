@@ -1,12 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { DeactivateMarcaButton } from "./deactivate-marca-button";
 
+const { confirmActionMock } = vi.hoisted(() => ({ confirmActionMock: vi.fn() }));
+
+vi.mock("@/lib/confirm", () => ({
+  confirmAction: confirmActionMock,
+}));
+
 describe("DeactivateMarcaButton", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
+  beforeEach(() => {
+    confirmActionMock.mockReset();
   });
 
   it("no renderiza nada si la marca ya está inactiva", () => {
@@ -17,7 +23,7 @@ describe("DeactivateMarcaButton", () => {
   });
 
   it("pide confirmación y llama a la acción si se confirma", async () => {
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    confirmActionMock.mockResolvedValue(true);
     const action = vi.fn().mockResolvedValue({ error: null });
     const user = userEvent.setup();
     render(<DeactivateMarcaButton sitioId="sitio-1" marca={{ id: "marca-1", activo: true }} action={action} />);
@@ -28,7 +34,7 @@ describe("DeactivateMarcaButton", () => {
   });
 
   it("no llama a la acción si el usuario cancela la confirmación", async () => {
-    vi.stubGlobal("confirm", vi.fn(() => false));
+    confirmActionMock.mockResolvedValue(false);
     const action = vi.fn();
     const user = userEvent.setup();
     render(<DeactivateMarcaButton sitioId="sitio-1" marca={{ id: "marca-1", activo: true }} action={action} />);

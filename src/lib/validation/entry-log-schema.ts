@@ -17,7 +17,7 @@ export const entryLogSchema = z.object({
     .refine(isValidCedula, "Cédula inválida: debe tener 9 dígitos"),
   company: z.string().trim().min(1, "Ingrese la empresa"),
   reason: z.string().trim().min(1, "Ingrese el motivo"),
-  visitingLocal: z.string().trim().min(1, "Seleccione el local que visita"),
+  visitingLocal: z.string().trim().optional().default(""),
   observations: z.string().trim().optional().default(""),
 });
 

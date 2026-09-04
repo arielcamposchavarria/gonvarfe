@@ -94,6 +94,16 @@ describe("createHttpRecorridoRepository", () => {
     expect(windowError?.message).not.toEqual(qrError?.message);
   });
 
+  it("traduce VentanaCerradaException (409) a un mensaje que indica reportar como no escaneada", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockFetchResponse({ statusCode: 409, message: "x", error: "VentanaCerradaException" }, 409));
+    vi.stubGlobal("fetch", fetchMock);
+    const repository = createHttpRecorridoRepository();
+
+    await expect(repository.escanear({ qrValue: "qr-abc", skip: false })).rejects.toThrow(/venció/i);
+  });
+
   it("lanza un error legible si no hay turno activo (404)", async () => {
     const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(null, 404));
     vi.stubGlobal("fetch", fetchMock);

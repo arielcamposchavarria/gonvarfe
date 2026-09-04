@@ -99,6 +99,7 @@ describe("listGuardMissedScans", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([TURNO]),
       porSitio: vi.fn(),
     };
@@ -144,6 +145,7 @@ describe("listGuardMissedScans", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([TURNO]),
       porSitio: vi.fn(),
     };

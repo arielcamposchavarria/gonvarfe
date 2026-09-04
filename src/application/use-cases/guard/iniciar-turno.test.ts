@@ -24,6 +24,7 @@ describe("iniciarTurno", () => {
       activo: vi.fn(),
       iniciar,
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn(),
     };
@@ -39,6 +40,7 @@ describe("iniciarTurno", () => {
       activo: vi.fn(),
       iniciar: vi.fn().mockRejectedValue(new Error("Ya tiene un turno activo.")),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn(),
     };
