@@ -86,8 +86,9 @@ describe("listRoundsBySite", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
-      porSitio: vi.fn().mockResolvedValue([buildTurno({})]),
+      porSitio: vi.fn().mockResolvedValue([buildTurno({ estado: "activo" })]),
     };
     const userRepository = createFakeUserRepository([GUARD]);
 
@@ -95,6 +96,7 @@ describe("listRoundsBySite", () => {
 
     expect(result.map((r) => r.recorrido.id)).toEqual(["recorrido-2", "recorrido-1"]);
     expect(result[0].guardName).toBe("Ana Pérez");
+    expect(result[0].turnoEstado).toBe("activo");
   });
 
   it("filtra por el rango de fechas de INICIO DEL TURNO, no del recorrido individual", async () => {
@@ -113,6 +115,7 @@ describe("listRoundsBySite", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn().mockResolvedValue([
         buildTurno({ id: "turno-fuera", iniciadoEn: new Date("2025-12-31T08:00:00Z") }),
@@ -148,6 +151,7 @@ describe("listRoundsBySite", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn().mockResolvedValue([buildTurno({ id: "turno-medianoche", iniciadoEn: new Date("2025-12-31T23:50:00Z") })]),
     };
@@ -174,6 +178,7 @@ describe("listRoundsBySite", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn().mockResolvedValue([]),
     };
@@ -182,5 +187,7 @@ describe("listRoundsBySite", () => {
     const result = await listRoundsBySite({ recorridoRepository, turnoRepository, userRepository }, "site-1");
 
     expect(result[0].guardName).toBe("Guarda desconocido");
+    // Sin turno conocido, se asume finalizado: no se ofrece "Finalizar turno" sobre un grupo huérfano.
+    expect(result[0].turnoEstado).toBe("finalizado");
   });
 });

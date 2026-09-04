@@ -49,6 +49,7 @@ import { createLocal, type CreateLocalInput } from "@/application/use-cases/admi
 import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import { assignGuardSite, type AssignGuardSiteInput } from "@/application/use-cases/admin/assign-guard-site";
+import { forzarFinalizarTurno } from "@/application/use-cases/admin/forzar-finalizar-turno";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { CreateUserInput } from "@/domain/ports/user-repository";
 import type { EscanearInput, ReportarPerdidoInput } from "@/domain/ports/recorrido-repository";
@@ -96,6 +97,7 @@ export const container = {
   listGuards: () => listGuards({ userRepository }),
   listManageableUsers: () => listManageableUsers({ userRepository }),
   assignGuardSite: (input: AssignGuardSiteInput) => assignGuardSite({ userRepository }, input),
+  forzarFinalizarTurno: (turnoId: string) => forzarFinalizarTurno({ turnoRepository }, turnoId),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),

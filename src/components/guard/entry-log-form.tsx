@@ -71,18 +71,16 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
                 <Select
                   id="visitingLocal"
                   name="visitingLocal"
-                  required
                   value={visitingLocal}
                   onChange={(event) => setVisitingLocal(event.target.value)}
                 >
-                  <option value="" disabled>
-                    Seleccione...
-                  </option>
+                  <option value="">Sin especificar</option>
                   {visitingLocals.map((local) => (
                     <option key={local} value={local}>
                       {local}
                     </option>
                   ))}
+                  <option value="Otro">Otro</option>
                 </Select>
               </div>
             </div>
@@ -94,7 +92,6 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
                   id="visitingLocalOther"
                   name="visitingLocalOther"
                   placeholder="Escriba el nombre exacto del local"
-                  required
                 />
               </div>
             )}

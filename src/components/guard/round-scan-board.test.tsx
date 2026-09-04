@@ -120,6 +120,18 @@ describe("RoundScanBoard", () => {
     expect(screen.getByRole("button", { name: /^escanear$/i })).toBeDisabled();
   });
 
+  it("deshabilita 'Escanear' y 'Omitir (demo)' una vez vencida la ventana de la marca objetivo, dejando solo 'No pude escanear'", () => {
+    const recorrido = buildRecorrido([
+      buildRegistro({ abreEn: new Date(NOW - 120_000), cierraEn: new Date(NOW - 60_000) }),
+    ]);
+    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+
+    expect(screen.getByRole("button", { name: /^escanear$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /omitir \(demo\)/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /no pude escanear/i })).toBeEnabled();
+    expect(screen.getByText(/tiempo vencido/i)).toBeInTheDocument();
+  });
+
   it("habilita 'Escanear' una vez abierta la ventana, y abre la cámara al presionarlo (camino de cámara)", async () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
     renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);

@@ -7,6 +7,12 @@ export interface TurnoRepository {
   iniciar(sitioId: string): Promise<Turno>;
   /** PATCH /turnos/:id/finalizar */
   finalizar(turnoId: string): Promise<Turno>;
+  /**
+   * PATCH /turnos/:id/forzar-finalizar — admin/superAdmin cierra el turno de
+   * un guardia aunque tenga un recorrido en progreso (a diferencia de
+   * `finalizar`, que el guard usa sobre sí mismo y sí se bloquea en ese caso).
+   */
+  forzarFinalizar(turnoId: string): Promise<Turno>;
   /** GET /turnos/guardia/:guardiaId — reporte admin/superAdmin. */
   porGuardia(guardiaId: string): Promise<Turno[]>;
   /** GET /turnos/sitio/:sitioId — reporte admin/superAdmin. */

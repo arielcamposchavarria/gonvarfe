@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Ban } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { confirmAction } from "@/lib/confirm";
 
 export interface DeactivateSiteButtonProps {
   sitioId: string;
@@ -17,8 +18,13 @@ export function DeactivateSiteButton({ sitioId, activo, action }: DeactivateSite
 
   if (!activo) return null;
 
-  function handleClick() {
-    if (!confirm("¿Desactivar este sitio?")) return;
+  async function handleClick() {
+    const confirmed = await confirmAction({
+      title: "¿Desactivar este sitio?",
+      variant: "destructive",
+      confirmText: "Desactivar",
+    });
+    if (!confirmed) return;
 
     startTransition(async () => {
       const result = await action(sitioId);

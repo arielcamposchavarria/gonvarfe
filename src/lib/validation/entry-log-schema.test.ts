@@ -29,8 +29,15 @@ describe("entryLogSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rechaza cuando no se selecciona el local que visita", () => {
+  it("acepta que no se seleccione el local que visita (campo opcional)", () => {
     const result = entryLogSchema.safeParse({ ...VALID_INPUT, visitingLocal: "" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+  });
+
+  it("acepta que el local que visita esté ausente por completo", () => {
+    const withoutVisitingLocal: Record<string, unknown> = { ...VALID_INPUT };
+    delete withoutVisitingLocal.visitingLocal;
+    const result = entryLogSchema.safeParse(withoutVisitingLocal);
+    expect(result.success).toBe(true);
   });
 });

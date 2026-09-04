@@ -49,6 +49,7 @@ function buildDeps(overrides: {
     activo: vi.fn().mockResolvedValue(overrides.turno ?? null),
     iniciar: vi.fn(),
     finalizar: vi.fn(),
+    forzarFinalizar: vi.fn(),
     porGuardia: vi.fn(),
     porSitio: vi.fn(),
   };

@@ -39,3 +39,49 @@ body {
   /* Sin esto, el ícono del selector nativo de fecha/hora se dibuja en negro y es invisible sobre el fondo oscuro. */
   color-scheme: dark;
 }
+
+/* Tema de SweetAlert2 (ver src/lib/confirm.ts) para que sus modales de
+   confirmación se vean como el resto de la app en vez del look por defecto. */
+.gv-swal-popup {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+.gv-swal-title {
+  color: var(--foreground);
+  font-size: 1.125rem;
+}
+.gv-swal-text {
+  color: var(--muted-foreground);
+}
+.gv-swal-btn {
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+.gv-swal-btn-default {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.gv-swal-btn-default:hover {
+  background: var(--accent-hover);
+}
+.gv-swal-btn-destructive {
+  background: var(--danger);
+  color: var(--danger-foreground);
+}
+.gv-swal-btn-destructive:hover {
+  background: var(--danger-hover);
+}
+.gv-swal-btn-cancel {
+  background: var(--surface-hover);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+.gv-swal-btn-cancel:hover {
+  background: var(--border);
+}

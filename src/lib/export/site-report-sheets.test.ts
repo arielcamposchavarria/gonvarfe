@@ -44,7 +44,13 @@ const TURNO_INICIADO_EN = new Date("2026-01-01T07:30:00.000Z");
 describe("buildSiteRoundsSheet", () => {
   it("resume cada recorrido del sitio con el guarda, el turno, estado y conteo de marcas", () => {
     const sheet = buildSiteRoundsSheet([
-      { recorrido: RECORRIDO, guardName: "Ana Pérez", turnoId: "turno-1", turnoIniciadoEn: TURNO_INICIADO_EN },
+      {
+        recorrido: RECORRIDO,
+        guardName: "Ana Pérez",
+        turnoId: "turno-1",
+        turnoIniciadoEn: TURNO_INICIADO_EN,
+        turnoEstado: "finalizado",
+      },
     ]);
 
     expect(sheet.name).toBe("Recorridos");

@@ -125,6 +125,21 @@ describe("createHttpUserRepository", () => {
     expect(user).toMatchObject({ assignedSiteId: null });
   });
 
+  it("al reasignar o desasignar, propaga el mensaje del backend en vez de uno genérico", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse(
+        { statusCode: 409, message: "No se puede finalizar el turno mientras haya un recorrido en progreso", error: "RecorridoEnProgresoException" },
+        409,
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    await expect(repository.assignSite("guard-1", "sitio-2")).rejects.toThrow(
+      /recorrido en progreso/i,
+    );
+  });
+
   it("lanza UsernameTakenError si el backend responde 409", async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.includes("/roles")) {

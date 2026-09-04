@@ -85,6 +85,7 @@ describe("listGuardRounds", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi
         .fn()
         .mockResolvedValue([buildTurno({ id: "turno-1", sitioId: SITE_1.id }), buildTurno({ id: "turno-2", sitioId: SITE_2.id })]),
@@ -116,6 +117,7 @@ describe("listGuardRounds", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([
         buildTurno({ id: "turno-fuera", iniciadoEn: new Date("2025-12-31T08:00:00Z") }),
         buildTurno({ id: "turno-dentro", iniciadoEn: new Date("2026-01-05T08:00:00Z") }),
@@ -149,6 +151,7 @@ describe("listGuardRounds", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([buildTurno({ id: "turno-medianoche", iniciadoEn: new Date("2025-12-31T23:50:00Z") })]),
       porSitio: vi.fn(),
     };

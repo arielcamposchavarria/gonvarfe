@@ -70,7 +70,15 @@ export function createHttpUserRepository(): UserRepository {
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
         body: JSON.stringify({ sitioId: siteId }),
       });
-      if (!res.ok) throw new Error("No se pudo asignar el sitio.");
+      if (!res.ok) {
+        // A diferencia de /recorridos (pocas excepciones conocidas, mapeadas
+        // 1 a 1), aquí hay varias posibles (sitio/guardia inexistente, turno
+        // no finalizable por recorrido en progreso, etc.) y el backend ya
+        // devuelve `message` en español listo para mostrar — se usa tal
+        // cual en vez de duplicar cada caso en un mapeo propio.
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(body?.message ?? "No se pudo asignar el sitio.");
+      }
       return buildAppUser((await res.json()) as BackendUser);
     },
   };

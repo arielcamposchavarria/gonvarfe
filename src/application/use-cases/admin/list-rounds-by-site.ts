@@ -2,6 +2,7 @@ import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
 import type { TurnoRepository } from "@/domain/ports/turno-repository";
 import type { UserRepository } from "@/domain/ports/user-repository";
 import type { Recorrido } from "@/domain/entities/recorrido";
+import type { TurnoEstado } from "@/domain/entities/turno";
 import { isWithinDateRange, type DateRange } from "@/lib/date-range";
 
 export interface ListRoundsBySiteDeps {
@@ -16,6 +17,8 @@ export interface RoundWithGuard {
   /** Turno al que pertenece el recorrido — todos sus escaneos caen bajo este turno hasta que se finaliza. */
   turnoId: string;
   turnoIniciadoEn: Date;
+  /** "activo" habilita la acción de admin "Finalizar turno" sobre este grupo. */
+  turnoEstado: TurnoEstado;
 }
 
 /**
@@ -57,6 +60,7 @@ export async function listRoundsBySite(
       guardName,
       turnoId: recorrido.turnoId,
       turnoIniciadoEn: turno?.iniciadoEn ?? recorrido.iniciadoEn,
+      turnoEstado: turno?.estado ?? "finalizado",
     };
   });
 }

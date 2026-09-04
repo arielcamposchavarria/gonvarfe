@@ -99,6 +99,7 @@ describe("listGuardScannedStations", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([TURNO]),
       porSitio: vi.fn(),
     };
@@ -134,6 +135,7 @@ describe("listGuardScannedStations", () => {
       activo: vi.fn(),
       iniciar: vi.fn(),
       finalizar: vi.fn(),
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn().mockResolvedValue([TURNO]),
       porSitio: vi.fn(),
     };

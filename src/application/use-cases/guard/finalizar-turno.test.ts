@@ -25,6 +25,7 @@ describe("finalizarTurno", () => {
       activo: vi.fn().mockResolvedValue(activo),
       iniciar: vi.fn(),
       finalizar,
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn(),
     };
@@ -41,6 +42,7 @@ describe("finalizarTurno", () => {
       activo: vi.fn().mockResolvedValue(null),
       iniciar: vi.fn(),
       finalizar,
+      forzarFinalizar: vi.fn(),
       porGuardia: vi.fn(),
       porSitio: vi.fn(),
     };
