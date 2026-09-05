@@ -5,7 +5,7 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 
 import { createHttpUserRepository } from "./http-user-repository";
-import { UsernameTakenError } from "@/domain/ports/user-repository";
+import { UsernameTakenError, EmailTakenError } from "@/domain/ports/user-repository";
 
 function mockFetchResponse(body: unknown, status = 200) {
   return {
@@ -153,5 +153,28 @@ describe("createHttpUserRepository", () => {
     await expect(
       repository.create({ name: "Dup", username: "dup", email: "dup@example.com", role: "admin" }),
     ).rejects.toBeInstanceOf(UsernameTakenError);
+  });
+
+  it("lanza EmailTakenError (no UsernameTakenError) si el 409 del backend es por email duplicado", async () => {
+    // Regresión: antes cualquier 409 se interpretaba como username duplicado
+    // sin mirar el body, así que un email repetido le mostraba al admin
+    // "el usuario ya existe" en vez del problema real (el correo).
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/roles")) {
+        return Promise.resolve(mockFetchResponse([{ id: "role-admin", name: "admin" }]));
+      }
+      return Promise.resolve(
+        mockFetchResponse(
+          { statusCode: 409, message: "x", error: "EmailAlreadyExistsException" },
+          409,
+        ),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    await expect(
+      repository.create({ name: "Nuevo", username: "nuevo", email: "dup@example.com", role: "admin" }),
+    ).rejects.toBeInstanceOf(EmailTakenError);
   });
 });

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createUser, UsernameTakenError } from "./create-user";
+import { createUser, UsernameTakenError, EmailTakenError } from "./create-user";
 import type { CreateUserInput, UserRepository } from "@/domain/ports/user-repository";
 import type { AppUser } from "@/domain/entities/user";
 
-function createFakeUserRepository(existing: AppUser[] = []): UserRepository {
+function createFakeUserRepository(existing: AppUser[] = [], takenEmails: string[] = []): UserRepository {
   const users = [...existing];
   return {
     async findAll() {
@@ -19,6 +19,9 @@ function createFakeUserRepository(existing: AppUser[] = []): UserRepository {
     async create(input: CreateUserInput) {
       if (users.some((u) => u.username === input.username)) {
         throw new UsernameTakenError(input.username);
+      }
+      if (takenEmails.includes(input.email)) {
+        throw new EmailTakenError(input.email);
       }
       const created: AppUser =
         input.role === "guard"
@@ -89,5 +92,16 @@ describe("createUser", () => {
         { name: "Otro", username: "duplicado", email: "otro@example.com", role: "admin" },
       ),
     ).rejects.toBeInstanceOf(UsernameTakenError);
+  });
+
+  it("propaga EmailTakenError si el repositorio la lanza", async () => {
+    const userRepository = createFakeUserRepository([], ["repetido@example.com"]);
+
+    await expect(
+      createUser(
+        { userRepository },
+        { name: "Otro", username: "otro-usuario", email: "repetido@example.com", role: "admin" },
+      ),
+    ).rejects.toBeInstanceOf(EmailTakenError);
   });
 });

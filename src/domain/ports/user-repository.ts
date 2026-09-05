@@ -15,6 +15,13 @@ export class UsernameTakenError extends Error {
   }
 }
 
+export class EmailTakenError extends Error {
+  constructor(email: string) {
+    super(`Ya existe un usuario registrado con el correo "${email}".`);
+    this.name = "EmailTakenError";
+  }
+}
+
 export interface UserRepository {
   findAll(): Promise<AppUser[]>;
   findById(id: string): Promise<AppUser | null>;
