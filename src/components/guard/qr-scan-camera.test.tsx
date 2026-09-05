@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 
 interface MockDecodeResult {
   data: string;
+}
+
+interface MockQrScannerOptions {
+  onDecodeError?: (error: Error | string) => void;
 }
 
 const { hasCameraMock, startMock, stopMock, destroyMock, instances } = vi.hoisted(() => ({
@@ -11,19 +15,29 @@ const { hasCameraMock, startMock, stopMock, destroyMock, instances } = vi.hoiste
   startMock: vi.fn(),
   stopMock: vi.fn(),
   destroyMock: vi.fn(),
-  instances: [] as { onDecodeCallback: (result: MockDecodeResult) => void }[],
+  instances: [] as {
+    onDecodeCallback: (result: MockDecodeResult) => void;
+    onDecodeErrorCallback?: (error: Error | string) => void;
+  }[],
 }));
 
 vi.mock("qr-scanner", () => {
   class MockQrScanner {
     static hasCamera = hasCameraMock;
+    static NO_QR_CODE_FOUND = "No QR code found";
     onDecodeCallback: (result: MockDecodeResult) => void;
+    onDecodeErrorCallback?: (error: Error | string) => void;
     start = startMock;
     stop = stopMock;
     destroy = destroyMock;
 
-    constructor(_video: HTMLVideoElement, onDecode: (result: MockDecodeResult) => void) {
+    constructor(
+      _video: HTMLVideoElement,
+      onDecode: (result: MockDecodeResult) => void,
+      options?: MockQrScannerOptions,
+    ) {
       this.onDecodeCallback = onDecode;
+      this.onDecodeErrorCallback = options?.onDecodeError;
       instances.push(this);
     }
   }
@@ -113,5 +127,84 @@ describe("QrScanCamera", () => {
     // Y usa la versión más reciente del callback.
     instances[0].onDecodeCallback({ data: "qr-xyz" });
     expect(decodedValues).toEqual(["qr-xyz-1"]);
+  });
+
+  describe("errores de decodificación", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("ignora silenciosamente 'No QR code found' (caso normal, se dispara constantemente)", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      render(<QrScanCamera onDecode={vi.fn()} />);
+      await waitFor(() => expect(instances).toHaveLength(1));
+
+      instances[0].onDecodeErrorCallback?.("No QR code found");
+
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("registra en consola un error real del motor de escaneo (antes se perdía en un console.log silencioso)", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      render(<QrScanCamera onDecode={vi.fn()} />);
+      await waitFor(() => expect(instances).toHaveLength(1));
+
+      instances[0].onDecodeErrorCallback?.("Scanner error: timeout");
+
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("error al decodificar"),
+        "Scanner error: timeout",
+      );
+    });
+  });
+
+  describe("aviso de 'no logra escanear'", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("muestra un aviso con sugerencias tras varios segundos activa sin decodificar nada", async () => {
+      render(<QrScanCamera onDecode={vi.fn()} />);
+      // Deja que las promesas ya resueltas de hasCamera()/start() (mocks)
+      // terminen de encadenarse, dentro de act(), antes de avanzar el reloj
+      // falso — si no, React pierde el setState("active") que arma el timer.
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(screen.queryByText(/iniciando cámara/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/no logra escanear/i)).not.toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(8000);
+      });
+
+      expect(screen.getByText(/no logra escanear/i)).toBeInTheDocument();
+    });
+
+    it("no muestra el aviso si logra decodificar antes de que pase el tiempo", async () => {
+      const onDecode = vi.fn();
+      render(<QrScanCamera onDecode={onDecode} />);
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(4000);
+      });
+      act(() => {
+        instances[0].onDecodeCallback({ data: "qr-abc" });
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(8000);
+      });
+
+      expect(screen.queryByText(/no logra escanear/i)).not.toBeInTheDocument();
+    });
   });
 });
