@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { container } from "@/infrastructure/container";
 import { createSession } from "@/lib/auth/session";
 import { loginSchema } from "@/lib/validation/login-schema";
@@ -9,6 +8,7 @@ import { InvalidCredentialsError, InactiveUserError } from "@/application/use-ca
 
 export interface LoginActionState {
   error: string | null;
+  redirectTo: string | null;
 }
 
 export async function loginAction(_prevState: LoginActionState, formData: FormData): Promise<LoginActionState> {
@@ -17,7 +17,7 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos.", redirectTo: null };
   }
 
   let result;
@@ -25,7 +25,7 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
     result = await container.authenticateUser(parsed.data);
   } catch (error) {
     if (error instanceof InvalidCredentialsError || error instanceof InactiveUserError) {
-      return { error: error.message };
+      return { error: error.message, redirectTo: null };
     }
     throw error;
   }
@@ -34,9 +34,10 @@ export async function loginAction(_prevState: LoginActionState, formData: FormDa
 
   // Un guardia sin sitio asignado nunca llega al dashboard: se le informa
   // apenas termina de loguear en vez de dejarlo entrar y rebotarlo después.
-  if (result.user.role === "guard" && !result.user.assignedSiteId) {
-    redirect("/guard/select-site");
-  }
+  const redirectTo =
+    result.user.role === "guard" && !result.user.assignedSiteId
+      ? "/guard/select-site"
+      : `/${ROLE_PATH_SEGMENT[result.user.role]}/dashboard`;
 
-  redirect(`/${ROLE_PATH_SEGMENT[result.user.role]}/dashboard`);
+  return { error: null, redirectTo };
 }
