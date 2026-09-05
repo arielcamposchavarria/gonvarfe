@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Ban } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { confirmAction } from "@/lib/confirm";
+import { confirmAction, notifySuccess } from "@/lib/confirm";
 
 export interface DeactivateMarcaButtonProps {
   sitioId: string;
@@ -28,7 +28,11 @@ export function DeactivateMarcaButton({ sitioId, marca, action }: DeactivateMarc
 
     startTransition(async () => {
       const result = await action(sitioId, marca.id);
-      if (result.error) setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      await notifySuccess("Marca desactivada");
     });
   }
 

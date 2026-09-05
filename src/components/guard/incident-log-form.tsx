@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -13,12 +14,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ImageUploadField } from "@/components/shared/image-upload-field";
 import { INCIDENT_TYPES } from "@/domain/value-objects/incident-type";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
 const INITIAL_STATE: IncidentLogActionState = { error: null };
 
 export function IncidentLogForm() {
   const [state, formAction, isPending] = useActionState(submitIncidentLogAction, INITIAL_STATE);
   const [incidentType, setIncidentType] = useState("");
+  const router = useRouter();
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    void notifySuccess("Reporte de incidencia guardado").then(() => router.push("/guard/dashboard"));
+  });
 
   return (
     <div className="flex flex-col gap-3">

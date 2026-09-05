@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
@@ -66,7 +65,7 @@ export async function submitEntryLogAction(
     photoUrls,
   });
 
-  redirect("/guard/dashboard");
+  return { error: null };
 }
 
 export interface RegistrarSalidaActionState {

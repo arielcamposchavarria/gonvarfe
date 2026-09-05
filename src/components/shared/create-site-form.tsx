@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -9,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MarcaTagInput } from "@/components/shared/marca-tag-input";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
 export interface CreateSiteFormState {
   error: string | null;
@@ -23,6 +26,11 @@ const INITIAL_STATE: CreateSiteFormState = { error: null };
 
 export function CreateSiteForm({ action, backHref }: CreateSiteFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL_STATE);
+  const router = useRouter();
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    void notifySuccess("Sitio creado").then(() => router.push(backHref));
+  });
 
   return (
     <div className="flex flex-col gap-3">

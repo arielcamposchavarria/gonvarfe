@@ -14,6 +14,8 @@ export interface ScannedStationEntry {
   stationName: string;
   roundSequence: number;
   scannedAt: Date;
+  fotos: string[] | null;
+  observacion: string | null;
 }
 
 /** Marcas que el guard escaneó a tiempo, de la más reciente a la más antigua. */
@@ -43,6 +45,8 @@ export async function listGuardScannedStations(
         stationName: marca?.nombre ?? registro.marcaId,
         roundSequence: recorrido.secuencia,
         scannedAt: registro.escaneadoEn,
+        fotos: registro.fotos ?? null,
+        observacion: registro.observacion ?? null,
       });
     }
   }

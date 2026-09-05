@@ -66,6 +66,8 @@ function buildRegistro(overrides: Partial<Registro>): Registro {
     cierraEn: new Date("2026-01-01T08:02:00Z"),
     escaneadoEn: new Date("2026-01-01T08:01:00Z"),
     motivoPerdido: null,
+    fotos: null,
+    observacion: null,
     ...overrides,
   };
 }
@@ -118,6 +120,8 @@ describe("listGuardMissedScans", () => {
               escaneadoEn: null,
               cierraEn: new Date("2026-01-01T08:15:00Z"),
               motivoPerdido: "QR dañado, no se puede leer.",
+              fotos: ["data:image/png;base64,foto1"],
+              observacion: "Sin acceso al área",
             }),
           ],
         }),
@@ -136,6 +140,8 @@ describe("listGuardMissedScans", () => {
         roundSequence: 1,
         reason: "QR dañado, no se puede leer.",
         reportedAt: new Date("2026-01-01T08:15:00Z"),
+        fotos: ["data:image/png;base64,foto1"],
+        observacion: "Sin acceso al área",
       },
     ]);
   });

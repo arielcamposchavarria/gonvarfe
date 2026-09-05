@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireSuperAdmin } from "@/lib/auth/require-super-admin";
@@ -37,5 +37,6 @@ export async function createUserAction(
     throw error;
   }
 
-  redirect("/superadmin/dashboard");
+  revalidatePath("/superadmin/dashboard");
+  return { error: null };
 }

@@ -4,15 +4,20 @@ import userEvent from "@testing-library/user-event";
 
 import { ForceFinalizeTurnoButton } from "./force-finalize-turno-button";
 
-const { confirmActionMock } = vi.hoisted(() => ({ confirmActionMock: vi.fn() }));
+const { confirmActionMock, notifySuccessMock } = vi.hoisted(() => ({
+  confirmActionMock: vi.fn(),
+  notifySuccessMock: vi.fn(),
+}));
 
 vi.mock("@/lib/confirm", () => ({
   confirmAction: confirmActionMock,
+  notifySuccess: notifySuccessMock,
 }));
 
 describe("ForceFinalizeTurnoButton", () => {
   beforeEach(() => {
     confirmActionMock.mockReset();
+    notifySuccessMock.mockReset().mockResolvedValue(undefined);
   });
 
   it("pide confirmación y llama a la acción con el sitio y el turno si se confirma", async () => {
@@ -29,6 +34,7 @@ describe("ForceFinalizeTurnoButton", () => {
       expect.objectContaining({ variant: "destructive" }),
     );
     await waitFor(() => expect(action).toHaveBeenCalledWith("site-1", "turno-1"));
+    await waitFor(() => expect(notifySuccessMock).toHaveBeenCalledWith("Turno finalizado"));
   });
 
   it("no llama a la acción si el admin cancela la confirmación", async () => {
@@ -55,5 +61,6 @@ describe("ForceFinalizeTurnoButton", () => {
     await user.click(screen.getByRole("button", { name: /finalizar turno/i }));
 
     expect(await screen.findByText(/ya está finalizado/i)).toBeInTheDocument();
+    expect(notifySuccessMock).not.toHaveBeenCalled();
   });
 });

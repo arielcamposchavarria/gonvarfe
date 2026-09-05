@@ -12,6 +12,7 @@ import { QrScanCamera } from "./qr-scan-camera";
 import { ReportMissedDialog } from "./report-missed-dialog";
 import { ConfirmScanDialog } from "./confirm-scan-dialog";
 import { registrarEscaneoAction, finalizarTurnoAction } from "@/app/guard/actions";
+import { confirmAction, notifyError } from "@/lib/confirm";
 import type { EscanearInput } from "@/domain/ports/recorrido-repository";
 import { useNow } from "@/lib/hooks/use-now";
 import { cn } from "@/lib/utils";
@@ -45,10 +46,12 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
   const router = useRouter();
 
   function run(action: () => Promise<ActionResult>) {
-    setError(null);
     startTransition(async () => {
       const result = await action();
-      if (result.error) setError(result.error);
+      // Un SweetAlert es más visible que el banner rojo de abajo para un
+      // rechazo de escaneo (QR fuera de orden, ventana vencida, etc.) — con
+      // la cámara todavía abierta encima, el guard fácilmente no lo notaría.
+      if (result.error) await notifyError("No se pudo registrar el escaneo", result.error);
     });
   }
 
@@ -72,7 +75,15 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
     run(() => registrarEscaneoAction(input));
   }
 
-  function handleFinalizarTurno() {
+  async function handleFinalizarTurno() {
+    const confirmed = await confirmAction({
+      title: "¿Finalizar el turno?",
+      text: "No podrá seguir escaneando ni reportando en este turno.",
+      variant: "destructive",
+      confirmText: "Finalizar",
+    });
+    if (!confirmed) return;
+
     setError(null);
     startTransition(async () => {
       const result = await finalizarTurnoAction();
