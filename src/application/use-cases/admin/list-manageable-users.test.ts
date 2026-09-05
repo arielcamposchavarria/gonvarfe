@@ -31,6 +31,7 @@ describe("listManageableUsers", () => {
       findByRole: vi.fn(async (role) => (role === "admin" ? admins : role === "guard" ? guards : [])),
       create: vi.fn(),
       assignSite: vi.fn(),
+      deactivate: vi.fn(),
     };
 
     const result = await listManageableUsers({ userRepository });

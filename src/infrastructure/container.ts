@@ -47,6 +47,7 @@ import { updateMarca, type UpdateMarcaInput } from "@/application/use-cases/supe
 import { deactivateMarca, type DeactivateMarcaInput } from "@/application/use-cases/superadmin/deactivate-marca";
 import { createLocal, type CreateLocalInput } from "@/application/use-cases/admin/create-local";
 import { createUser } from "@/application/use-cases/superadmin/create-user";
+import { deactivateUser } from "@/application/use-cases/superadmin/deactivate-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import { assignGuardSite, type AssignGuardSiteInput } from "@/application/use-cases/admin/assign-guard-site";
 import { forzarFinalizarTurno } from "@/application/use-cases/admin/forzar-finalizar-turno";
@@ -99,6 +100,7 @@ export const container = {
   assignGuardSite: (input: AssignGuardSiteInput) => assignGuardSite({ userRepository }, input),
   forzarFinalizarTurno: (turnoId: string) => forzarFinalizarTurno({ turnoRepository }, turnoId),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
+  deactivateUser: (userId: string) => deactivateUser({ userRepository }, userId),
   listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),
   listSitios: () => listSitios({ sitioRepository }),

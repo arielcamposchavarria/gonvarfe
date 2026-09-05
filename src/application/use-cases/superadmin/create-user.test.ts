@@ -48,6 +48,9 @@ function createFakeUserRepository(existing: AppUser[] = [], takenEmails: string[
     async assignSite() {
       throw new Error("No usado en esta prueba.");
     },
+    async deactivate() {
+      throw new Error("No usado en esta prueba.");
+    },
   };
 }
 

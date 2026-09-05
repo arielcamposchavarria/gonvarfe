@@ -2,14 +2,17 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 
 import { container } from "@/infrastructure/container";
+import { getSession } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DeactivateUserButton } from "@/components/superadmin/deactivate-user-button";
 import { ROLE_LABELS } from "@/domain/value-objects/role";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { deactivateUserAction } from "./actions";
 
 export default async function SuperAdminDashboardPage() {
-  const users = await container.listUsers();
+  const [users, session] = await Promise.all([container.listUsers(), getSession()]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,9 +35,19 @@ export default async function SuperAdminDashboardPage() {
                 {user.username} · {ROLE_LABELS[user.role]}
               </p>
             </div>
-            <Badge variant={user.isActive ? "success" : "destructive"} className="shrink-0">
-              {user.isActive ? "Activo" : "Inactivo"}
-            </Badge>
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge variant={user.isActive ? "success" : "destructive"}>
+                {user.isActive ? "Activo" : "Inactivo"}
+              </Badge>
+              {user.id !== session?.userId && (
+                <DeactivateUserButton
+                  userId={user.id}
+                  userName={user.name}
+                  isActive={user.isActive}
+                  action={deactivateUserAction}
+                />
+              )}
+            </div>
           </div>
         ))}
       </Card>
@@ -47,6 +60,7 @@ export default async function SuperAdminDashboardPage() {
               <TableHead>Usuario</TableHead>
               <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,6 +73,16 @@ export default async function SuperAdminDashboardPage() {
                   <Badge variant={user.isActive ? "success" : "destructive"}>
                     {user.isActive ? "Activo" : "Inactivo"}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {user.id !== session?.userId && (
+                    <DeactivateUserButton
+                      userId={user.id}
+                      userName={user.name}
+                      isActive={user.isActive}
+                      action={deactivateUserAction}
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ))}

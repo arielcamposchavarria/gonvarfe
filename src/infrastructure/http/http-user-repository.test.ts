@@ -177,4 +177,36 @@ describe("createHttpUserRepository", () => {
       repository.create({ name: "Nuevo", username: "nuevo", email: "dup@example.com", role: "admin" }),
     ).rejects.toBeInstanceOf(EmailTakenError);
   });
+
+  it("desactiva un usuario con PATCH /users/:id/deactivate, enviando el Bearer token", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse({
+        id: "user-1",
+        username: "jperez",
+        name: "Juan Pérez",
+        role: "admin",
+        isActive: false,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    const user = await repository.deactivate("user-1");
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/users/user-1/deactivate", {
+      method: "PATCH",
+      headers: { Authorization: "Bearer test-token" },
+    });
+    expect(user).toMatchObject({ isActive: false });
+  });
+
+  it("al desactivar, propaga el mensaje del backend en vez de uno genérico", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockFetchResponse({ statusCode: 403, message: "No puede desactivar su propia cuenta", error: "CannotDeactivateSelfException" }, 403),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    await expect(repository.deactivate("user-1")).rejects.toThrow(/no puede desactivar su propia cuenta/i);
+  });
 });
