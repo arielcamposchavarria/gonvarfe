@@ -86,6 +86,15 @@ describe("QrScanCamera", () => {
     expect(startMock).not.toHaveBeenCalled();
   });
 
+  it("muestra un mensaje de error (no se queda colgado) si hasCamera() lanza, p. ej. porque navigator.mediaDevices es undefined en un origen inseguro", async () => {
+    hasCameraMock.mockRejectedValue(new TypeError("Cannot read properties of undefined (reading 'enumerateDevices')"));
+
+    render(<QrScanCamera onDecode={vi.fn()} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/no se pudo iniciar la cámara/i);
+    expect(startMock).not.toHaveBeenCalled();
+  });
+
   it("detiene y destruye el scanner al desmontar (limpieza)", async () => {
     const { unmount } = render(<QrScanCamera onDecode={vi.fn()} />);
     await waitFor(() => expect(instances).toHaveLength(1));
@@ -140,6 +149,16 @@ describe("QrScanCamera", () => {
       await waitFor(() => expect(instances).toHaveLength(1));
 
       instances[0].onDecodeErrorCallback?.("No QR code found");
+
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("ignora 'Scanner error: No QR code found' — variante real de la ruta nativa BarcodeDetector en Android/Chrome, que envuelve el sentinel en vez de lanzarlo tal cual", async () => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      render(<QrScanCamera onDecode={vi.fn()} />);
+      await waitFor(() => expect(instances).toHaveLength(1));
+
+      instances[0].onDecodeErrorCallback?.("Scanner error: No QR code found");
 
       expect(consoleError).not.toHaveBeenCalled();
     });
