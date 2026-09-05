@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { loginAction, type LoginActionState } from "@/app/login/actions";
@@ -8,11 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
-const initialState: LoginActionState = { error: null };
+const initialState: LoginActionState = { error: null, redirectTo: null };
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
+  const router = useRouter();
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    if (!state.redirectTo) return;
+    void notifySuccess("Bienvenido").then(() => router.push(state.redirectTo!));
+  });
 
   return (
     <Card className="w-full max-w-sm">
