@@ -1,4 +1,9 @@
-import { UsernameTakenError, type CreateUserInput, type UserRepository } from "@/domain/ports/user-repository";
+import {
+  UsernameTakenError,
+  EmailTakenError,
+  type CreateUserInput,
+  type UserRepository,
+} from "@/domain/ports/user-repository";
 import type { AppUser } from "@/domain/entities/user";
 import { getAccessToken } from "@/lib/auth/session";
 import { buildAppUser, type BackendUser } from "./map-backend-user";
@@ -59,7 +64,16 @@ export function createHttpUserRepository(): UserRepository {
           roleId: role.id,
         }),
       });
-      if (res.status === 409) throw new UsernameTakenError(input.username);
+      if (res.status === 409) {
+        // El backend distingue username y email duplicados con excepciones
+        // de dominio distintas (ambas responden 409) — antes esto asumía
+        // siempre "username duplicado" sin mirar el body, así que un correo
+        // repetido se le reportaba al admin como si el USERNAME ya existiera,
+        // un mensaje totalmente equivocado.
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (body?.error === "EmailAlreadyExistsException") throw new EmailTakenError(input.email);
+        throw new UsernameTakenError(input.username);
+      }
       if (!res.ok) throw new Error("No se pudo crear el usuario.");
       return buildAppUser((await res.json()) as BackendUser);
     },

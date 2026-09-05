@@ -37,42 +37,59 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
     let struggleTimer: ReturnType<typeof setTimeout> | undefined;
 
     async function setup() {
-      const hasCamera = await QrScanner.hasCamera();
-      if (cancelled) return;
-      if (!hasCamera) {
-        setState("no-camera");
-        return;
-      }
-      if (!videoRef.current) return;
-
-      const scanner = new QrScanner(
-        videoRef.current,
-        (result) => {
-          if (cancelled) return;
-          clearTimeout(struggleTimer);
-          setStrugglingToScan(false);
-          onDecodeRef.current(result.data);
-        },
-        {
-          returnDetailedScanResult: true,
-          onDecodeError: (error) => {
-            // "No QR code found" se dispara docenas de veces por segundo
-            // mientras no hay un código en cuadro — es el caso normal, no un
-            // error. Cualquier otro valor sí es un fallo real del motor de
-            // escaneo (worker o BarcodeDetector) que, con el manejador por
-            // defecto de la librería, solo hace un console.log silencioso:
-            // en un celular sin devtools remotos conectados eso es invisible
-            // y la cámara se queda viva sin escanear nunca, sin ninguna
-            // pista de qué pasó. Se sube a console.error para poder
-            // encontrarlo con Chrome remote debugging / Safari Web Inspector.
-            if (error === QrScanner.NO_QR_CODE_FOUND) return;
-            console.error("QrScanCamera: error al decodificar", error);
-          },
-        },
-      );
-      scannerRef.current = scanner;
-
+      // Todo lo que toca la cámara va en un mismo try/catch: `hasCamera()`
+      // también puede lanzar (p. ej. `navigator.mediaDevices` es `undefined`
+      // en un origen inseguro — http a una IP de LAN en vez de localhost/
+      // https, el caso típico al probar desde un celular). Antes solo
+      // `scanner.start()` estaba cubierto, así que ese fallo quedaba como
+      // una promesa rechazada sin manejar y la UI se quedaba en "Iniciando
+      // cámara..." para siempre, sin ningún mensaje para el guard.
       try {
+        const hasCamera = await QrScanner.hasCamera();
+        if (cancelled) return;
+        if (!hasCamera) {
+          setState("no-camera");
+          return;
+        }
+        if (!videoRef.current) return;
+
+        const scanner = new QrScanner(
+          videoRef.current,
+          (result) => {
+            if (cancelled) return;
+            clearTimeout(struggleTimer);
+            setStrugglingToScan(false);
+            onDecodeRef.current(result.data);
+          },
+          {
+            returnDetailedScanResult: true,
+            onDecodeError: (error) => {
+              // "No QR code found" se dispara docenas de veces por segundo
+              // mientras no hay un código en cuadro — es el caso normal, no un
+              // error. Cualquier otro valor sí es un fallo real del motor de
+              // escaneo (worker o BarcodeDetector) que, con el manejador por
+              // defecto de la librería, solo hace un console.log silencioso:
+              // en un celular sin devtools remotos conectados eso es invisible
+              // y la cámara se queda viva sin escanear nunca, sin ninguna
+              // pista de qué pasó. Se sube a console.error para poder
+              // encontrarlo con Chrome remote debugging / Safari Web Inspector.
+              //
+              // La ruta nativa de BarcodeDetector (qr-scanner.min.js) envuelve
+              // el sentinel en un catch propio y relanza `Scanner error: No QR
+              // code found` en vez del valor exacto — probado en Android/
+              // Chrome real. Con comparación estricta, cada frame sin QR (la
+              // mayoría, mientras se apunta la cámara) se registraba como
+              // error real, y en dev eso disparaba el overlay de errores de
+              // Next.js tapando la pantalla en cada frame: parecía que el
+              // escaneo no funcionaba, cuando en realidad sí decodificaba.
+              const message = typeof error === "string" ? error : error.message;
+              if (message.includes(QrScanner.NO_QR_CODE_FOUND)) return;
+              console.error("QrScanCamera: error al decodificar", error);
+            },
+          },
+        );
+        scannerRef.current = scanner;
+
         await scanner.start();
         if (cancelled) return;
         setState("active");

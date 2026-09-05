@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+  // Permite pruebas desde un celular en la misma red local durante
+  // desarrollo (ej. probar la cámara/QR, que requiere HTTPS o un origen
+  // distinto de localhost) — sin esto, Next.js bloquea los recursos del
+  // dev server (JS, HMR) para cualquier origen que no sea localhost.
+  allowedDevOrigins: ["192.168.100.5"],
   // pdfkit carga sus fuentes AFM vía fs relativo a su propio módulo; si
   // Turbopack lo empaqueta, esa ruta se rompe y la exportación a PDF falla
   // en runtime con un 500 (no se ve en build ni en tests unitarios).
