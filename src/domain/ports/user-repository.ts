@@ -29,4 +29,5 @@ export interface UserRepository {
   create(input: CreateUserInput): Promise<AppUser>;
   /** Solo aplica a guards; null desasigna el sitio vigente. */
   assignSite(guardId: string, siteId: string | null): Promise<AppUser>;
+  deactivate(userId: string): Promise<AppUser>;
 }

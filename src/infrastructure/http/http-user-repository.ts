@@ -95,5 +95,17 @@ export function createHttpUserRepository(): UserRepository {
       }
       return buildAppUser((await res.json()) as BackendUser);
     },
+
+    async deactivate(userId) {
+      const res = await fetch(`${baseUrl}/users/${userId}/deactivate`, {
+        method: "PATCH",
+        headers: await authHeaders(),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(body?.message ?? "No se pudo desactivar el usuario.");
+      }
+      return buildAppUser((await res.json()) as BackendUser);
+    },
   };
 }
