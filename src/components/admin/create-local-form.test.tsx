@@ -1,8 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { CreateLocalForm } from "./create-local-form";
+
+const { notifySuccessMock } = vi.hoisted(() => ({ notifySuccessMock: vi.fn() }));
 
 vi.mock("@/app/admin/sitios/actions", () => ({
   createLocalAction: vi.fn(async (_prevState: { error: string | null }, formData: FormData) => {
@@ -13,7 +15,15 @@ vi.mock("@/app/admin/sitios/actions", () => ({
   }),
 }));
 
+vi.mock("@/lib/confirm", () => ({
+  notifySuccess: notifySuccessMock,
+}));
+
 describe("CreateLocalForm", () => {
+  beforeEach(() => {
+    notifySuccessMock.mockReset().mockResolvedValue(undefined);
+  });
+
   it("incluye el sitioId como campo oculto", () => {
     render(<CreateLocalForm sitioId="sitio-1" />);
 
@@ -29,5 +39,18 @@ describe("CreateLocalForm", () => {
     await user.click(screen.getByRole("button", { name: /agregar local/i }));
 
     expect(await screen.findByText(/no se encontró el sitio/i)).toBeInTheDocument();
+    expect(notifySuccessMock).not.toHaveBeenCalled();
+  });
+
+  it("al agregar exitosamente, muestra un SweetAlert de éxito y limpia el campo", async () => {
+    const user = userEvent.setup();
+    render(<CreateLocalForm sitioId="sitio-1" />);
+
+    const input = screen.getByLabelText(/nuevo local/i);
+    await user.type(input, "Panadería El Trigo");
+    await user.click(screen.getByRole("button", { name: /agregar local/i }));
+
+    await waitFor(() => expect(notifySuccessMock).toHaveBeenCalledWith("Local agregado"));
+    await waitFor(() => expect(input).toHaveValue(""));
   });
 });

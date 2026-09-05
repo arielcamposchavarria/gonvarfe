@@ -5,6 +5,7 @@ import { ChevronLeft, CheckCircle2, CircleAlert, CircleDashed } from "lucide-rea
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { PhotosDialog } from "@/components/shared/photos-dialog";
 import { formatDateCR, formatDateTimeCR, formatTimeCR } from "@/lib/format-date";
 import type { RecorridoEstado } from "@/domain/entities/recorrido";
 import type { RegistroEstado } from "@/domain/entities/registro";
@@ -77,11 +78,23 @@ export default async function AdminRoundDetailPage({
                   {registro.motivoPerdido && (
                     <p className="text-xs text-danger">Justificación: {registro.motivoPerdido}</p>
                   )}
+                  {registro.observacion && (
+                    <p className="text-xs text-muted-foreground">Observación: {registro.observacion}</p>
+                  )}
                 </div>
               </div>
-              <p className="pl-8 text-xs text-muted-foreground sm:pl-0">
-                Ventana: {formatTimeCR(registro.abreEn)} – {formatTimeCR(registro.cierraEn)}
-              </p>
+              <div className="flex flex-wrap items-center gap-2 pl-8 sm:pl-0">
+                {registro.fotos && (
+                  <PhotosDialog
+                    fotos={registro.fotos}
+                    title={`Fotos — ${marca?.nombre ?? registro.marcaId}`}
+                    description={REGISTRO_STATUS_LABEL[registro.estado]}
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Ventana: {formatTimeCR(registro.abreEn)} – {formatTimeCR(registro.cierraEn)}
+                </p>
+              </div>
             </div>
           );
         })}

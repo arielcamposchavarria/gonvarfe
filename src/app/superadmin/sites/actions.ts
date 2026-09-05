@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireSuperAdmin } from "@/lib/auth/require-super-admin";
@@ -35,7 +35,8 @@ export async function createSiteAction(
     marcas: parsed.data.visitingLocals,
   });
 
-  redirect("/superadmin/sites");
+  revalidatePath("/superadmin/sites");
+  return { error: null };
 }
 
 export interface AddVisitingLocalActionState {
@@ -65,7 +66,11 @@ export async function addVisitingLocalAction(
     throw error;
   }
 
-  redirect("/superadmin/sites");
+  // El form vive en la página de detalle (`[siteId]`), no en el listado —
+  // antes el redirect a `/superadmin/sites` sacaba al superAdmin de donde
+  // estaba parado justo después de agregar la marca.
+  revalidatePath(`/superadmin/sites/${siteId}`);
+  return { error: null };
 }
 
 export interface GenerateMarcaQrActionState {
@@ -116,7 +121,8 @@ export async function updateSiteAction(
     throw error;
   }
 
-  redirect(`/superadmin/sites/${siteId}`);
+  revalidatePath(`/superadmin/sites/${siteId}`);
+  return { error: null };
 }
 
 export interface DeactivateSiteActionState {
@@ -133,7 +139,8 @@ export async function deactivateSiteAction(sitioId: string): Promise<DeactivateS
     throw error;
   }
 
-  redirect(`/superadmin/sites/${sitioId}`);
+  revalidatePath(`/superadmin/sites/${sitioId}`);
+  return { error: null };
 }
 
 export interface UpdateMarcaActionState {
@@ -164,7 +171,8 @@ export async function updateMarcaAction(
     throw error;
   }
 
-  redirect(`/superadmin/sites/${sitioId}`);
+  revalidatePath(`/superadmin/sites/${sitioId}`);
+  return { error: null };
 }
 
 export async function deactivateMarcaAction(sitioId: string, marcaId: string): Promise<{ error: string | null }> {
@@ -177,5 +185,6 @@ export async function deactivateMarcaAction(sitioId: string, marcaId: string): P
     throw error;
   }
 
-  redirect(`/superadmin/sites/${sitioId}`);
+  revalidatePath(`/superadmin/sites/${sitioId}`);
+  return { error: null };
 }

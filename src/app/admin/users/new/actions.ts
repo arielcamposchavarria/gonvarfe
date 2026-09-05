@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -37,5 +37,6 @@ export async function createUserAction(
     throw error;
   }
 
-  redirect("/admin/users");
+  revalidatePath("/admin/users");
+  return { error: null };
 }

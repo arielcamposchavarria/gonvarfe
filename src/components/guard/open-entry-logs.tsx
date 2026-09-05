@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { registrarSalidaAction } from "@/app/guard/logs/entry/actions";
+import { confirmAction, notifySuccess } from "@/lib/confirm";
 import type { EntryLog } from "@/domain/entities/entry-log";
 
 export interface OpenEntryLogsProps {
@@ -23,7 +24,13 @@ export function OpenEntryLogs({ logs }: OpenEntryLogsProps) {
   const visible = logs.filter((log) => !closedIds.includes(log.id));
   if (visible.length === 0) return null;
 
-  function handleSalida(logId: string) {
+  async function handleSalida(logId: string) {
+    const confirmed = await confirmAction({
+      title: "¿Registrar la salida?",
+      text: "No podrá deshacer esta acción.",
+    });
+    if (!confirmed) return;
+
     setError(null);
     setPendingId(logId);
     startTransition(async () => {
@@ -32,6 +39,7 @@ export function OpenEntryLogs({ logs }: OpenEntryLogsProps) {
         setError(result.error);
       } else {
         setClosedIds((ids) => [...ids, logId]);
+        await notifySuccess("Salida registrada");
       }
       setPendingId(null);
     });

@@ -73,7 +73,14 @@ describe("buildGuardScannedStationsSheet", () => {
   it("mapea cada escaneo a tiempo a una fila", () => {
     const scannedAt = new Date("2026-01-01T08:05:00.000Z");
     const sheet = buildGuardScannedStationsSheet([
-      { siteName: "Plaza Amara", stationName: "Entrada principal", roundSequence: 1, scannedAt },
+      {
+        siteName: "Plaza Amara",
+        stationName: "Entrada principal",
+        roundSequence: 1,
+        scannedAt,
+        fotos: null,
+        observacion: null,
+      },
     ]);
 
     expect(sheet.name).toBe("QR escaneados");
@@ -87,7 +94,15 @@ describe("buildGuardMissedScansSheet", () => {
   it("incluye el motivo reportado", () => {
     const reportedAt = new Date("2026-01-01T08:10:00.000Z");
     const sheet = buildGuardMissedScansSheet([
-      { siteName: "Plaza Amara", stationName: "Área de carga", roundSequence: 1, reason: "QR dañado", reportedAt },
+      {
+        siteName: "Plaza Amara",
+        stationName: "Área de carga",
+        roundSequence: 1,
+        reason: "QR dañado",
+        reportedAt,
+        fotos: null,
+        observacion: null,
+      },
     ]);
 
     expect(sheet.name).toBe("QR no escaneados");

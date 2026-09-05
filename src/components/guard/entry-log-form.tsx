@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -12,6 +13,8 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ImageUploadField } from "@/components/shared/image-upload-field";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
 export interface EntryLogFormProps {
   visitingLocals: string[];
@@ -23,6 +26,11 @@ export function EntryLogForm({ visitingLocals }: EntryLogFormProps) {
   const [state, formAction, isPending] = useActionState(submitEntryLogAction, INITIAL_STATE);
   const [defaultDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [visitingLocal, setVisitingLocal] = useState("");
+  const router = useRouter();
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    void notifySuccess("Registro de ingreso guardado").then(() => router.push("/guard/dashboard"));
+  });
 
   return (
     <div className="flex flex-col gap-3">
