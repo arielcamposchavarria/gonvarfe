@@ -39,3 +39,25 @@ export async function confirmAction(options: ConfirmOptions): Promise<boolean> {
 
   return result.isConfirmed;
 }
+
+/**
+ * Notificación de éxito de un solo botón (o autocierre), mismo tema de
+ * SweetAlert2 que `confirmAction`. Para feedback tras una mutación que ya
+ * ocurrió (guardar, asignar, etc.), no para pedir confirmación previa.
+ */
+export async function notifySuccess(title: string, text?: string): Promise<void> {
+  await Swal.fire({
+    title,
+    text,
+    icon: "success",
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false,
+    buttonsStyling: false,
+    customClass: {
+      popup: "gv-swal-popup",
+      title: "gv-swal-title",
+      htmlContainer: "gv-swal-text",
+    },
+  });
+}

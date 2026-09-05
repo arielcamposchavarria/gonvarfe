@@ -5,6 +5,7 @@ import { ChevronLeft, CheckCircle2, CircleAlert, CircleDashed } from "lucide-rea
 import { container } from "@/infrastructure/container";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { formatDateCR, formatDateTimeCR, formatTimeCR } from "@/lib/format-date";
 import type { RecorridoEstado } from "@/domain/entities/recorrido";
 import type { RegistroEstado } from "@/domain/entities/registro";
 
@@ -50,11 +51,11 @@ export default async function AdminRoundDetailPage({
           {guardName} · {sitio.nombre}
         </p>
         {turnoIniciadoEn && (
-          <p className="text-sm text-muted-foreground">Turno del {turnoIniciadoEn.toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground">Turno del {formatDateCR(turnoIniciadoEn)}</p>
         )}
         <p className="text-sm text-muted-foreground">
-          Iniciado {recorrido.iniciadoEn.toLocaleString()}
-          {recorrido.completadoEn && ` · Finalizado ${recorrido.completadoEn.toLocaleString()}`}
+          Iniciado {formatDateTimeCR(recorrido.iniciadoEn)}
+          {recorrido.completadoEn && ` · Finalizado ${formatDateTimeCR(recorrido.completadoEn)}`}
         </p>
       </div>
 
@@ -71,7 +72,7 @@ export default async function AdminRoundDetailPage({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {REGISTRO_STATUS_LABEL[registro.estado]}
-                    {registro.escaneadoEn && ` a las ${registro.escaneadoEn.toLocaleTimeString()}`}
+                    {registro.escaneadoEn && ` a las ${formatTimeCR(registro.escaneadoEn)}`}
                   </p>
                   {registro.motivoPerdido && (
                     <p className="text-xs text-danger">Justificación: {registro.motivoPerdido}</p>
@@ -79,7 +80,7 @@ export default async function AdminRoundDetailPage({
                 </div>
               </div>
               <p className="pl-8 text-xs text-muted-foreground sm:pl-0">
-                Ventana: {registro.abreEn.toLocaleTimeString()} – {registro.cierraEn.toLocaleTimeString()}
+                Ventana: {formatTimeCR(registro.abreEn)} – {formatTimeCR(registro.cierraEn)}
               </p>
             </div>
           );

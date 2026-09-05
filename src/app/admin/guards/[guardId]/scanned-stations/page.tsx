@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
+import { formatDateTimeCR } from "@/lib/format-date";
 
 export default async function AdminGuardScannedStationsPage({
   params,
@@ -54,7 +55,7 @@ export default async function AdminGuardScannedStationsPage({
             <div className="min-w-0">
               <p className="text-sm font-medium">{entry.stationName}</p>
               <p className="text-xs text-muted-foreground">
-                {entry.siteName} · Recorrido #{entry.roundSequence} · {new Date(entry.scannedAt).toLocaleString()}
+                {entry.siteName} · Recorrido #{entry.roundSequence} · {formatDateTimeCR(new Date(entry.scannedAt))}
               </p>
             </div>
           </div>

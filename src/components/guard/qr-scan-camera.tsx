@@ -3,6 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
 
+// qr-scanner decodifica en un Web Worker que carga vía import() dinámico;
+// bajo Turbopack (ver next.config.ts) ese import no siempre se resuelve al
+// bundlear para el navegador, así que el worker nunca arranca: la cámara se
+// ve activa pero nunca decodifica nada, sin ningún error visible. Fijar
+// WORKER_PATH a una copia estática servida desde /public evita depender de
+// ese import (ver README de qr-scanner, sección de bundlers).
+QrScanner.WORKER_PATH = "/qr-scanner-worker.min.js";
+
 export interface QrScanCameraProps {
   onDecode: (value: string) => void;
 }

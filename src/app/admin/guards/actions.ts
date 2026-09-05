@@ -10,18 +10,14 @@ export interface AssignGuardSiteActionState {
 }
 
 export async function assignGuardSiteAction(
-  _prevState: AssignGuardSiteActionState,
-  formData: FormData,
+  guardId: string,
+  siteId: string | null,
 ): Promise<AssignGuardSiteActionState> {
   await requireAdmin();
 
-  const guardId = formData.get("guardId");
-  if (typeof guardId !== "string" || !guardId) {
+  if (!guardId) {
     return { error: "Guardia inválido." };
   }
-
-  const rawSiteId = formData.get("siteId");
-  const siteId = typeof rawSiteId === "string" && rawSiteId !== "" ? rawSiteId : null;
 
   try {
     await container.assignGuardSite({ guardId, siteId });

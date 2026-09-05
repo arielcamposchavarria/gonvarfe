@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { ExportButton } from "@/components/shared/export-button";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
+import { formatDateTimeCR } from "@/lib/format-date";
 
 export default async function AdminSiteIncidentLogsPage({
   params,
@@ -59,7 +60,7 @@ export default async function AdminSiteIncidentLogsPage({
                 </Badge>
               </div>
               <CardDescription>
-                {guardName} · {log.occurredAt.toLocaleString()}
+                {guardName} · {formatDateTimeCR(log.occurredAt)}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">
