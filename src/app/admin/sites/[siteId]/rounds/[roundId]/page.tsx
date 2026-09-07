@@ -13,6 +13,7 @@ import type { RegistroEstado } from "@/domain/entities/registro";
 const ROUND_STATUS_LABEL: Record<RecorridoEstado, string> = {
   "en-progreso": "En curso",
   completado: "Completado",
+  vencido: "Vencido",
 };
 
 const REGISTRO_STATUS_LABEL: Record<RegistroEstado, string> = {
