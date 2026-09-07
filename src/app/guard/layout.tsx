@@ -19,7 +19,7 @@ export default async function GuardLayout({ children }: { children: React.ReactN
   if (!user || user.role !== "guard" || !user.isActive) redirect("/login");
 
   return (
-    <AppShell role="guard" userName={user.name} navItems={NAV_ITEMS}>
+    <AppShell role="guard" userName={user.name} userPhotoUrl={user.photoUrl} navItems={NAV_ITEMS}>
       {children}
     </AppShell>
   );

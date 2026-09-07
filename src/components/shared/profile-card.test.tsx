@@ -37,11 +37,22 @@ describe("ProfileCard", () => {
     expect(screen.getByAltText(/foto de perfil/i)).toHaveAttribute("src", "https://example.com/guard.jpg");
   });
 
-  it("no muestra foto ni placeholder para roles distintos de guard", () => {
+  it("también muestra iniciales para roles distintos de guard (sin foto asignada)", () => {
     render(<ProfileCard user={ADMIN} />);
 
-    expect(screen.queryByLabelText(/foto de perfil/i)).not.toBeInTheDocument();
-    expect(screen.queryByAltText(/foto de perfil/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/foto de perfil no asignada/i)).toHaveTextContent("LH");
+  });
+
+  it("muestra el correo cuando el usuario lo tiene", () => {
+    render(<ProfileCard user={{ ...ADMIN, email: "luis.herrera@example.com" }} />);
+
+    expect(screen.getByText(/luis\.herrera@example\.com/i)).toBeInTheDocument();
+  });
+
+  it("no muestra la línea de correo si el usuario no tiene", () => {
+    render(<ProfileCard user={ADMIN} />);
+
+    expect(screen.queryByText(/correo:/i)).not.toBeInTheDocument();
   });
 
   it("no incluye ningún control para cambiar la foto", () => {

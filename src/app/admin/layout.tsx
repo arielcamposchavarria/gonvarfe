@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user || user.role !== "admin" || !user.isActive) redirect("/login");
 
   return (
-    <AppShell role="admin" userName={user.name} navItems={NAV_ITEMS}>
+    <AppShell role="admin" userName={user.name} userPhotoUrl={user.photoUrl} navItems={NAV_ITEMS}>
       {children}
     </AppShell>
   );

@@ -62,6 +62,7 @@ export function createHttpUserRepository(): UserRepository {
           name: input.name,
           email: input.email,
           roleId: role.id,
+          fotoPerfil: input.fotoPerfil,
         }),
       });
       if (res.status === 409) {

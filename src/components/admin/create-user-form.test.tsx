@@ -47,6 +47,12 @@ describe("CreateUserForm (admin)", () => {
     expect(screen.queryByText(/super administrador/i)).not.toBeInTheDocument();
   });
 
+  it("incluye el campo opcional de foto de perfil", () => {
+    render(<CreateUserForm roles={ROLES} />);
+
+    expect(screen.getByText(/foto de perfil \(opcional\)/i)).toBeInTheDocument();
+  });
+
   it("permite elegir el rol admin", async () => {
     const user = userEvent.setup();
     render(<CreateUserForm roles={ROLES} />);

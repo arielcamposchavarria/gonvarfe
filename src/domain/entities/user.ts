@@ -6,6 +6,9 @@ interface BaseUser {
   username: string;
   isActive: boolean;
   readonly createdAt: Date;
+  /** Foto de perfil (base64 data URL); el propio usuario puede cambiarla desde "Mi perfil". */
+  photoUrl?: string | null;
+  readonly email?: string | null;
 }
 
 export interface SuperAdminUser extends BaseUser {
@@ -18,8 +21,6 @@ export interface AdminUser extends BaseUser {
 
 export interface GuardUser extends BaseUser {
   role: "guard";
-  /** Foto de referencia asignada por el admin; el guard no puede modificarla. */
-  photoUrl?: string | null;
   /** Sitio vigente asignado por el admin; null si no tiene ninguno. */
   assignedSiteId?: string | null;
 }
