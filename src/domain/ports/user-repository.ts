@@ -6,6 +6,7 @@ export interface CreateUserInput {
   username: string;
   email: string;
   role: Role;
+  fotoPerfil?: string;
 }
 
 export class UsernameTakenError extends Error {
