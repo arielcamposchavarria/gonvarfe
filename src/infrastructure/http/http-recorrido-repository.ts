@@ -67,14 +67,14 @@ function mapConflictError(errorName: string | undefined): string {
   switch (errorName) {
     case "QrInvalidoException":
       return "El código QR no corresponde a la marca esperada. Respete el orden del recorrido.";
-    case "VentanaAunNoAbreException":
-      return "Todavía no se habilita la ventana de esta estación.";
-    case "VentanaCerradaException":
-      return "El tiempo para escanear esta marca venció. Repórtela como no escaneada.";
     case "RecorridoYaCompletoException":
       return "Este recorrido ya está completo.";
     case "SitioSinMarcasException":
       return "El sitio no tiene marcas activas configuradas.";
+    case "RecorridoNotFoundException":
+      return "No se encontró ese recorrido.";
+    case "RegistroNoDisponibleException":
+      return "Esa marca ya no está disponible para reportar.";
     default:
       return "No se pudo procesar la solicitud.";
   }
@@ -120,6 +120,8 @@ export function createHttpRecorridoRepository(): RecorridoRepository {
           motivo: input.motivo,
           fotos: input.fotos,
           observacion: input.observacion,
+          recorridoId: input.recorridoId,
+          registroId: input.registroId,
         }),
       });
       if (res.status === 404) throw new Error("No hay un turno activo. Inicie un turno primero.");

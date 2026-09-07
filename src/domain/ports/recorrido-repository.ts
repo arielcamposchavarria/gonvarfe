@@ -14,6 +14,13 @@ export interface ReportarPerdidoInput {
   motivo: string;
   fotos?: string[];
   observacion?: string;
+  /**
+   * Ambos presentes (o ninguno): justifica una marca puntual en vez del
+   * objetivo actual del recorrido activo. Uso: reportar marcas que quedaron
+   * pendientes de un recorrido ya vencido.
+   */
+  recorridoId?: string;
+  registroId?: string;
 }
 
 export interface RecorridoRepository {

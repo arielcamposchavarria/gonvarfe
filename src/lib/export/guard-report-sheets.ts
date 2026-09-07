@@ -9,6 +9,7 @@ import type { RecorridoEstado } from "@/domain/entities/recorrido";
 const ROUND_STATUS_LABEL: Record<RecorridoEstado, string> = {
   "en-progreso": "En curso",
   completado: "Completado",
+  vencido: "Vencido",
 };
 
 export function buildGuardRoundsSheet(rounds: RoundWithSite[]): SheetDefinition {
