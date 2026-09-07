@@ -61,3 +61,25 @@ export async function notifySuccess(title: string, text?: string): Promise<void>
     },
   });
 }
+
+/**
+ * Notificación de error de un solo botón, mismo tema de SweetAlert2 que
+ * `confirmAction`/`notifySuccess`. No se autocierra (a diferencia de
+ * `notifySuccess`): un error requiere que el guard/admin lo lea y lo cierre
+ * a propósito, no que desaparezca solo.
+ */
+export async function notifyError(title: string, text?: string): Promise<void> {
+  await Swal.fire({
+    title,
+    text,
+    icon: "error",
+    confirmButtonText: "Entendido",
+    buttonsStyling: false,
+    customClass: {
+      popup: "gv-swal-popup",
+      title: "gv-swal-title",
+      htmlContainer: "gv-swal-text",
+      confirmButton: "gv-swal-btn gv-swal-btn-default",
+    },
+  });
+}

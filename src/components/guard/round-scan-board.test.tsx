@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
@@ -8,19 +8,31 @@ import type { GuardSitio } from "@/domain/entities/guard-sitio";
 import type { Recorrido } from "@/domain/entities/recorrido";
 import type { Registro } from "@/domain/entities/registro";
 
-const { registrarEscaneoActionMock, reportarPerdidoActionMock, finalizarTurnoActionMock, pushMock } = vi.hoisted(
-  () => ({
-    registrarEscaneoActionMock: vi.fn(),
-    reportarPerdidoActionMock: vi.fn(),
-    finalizarTurnoActionMock: vi.fn(),
-    pushMock: vi.fn(),
-  }),
-);
+const {
+  registrarEscaneoActionMock,
+  reportarPerdidoActionMock,
+  finalizarTurnoActionMock,
+  pushMock,
+  notifyErrorMock,
+  confirmActionMock,
+} = vi.hoisted(() => ({
+  registrarEscaneoActionMock: vi.fn(),
+  reportarPerdidoActionMock: vi.fn(),
+  finalizarTurnoActionMock: vi.fn(),
+  pushMock: vi.fn(),
+  notifyErrorMock: vi.fn(),
+  confirmActionMock: vi.fn(),
+}));
 
 vi.mock("@/app/guard/actions", () => ({
   registrarEscaneoAction: registrarEscaneoActionMock,
   reportarPerdidoAction: reportarPerdidoActionMock,
   finalizarTurnoAction: finalizarTurnoActionMock,
+}));
+
+vi.mock("@/lib/confirm", () => ({
+  notifyError: notifyErrorMock,
+  confirmAction: confirmActionMock,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -97,6 +109,8 @@ describe("RoundScanBoard", () => {
     reportarPerdidoActionMock.mockReset().mockResolvedValue({ error: null });
     finalizarTurnoActionMock.mockReset().mockResolvedValue({ error: null });
     pushMock.mockReset();
+    notifyErrorMock.mockReset().mockResolvedValue(undefined);
+    confirmActionMock.mockReset().mockResolvedValue(true);
   });
 
   it("sin recorrido activo, ofrece iniciar el recorrido escaneando o saltando (camino de saltar)", async () => {
@@ -186,7 +200,7 @@ describe("RoundScanBoard", () => {
     expect(screen.getByText("Área de carga")).toBeInTheDocument();
   });
 
-  it("muestra el error de secuencia inválida / QR incorrecto devuelto por la acción", async () => {
+  it("muestra el error de secuencia inválida / QR incorrecto como SweetAlert, no como banner", async () => {
     registrarEscaneoActionMock.mockResolvedValue({
       error: "El código QR no corresponde a la marca esperada. Respete el orden del recorrido.",
     });
@@ -197,7 +211,13 @@ describe("RoundScanBoard", () => {
     await user.click(screen.getByRole("button", { name: /omitir \(demo\)/i }));
     await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/no corresponde a la marca esperada/i);
+    await waitFor(() =>
+      expect(notifyErrorMock).toHaveBeenCalledWith(
+        "No se pudo registrar el escaneo",
+        "El código QR no corresponde a la marca esperada. Respete el orden del recorrido.",
+      ),
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("cuando todas las marcas del recorrido ya se resolvieron, ofrece continuar o finalizar el turno", () => {
@@ -217,8 +237,20 @@ describe("RoundScanBoard", () => {
 
     await user.click(screen.getByRole("button", { name: /finalizar turno/i }));
 
-    expect(finalizarTurnoActionMock).toHaveBeenCalled();
+    await waitFor(() => expect(finalizarTurnoActionMock).toHaveBeenCalled());
     expect(pushMock).toHaveBeenCalledWith("/guard/select-site");
+  });
+
+  it("pide confirmación antes de finalizar el turno, y no llama la acción si se cancela", async () => {
+    confirmActionMock.mockResolvedValue(false);
+    const user = userEvent.setup();
+    const recorrido = buildRecorrido([buildRegistro({ id: "r1", estado: "a-tiempo", escaneadoEn: new Date(NOW) })]);
+    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={1} />);
+
+    await user.click(screen.getByRole("button", { name: /finalizar turno/i }));
+
+    expect(finalizarTurnoActionMock).not.toHaveBeenCalled();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("no arranca el siguiente recorrido de forma automática al completar el actual", () => {

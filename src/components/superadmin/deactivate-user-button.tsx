@@ -6,33 +6,35 @@ import { Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { confirmAction, notifySuccess } from "@/lib/confirm";
 
-export interface DeactivateSiteButtonProps {
-  sitioId: string;
-  activo: boolean;
-  action: (sitioId: string) => Promise<{ error: string | null }>;
+export interface DeactivateUserButtonProps {
+  userId: string;
+  userName: string;
+  isActive: boolean;
+  action: (userId: string) => Promise<{ error: string | null }>;
 }
 
-export function DeactivateSiteButton({ sitioId, activo, action }: DeactivateSiteButtonProps) {
+export function DeactivateUserButton({ userId, userName, isActive, action }: DeactivateUserButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  if (!activo) return null;
+  if (!isActive) return null;
 
   async function handleClick() {
     const confirmed = await confirmAction({
-      title: "¿Desactivar este sitio?",
+      title: `¿Desactivar a ${userName}?`,
+      text: "No podrá volver a iniciar sesión hasta que se reactive su cuenta.",
       variant: "destructive",
       confirmText: "Desactivar",
     });
     if (!confirmed) return;
 
     startTransition(async () => {
-      const result = await action(sitioId);
+      const result = await action(userId);
       if (result.error) {
         setError(result.error);
         return;
       }
-      await notifySuccess("Sitio desactivado");
+      await notifySuccess("Usuario desactivado");
     });
   }
 

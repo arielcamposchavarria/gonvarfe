@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -36,7 +36,8 @@ export async function createLocalAction(
     throw error;
   }
 
-  redirect(`/admin/sitios/${sitioId}`);
+  revalidatePath(`/admin/sitios/${sitioId}`);
+  return { error: null };
 }
 
 export interface CreateSiteActionState {
@@ -65,7 +66,8 @@ export async function createSiteAction(
     marcas: parsed.data.visitingLocals,
   });
 
-  redirect("/admin/sitios");
+  revalidatePath("/admin/sitios");
+  return { error: null };
 }
 
 export interface AddMarcaActionState {
@@ -95,7 +97,8 @@ export async function addMarcaAction(
     throw error;
   }
 
-  redirect(`/admin/sitios/${siteId}`);
+  revalidatePath(`/admin/sitios/${siteId}`);
+  return { error: null };
 }
 
 export interface GenerateMarcaQrActionState {
@@ -146,7 +149,8 @@ export async function updateSiteAction(
     throw error;
   }
 
-  redirect(`/admin/sitios/${siteId}`);
+  revalidatePath(`/admin/sitios/${siteId}`);
+  return { error: null };
 }
 
 export interface DeactivateSiteActionState {
@@ -163,7 +167,8 @@ export async function deactivateSiteAction(sitioId: string): Promise<DeactivateS
     throw error;
   }
 
-  redirect(`/admin/sitios/${sitioId}`);
+  revalidatePath(`/admin/sitios/${sitioId}`);
+  return { error: null };
 }
 
 export interface UpdateMarcaActionState {
@@ -194,7 +199,8 @@ export async function updateMarcaAction(
     throw error;
   }
 
-  redirect(`/admin/sitios/${sitioId}`);
+  revalidatePath(`/admin/sitios/${sitioId}`);
+  return { error: null };
 }
 
 export async function deactivateMarcaAction(sitioId: string, marcaId: string): Promise<{ error: string | null }> {
@@ -207,5 +213,6 @@ export async function deactivateMarcaAction(sitioId: string, marcaId: string): P
     throw error;
   }
 
-  redirect(`/admin/sitios/${sitioId}`);
+  revalidatePath(`/admin/sitios/${sitioId}`);
+  return { error: null };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
 export interface EditSiteFormState {
   error: string | null;
@@ -28,9 +30,15 @@ const INITIAL_STATE: EditSiteFormState = { error: null };
 
 export function EditSiteForm({ sitio, action }: EditSiteFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL_STATE);
+  const [open, setOpen] = useState(false);
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    setOpen(false);
+    void notifySuccess("Sitio actualizado");
+  });
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <Pencil className="h-4 w-4" />

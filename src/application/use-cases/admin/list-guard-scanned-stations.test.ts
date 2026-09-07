@@ -66,6 +66,8 @@ function buildRegistro(overrides: Partial<Registro>): Registro {
     cierraEn: new Date("2026-01-01T08:02:00Z"),
     escaneadoEn: new Date("2026-01-01T08:01:00Z"),
     motivoPerdido: null,
+    fotos: null,
+    observacion: null,
     ...overrides,
   };
 }
@@ -111,7 +113,13 @@ describe("listGuardScannedStations", () => {
         buildRecorrido({
           registros: [
             buildRegistro({ id: "r1", marcaId: "marca-1", escaneadoEn: new Date("2026-01-01T08:01:00Z") }),
-            buildRegistro({ id: "r2", marcaId: "marca-2", escaneadoEn: new Date("2026-01-01T08:06:00Z") }),
+            buildRegistro({
+              id: "r2",
+              marcaId: "marca-2",
+              escaneadoEn: new Date("2026-01-01T08:06:00Z"),
+              fotos: ["data:image/png;base64,foto1"],
+              observacion: "Todo en orden",
+            }),
             buildRegistro({ id: "r3", estado: "perdido", escaneadoEn: null, motivoPerdido: "N/A" }),
             buildRegistro({ id: "r4", estado: "pendiente", escaneadoEn: null }),
           ],
@@ -125,8 +133,22 @@ describe("listGuardScannedStations", () => {
     const result = await listGuardScannedStations({ turnoRepository, recorridoRepository, sitioRepository }, "guard-1");
 
     expect(result).toEqual([
-      { siteName: "Plaza Amara", stationName: "Área de carga", roundSequence: 1, scannedAt: new Date("2026-01-01T08:06:00Z") },
-      { siteName: "Plaza Amara", stationName: "Entrada principal", roundSequence: 1, scannedAt: new Date("2026-01-01T08:01:00Z") },
+      {
+        siteName: "Plaza Amara",
+        stationName: "Área de carga",
+        roundSequence: 1,
+        scannedAt: new Date("2026-01-01T08:06:00Z"),
+        fotos: ["data:image/png;base64,foto1"],
+        observacion: "Todo en orden",
+      },
+      {
+        siteName: "Plaza Amara",
+        stationName: "Entrada principal",
+        roundSequence: 1,
+        scannedAt: new Date("2026-01-01T08:01:00Z"),
+        fotos: null,
+        observacion: null,
+      },
     ]);
   });
 

@@ -1,7 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { container } from "@/infrastructure/container";
 import { requireGuard } from "@/lib/auth/require-guard";
 import { incidentLogSchema } from "@/lib/validation/incident-log-schema";
@@ -51,5 +49,5 @@ export async function submitIncidentLogAction(
     photoUrls,
   });
 
-  redirect("/guard/dashboard");
+  return { error: null };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
 export interface EditMarcaFormState {
   error: string | null;
@@ -29,9 +31,15 @@ const INITIAL_STATE: EditMarcaFormState = { error: null };
 
 export function EditMarcaForm({ sitioId, marca, action }: EditMarcaFormProps) {
   const [state, formAction, isPending] = useActionState(action, INITIAL_STATE);
+  const [open, setOpen] = useState(false);
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    setOpen(false);
+    void notifySuccess("Marca actualizada");
+  });
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <Pencil className="h-4 w-4" />

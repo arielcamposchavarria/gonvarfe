@@ -1,11 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { container } from "@/infrastructure/container";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createUserSchema } from "@/lib/validation/create-user-schema";
-import { UsernameTakenError } from "@/domain/ports/user-repository";
+import { UsernameTakenError, EmailTakenError } from "@/domain/ports/user-repository";
 
 export interface CreateUserActionState {
   error: string | null;
@@ -31,11 +31,12 @@ export async function createUserAction(
   try {
     await container.createUser(parsed.data);
   } catch (error) {
-    if (error instanceof UsernameTakenError) {
+    if (error instanceof UsernameTakenError || error instanceof EmailTakenError) {
       return { error: error.message };
     }
     throw error;
   }
 
-  redirect("/admin/users");
+  revalidatePath("/admin/users");
+  return { error: null };
 }

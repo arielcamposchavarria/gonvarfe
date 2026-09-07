@@ -4,15 +4,20 @@ import userEvent from "@testing-library/user-event";
 
 import { DeactivateSiteButton } from "./deactivate-site-button";
 
-const { confirmActionMock } = vi.hoisted(() => ({ confirmActionMock: vi.fn() }));
+const { confirmActionMock, notifySuccessMock } = vi.hoisted(() => ({
+  confirmActionMock: vi.fn(),
+  notifySuccessMock: vi.fn(),
+}));
 
 vi.mock("@/lib/confirm", () => ({
   confirmAction: confirmActionMock,
+  notifySuccess: notifySuccessMock,
 }));
 
 describe("DeactivateSiteButton", () => {
   beforeEach(() => {
     confirmActionMock.mockReset();
+    notifySuccessMock.mockReset().mockResolvedValue(undefined);
   });
 
   it("no renderiza nada si el sitio ya está inactivo", () => {
@@ -31,6 +36,7 @@ describe("DeactivateSiteButton", () => {
     await user.click(screen.getByRole("button", { name: /desactivar/i }));
 
     await waitFor(() => expect(action).toHaveBeenCalledWith("sitio-1"));
+    await waitFor(() => expect(notifySuccessMock).toHaveBeenCalledWith("Sitio desactivado"));
   });
 
   it("no llama a la acción si el usuario cancela la confirmación", async () => {
@@ -53,5 +59,6 @@ describe("DeactivateSiteButton", () => {
     await user.click(screen.getByRole("button", { name: /desactivar/i }));
 
     expect(await screen.findByText(/no se pudo desactivar/i)).toBeInTheDocument();
+    expect(notifySuccessMock).not.toHaveBeenCalled();
   });
 });

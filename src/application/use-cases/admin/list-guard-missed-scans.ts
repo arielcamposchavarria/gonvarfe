@@ -15,6 +15,8 @@ export interface MissedScanEntry {
   roundSequence: number;
   reason: string;
   reportedAt: Date;
+  fotos: string[] | null;
+  observacion: string | null;
 }
 
 /**
@@ -50,6 +52,8 @@ export async function listGuardMissedScans(
         roundSequence: recorrido.secuencia,
         reason: registro.motivoPerdido,
         reportedAt: registro.cierraEn,
+        fotos: registro.fotos ?? null,
+        observacion: registro.observacion ?? null,
       });
     }
   }

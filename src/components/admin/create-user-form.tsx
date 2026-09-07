@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -11,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { notifySuccess } from "@/lib/confirm";
+import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
 export interface CreateUserFormProps {
   roles: { id: string; name: string }[];
@@ -20,6 +23,13 @@ const INITIAL_STATE: CreateUserActionState = { error: null };
 
 export function CreateUserForm({ roles }: CreateUserFormProps) {
   const [state, formAction, isPending] = useActionState(createUserAction, INITIAL_STATE);
+  const router = useRouter();
+
+  useActionSuccess(isPending, Boolean(state.error), () => {
+    void notifySuccess("Usuario creado", "Se envió una contraseña temporal al correo ingresado.").then(() =>
+      router.push("/admin/users"),
+    );
+  });
 
   return (
     <div className="flex flex-col gap-3">

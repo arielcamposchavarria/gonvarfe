@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { confirmAction } from "@/lib/confirm";
+import { confirmAction, notifySuccess } from "@/lib/confirm";
 
 export interface ForceFinalizeTurnoButtonProps {
   siteId: string;
@@ -30,6 +30,7 @@ export function ForceFinalizeTurnoButton({ siteId, turnoId, guardName, action }:
     startTransition(async () => {
       const result = await action(siteId, turnoId);
       setError(result.error);
+      if (!result.error) await notifySuccess("Turno finalizado");
     });
   }
 

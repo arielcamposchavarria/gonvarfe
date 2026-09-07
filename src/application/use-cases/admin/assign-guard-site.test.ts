@@ -27,6 +27,7 @@ describe("assignGuardSite", () => {
       findByRole: vi.fn(),
       create: vi.fn(),
       assignSite,
+      deactivate: vi.fn(),
     };
 
     const result = await assignGuardSite({ userRepository }, { guardId: "guard-1", siteId: "sitio-1" });
@@ -43,6 +44,7 @@ describe("assignGuardSite", () => {
       findByRole: vi.fn(),
       create: vi.fn(),
       assignSite,
+      deactivate: vi.fn(),
     };
 
     await assignGuardSite({ userRepository }, { guardId: "guard-1", siteId: null });
@@ -57,6 +59,7 @@ describe("assignGuardSite", () => {
       findByRole: vi.fn(),
       create: vi.fn(),
       assignSite: vi.fn().mockRejectedValue(new Error('Solo un usuario con rol "guard" puede tener un sitio asignado')),
+      deactivate: vi.fn(),
     };
 
     await expect(assignGuardSite({ userRepository }, { guardId: "admin-1", siteId: "sitio-1" })).rejects.toThrow(

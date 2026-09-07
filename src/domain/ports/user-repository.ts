@@ -15,6 +15,13 @@ export class UsernameTakenError extends Error {
   }
 }
 
+export class EmailTakenError extends Error {
+  constructor(email: string) {
+    super(`Ya existe un usuario registrado con el correo "${email}".`);
+    this.name = "EmailTakenError";
+  }
+}
+
 export interface UserRepository {
   findAll(): Promise<AppUser[]>;
   findById(id: string): Promise<AppUser | null>;
@@ -22,4 +29,5 @@ export interface UserRepository {
   create(input: CreateUserInput): Promise<AppUser>;
   /** Solo aplica a guards; null desasigna el sitio vigente. */
   assignSite(guardId: string, siteId: string | null): Promise<AppUser>;
+  deactivate(userId: string): Promise<AppUser>;
 }

@@ -6,6 +6,7 @@ import { container } from "@/infrastructure/container";
 import { Card } from "@/components/ui/card";
 import { ExportButton } from "@/components/shared/export-button";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { PhotosDialog } from "@/components/shared/photos-dialog";
 import { firstDateParam, parseDateRangeParams, buildDateRangeQuery } from "@/lib/date-range";
 import { formatDateTimeCR } from "@/lib/format-date";
 
@@ -52,11 +53,23 @@ export default async function AdminGuardScannedStationsPage({
         {scannedStations.map((entry, index) => (
           <div key={index} className="flex items-start gap-3 p-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{entry.stationName}</p>
               <p className="text-xs text-muted-foreground">
                 {entry.siteName} · Recorrido #{entry.roundSequence} · {formatDateTimeCR(new Date(entry.scannedAt))}
               </p>
+              {entry.observacion && (
+                <p className="text-xs text-muted-foreground">Observación: {entry.observacion}</p>
+              )}
+              {entry.fotos && (
+                <div className="pt-2">
+                  <PhotosDialog
+                    fotos={entry.fotos}
+                    title={`Fotos — ${entry.stationName}`}
+                    description={`${entry.siteName} · Recorrido #${entry.roundSequence}`}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ))}

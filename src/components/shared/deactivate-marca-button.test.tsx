@@ -4,15 +4,20 @@ import userEvent from "@testing-library/user-event";
 
 import { DeactivateMarcaButton } from "./deactivate-marca-button";
 
-const { confirmActionMock } = vi.hoisted(() => ({ confirmActionMock: vi.fn() }));
+const { confirmActionMock, notifySuccessMock } = vi.hoisted(() => ({
+  confirmActionMock: vi.fn(),
+  notifySuccessMock: vi.fn(),
+}));
 
 vi.mock("@/lib/confirm", () => ({
   confirmAction: confirmActionMock,
+  notifySuccess: notifySuccessMock,
 }));
 
 describe("DeactivateMarcaButton", () => {
   beforeEach(() => {
     confirmActionMock.mockReset();
+    notifySuccessMock.mockReset().mockResolvedValue(undefined);
   });
 
   it("no renderiza nada si la marca ya está inactiva", () => {
@@ -31,6 +36,7 @@ describe("DeactivateMarcaButton", () => {
     await user.click(screen.getByRole("button", { name: /desactivar/i }));
 
     await waitFor(() => expect(action).toHaveBeenCalledWith("sitio-1", "marca-1"));
+    await waitFor(() => expect(notifySuccessMock).toHaveBeenCalledWith("Marca desactivada"));
   });
 
   it("no llama a la acción si el usuario cancela la confirmación", async () => {
