@@ -6,10 +6,10 @@ import { getSession } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DeactivateUserButton } from "@/components/superadmin/deactivate-user-button";
+import { DeleteUserButton } from "@/components/superadmin/delete-user-button";
 import { ROLE_LABELS } from "@/domain/value-objects/role";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { deactivateUserAction } from "./actions";
+import { deleteUserAction } from "./actions";
 
 export default async function SuperAdminDashboardPage() {
   const [users, session] = await Promise.all([container.listUsers(), getSession()]);
@@ -34,18 +34,14 @@ export default async function SuperAdminDashboardPage() {
               <p className="truncate text-xs text-muted-foreground">
                 {user.username} · {ROLE_LABELS[user.role]}
               </p>
+              <p className="truncate text-xs text-muted-foreground">{user.email ?? "Sin correo"}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Badge variant={user.isActive ? "success" : "destructive"}>
                 {user.isActive ? "Activo" : "Inactivo"}
               </Badge>
               {user.id !== session?.userId && (
-                <DeactivateUserButton
-                  userId={user.id}
-                  userName={user.name}
-                  isActive={user.isActive}
-                  action={deactivateUserAction}
-                />
+                <DeleteUserButton userId={user.id} userName={user.name} action={deleteUserAction} />
               )}
             </div>
           </div>
@@ -58,6 +54,7 @@ export default async function SuperAdminDashboardPage() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Usuario</TableHead>
+              <TableHead>Correo</TableHead>
               <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Acciones</TableHead>
@@ -68,6 +65,7 @@ export default async function SuperAdminDashboardPage() {
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.username}</TableCell>
+                <TableCell>{user.email ?? "Sin correo"}</TableCell>
                 <TableCell>{ROLE_LABELS[user.role]}</TableCell>
                 <TableCell>
                   <Badge variant={user.isActive ? "success" : "destructive"}>
@@ -76,12 +74,7 @@ export default async function SuperAdminDashboardPage() {
                 </TableCell>
                 <TableCell>
                   {user.id !== session?.userId && (
-                    <DeactivateUserButton
-                      userId={user.id}
-                      userName={user.name}
-                      isActive={user.isActive}
-                      action={deactivateUserAction}
-                    />
+                    <DeleteUserButton userId={user.id} userName={user.name} action={deleteUserAction} />
                   )}
                 </TableCell>
               </TableRow>

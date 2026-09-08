@@ -50,7 +50,8 @@ import { createLocal, type CreateLocalInput } from "@/application/use-cases/admi
 import { createUser } from "@/application/use-cases/superadmin/create-user";
 import { updateOwnProfile } from "@/application/use-cases/account/update-own-profile";
 import { changePassword } from "@/application/use-cases/account/change-password";
-import { deactivateUser } from "@/application/use-cases/superadmin/deactivate-user";
+import { deactivateUser } from "@/application/use-cases/admin/deactivate-user";
+import { deleteUser } from "@/application/use-cases/superadmin/delete-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import { assignGuardSite, type AssignGuardSiteInput } from "@/application/use-cases/admin/assign-guard-site";
 import { forzarFinalizarTurno } from "@/application/use-cases/admin/forzar-finalizar-turno";
@@ -106,6 +107,7 @@ export const container = {
   forzarFinalizarTurno: (turnoId: string) => forzarFinalizarTurno({ turnoRepository }, turnoId),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   deactivateUser: (userId: string) => deactivateUser({ userRepository }, userId),
+  deleteUser: (userId: string) => deleteUser({ userRepository }, userId),
   listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),
   listSitios: () => listSitios({ sitioRepository }),

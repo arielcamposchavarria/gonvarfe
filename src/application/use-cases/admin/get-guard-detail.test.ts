@@ -90,6 +90,9 @@ function createFakeUserRepository(users: AppUser[]): UserRepository {
     async deactivate() {
       throw new Error("No usado en esta prueba.");
     },
+    async delete() {
+      throw new Error("No usado en esta prueba.");
+    },
   };
 }
 
