@@ -25,6 +25,9 @@ function createFakeUserRepository(deactivated: AppUser): UserRepository {
       if (userId !== deactivated.id) throw new Error("Usuario inesperado.");
       return deactivated;
     },
+    async delete() {
+      throw new Error("No usado en esta prueba.");
+    },
   };
 }
 
