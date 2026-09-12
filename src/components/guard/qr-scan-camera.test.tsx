@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
 interface MockDecodeResult {
@@ -8,18 +9,26 @@ interface MockDecodeResult {
 
 interface MockQrScannerOptions {
   onDecodeError?: (error: Error | string) => void;
+  preferredCamera?: string;
+  highlightScanRegion?: boolean;
+  highlightCodeOutline?: boolean;
 }
 
-const { hasCameraMock, startMock, stopMock, destroyMock, instances } = vi.hoisted(() => ({
-  hasCameraMock: vi.fn(),
-  startMock: vi.fn(),
-  stopMock: vi.fn(),
-  destroyMock: vi.fn(),
-  instances: [] as {
-    onDecodeCallback: (result: MockDecodeResult) => void;
-    onDecodeErrorCallback?: (error: Error | string) => void;
-  }[],
-}));
+const { hasCameraMock, startMock, stopMock, destroyMock, hasFlashMock, toggleFlashMock, isFlashOnMock, instances } =
+  vi.hoisted(() => ({
+    hasCameraMock: vi.fn(),
+    startMock: vi.fn(),
+    stopMock: vi.fn(),
+    destroyMock: vi.fn(),
+    hasFlashMock: vi.fn(),
+    toggleFlashMock: vi.fn(),
+    isFlashOnMock: vi.fn(),
+    instances: [] as {
+      onDecodeCallback: (result: MockDecodeResult) => void;
+      onDecodeErrorCallback?: (error: Error | string) => void;
+      options?: MockQrScannerOptions;
+    }[],
+  }));
 
 vi.mock("qr-scanner", () => {
   class MockQrScanner {
@@ -27,9 +36,13 @@ vi.mock("qr-scanner", () => {
     static NO_QR_CODE_FOUND = "No QR code found";
     onDecodeCallback: (result: MockDecodeResult) => void;
     onDecodeErrorCallback?: (error: Error | string) => void;
+    options?: MockQrScannerOptions;
     start = startMock;
     stop = stopMock;
     destroy = destroyMock;
+    hasFlash = hasFlashMock;
+    toggleFlash = toggleFlashMock;
+    isFlashOn = isFlashOnMock;
 
     constructor(
       _video: HTMLVideoElement,
@@ -38,6 +51,7 @@ vi.mock("qr-scanner", () => {
     ) {
       this.onDecodeCallback = onDecode;
       this.onDecodeErrorCallback = options?.onDecodeError;
+      this.options = options;
       instances.push(this);
     }
   }
@@ -53,6 +67,9 @@ describe("QrScanCamera", () => {
     startMock.mockReset().mockResolvedValue(undefined);
     stopMock.mockReset();
     destroyMock.mockReset();
+    hasFlashMock.mockReset().mockResolvedValue(false);
+    toggleFlashMock.mockReset().mockResolvedValue(undefined);
+    isFlashOnMock.mockReset().mockReturnValue(false);
     Object.defineProperty(navigator, "mediaDevices", {
       value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) },
       configurable: true,
@@ -136,6 +153,43 @@ describe("QrScanCamera", () => {
     // Y usa la versión más reciente del callback.
     instances[0].onDecodeCallback({ data: "qr-xyz" });
     expect(decodedValues).toEqual(["qr-xyz-1"]);
+  });
+
+  it("pide cámara trasera y resalta la región/el contorno del QR para facilitar apuntar", async () => {
+    render(<QrScanCamera onDecode={vi.fn()} />);
+
+    await waitFor(() => expect(instances).toHaveLength(1));
+    expect(instances[0].options).toMatchObject({
+      preferredCamera: "environment",
+      highlightScanRegion: true,
+      highlightCodeOutline: true,
+    });
+  });
+
+  describe("linterna", () => {
+    it("no muestra el botón de linterna si el dispositivo no la soporta", async () => {
+      hasFlashMock.mockResolvedValue(false);
+      render(<QrScanCamera onDecode={vi.fn()} />);
+
+      await waitFor(() => expect(instances).toHaveLength(1));
+      await waitFor(() => expect(hasFlashMock).toHaveBeenCalled());
+
+      expect(screen.queryByRole("button", { name: /linterna/i })).not.toBeInTheDocument();
+    });
+
+    it("muestra el botón de linterna si el dispositivo la soporta, y alterna su estado al presionarlo", async () => {
+      hasFlashMock.mockResolvedValue(true);
+      const user = userEvent.setup();
+      render(<QrScanCamera onDecode={vi.fn()} />);
+
+      const flashButton = await screen.findByRole("button", { name: /encender linterna/i });
+
+      isFlashOnMock.mockReturnValue(true);
+      await user.click(flashButton);
+
+      expect(toggleFlashMock).toHaveBeenCalled();
+      expect(await screen.findByRole("button", { name: /apagar linterna/i })).toBeInTheDocument();
+    });
   });
 
   describe("errores de decodificación", () => {

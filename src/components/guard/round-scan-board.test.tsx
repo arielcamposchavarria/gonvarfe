@@ -14,6 +14,7 @@ const {
   finalizarTurnoActionMock,
   pushMock,
   notifyErrorMock,
+  notifySuccessMock,
   confirmActionMock,
 } = vi.hoisted(() => ({
   registrarEscaneoActionMock: vi.fn(),
@@ -21,6 +22,7 @@ const {
   finalizarTurnoActionMock: vi.fn(),
   pushMock: vi.fn(),
   notifyErrorMock: vi.fn(),
+  notifySuccessMock: vi.fn(),
   confirmActionMock: vi.fn(),
 }));
 
@@ -32,6 +34,7 @@ vi.mock("@/app/guard/actions", () => ({
 
 vi.mock("@/lib/confirm", () => ({
   notifyError: notifyErrorMock,
+  notifySuccess: notifySuccessMock,
   confirmAction: confirmActionMock,
 }));
 
@@ -110,6 +113,7 @@ describe("RoundScanBoard", () => {
     finalizarTurnoActionMock.mockReset().mockResolvedValue({ error: null });
     pushMock.mockReset();
     notifyErrorMock.mockReset().mockResolvedValue(undefined);
+    notifySuccessMock.mockReset().mockResolvedValue(undefined);
     confirmActionMock.mockReset().mockResolvedValue(true);
   });
 
@@ -198,6 +202,29 @@ describe("RoundScanBoard", () => {
 
     expect(screen.getAllByRole("button", { name: /^escanear$/i })).toHaveLength(1);
     expect(screen.getByText("Área de carga")).toBeInTheDocument();
+  });
+
+  it("al registrar un escaneo exitoso, muestra un SweetAlert de confirmación", async () => {
+    const recorrido = buildRecorrido([buildRegistro({})]);
+    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /^escanear$/i }));
+    await user.click(screen.getByRole("button", { name: /simular-decodificacion/i }));
+    await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
+
+    await waitFor(() => expect(notifySuccessMock).toHaveBeenCalledWith("Escaneo registrado"));
+    expect(notifyErrorMock).not.toHaveBeenCalled();
+  });
+
+  it("al omitir un escaneo (demo) exitosamente, muestra un SweetAlert distinto al de escaneo real", async () => {
+    const user = userEvent.setup();
+    render(<RoundScanBoard sitio={SITIO} recorridoActivo={null} recorridosCompletados={0} />);
+
+    await user.click(screen.getByRole("button", { name: /omitir escaneo \(demo\)/i }));
+    await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
+
+    await waitFor(() => expect(notifySuccessMock).toHaveBeenCalledWith("Registro omitido"));
   });
 
   it("muestra el error de secuencia inválida / QR incorrecto como SweetAlert, no como banner", async () => {

@@ -70,7 +70,12 @@ export function MarcaQrButton({ sitioId, marca, generateQrAction }: MarcaQrButto
           {qrCodeId && (
             <>
               <div className="flex justify-center py-2">
-                <QRCodeSVG ref={svgRef} value={qrCodeId} size={192} />
+                {/* level="M" (15% de corrección) + marginSize={4} (zona de
+                  silencio completa del estándar): un QR impreso se ensucia,
+                  se dobla o se pega en superficies con ruido visual
+                  alrededor — con el nivel "L" y margen 0 por defecto de la
+                  librería, muchos celulares no lo detectaban. */}
+                <QRCodeSVG ref={svgRef} value={qrCodeId} size={192} level="M" marginSize={4} />
               </div>
               <Button type="button" variant="outline" size="sm" onClick={handleDownload}>
                 Descargar
