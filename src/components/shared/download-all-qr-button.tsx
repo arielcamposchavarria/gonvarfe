@@ -94,6 +94,8 @@ export function DownloadAllQrButton({ sitioId, marcas, generateQrAction }: Downl
             }}
             value={marca.qrCodeId}
             size={QR_EXPORT_SIZE}
+            level="M"
+            marginSize={4}
           />
         ))}
       </div>

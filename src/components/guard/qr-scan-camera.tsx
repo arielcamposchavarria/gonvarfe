@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import QrScanner from "qr-scanner";
+import { Flashlight, FlashlightOff } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 export interface QrScanCameraProps {
   onDecode: (value: string) => void;
@@ -22,6 +25,8 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
   const scannerRef = useRef<QrScanner | null>(null);
   const [state, setState] = useState<CameraState>("starting");
   const [strugglingToScan, setStrugglingToScan] = useState(false);
+  const [hasFlash, setHasFlash] = useState(false);
+  const [flashOn, setFlashOn] = useState(false);
 
   // Ref en vez de dependencia directa: si `onDecode` cambia de identidad en
   // cada render del padre (p. ej. porque un hook como `useNow` lo hace tickear
@@ -63,6 +68,15 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
           },
           {
             returnDetailedScanResult: true,
+            // Cámara trasera explícita: en algunos Android, sin esto, el
+            // navegador a veces arrancaba con la frontal. Los overlays dan
+            // feedback visual de dónde apuntar y cuándo detectó el QR —
+            // sin esto el guard apuntaba "a ciegas" y muchos reportaban que
+            // "no agarraba" cuando en realidad apuntaban fuera del recuadro
+            // de escaneo real.
+            preferredCamera: "environment",
+            highlightScanRegion: true,
+            highlightCodeOutline: true,
             onDecodeError: (error) => {
               // "No QR code found" se dispara docenas de veces por segundo
               // mientras no hay un código en cuadro — es el caso normal, no un
@@ -96,6 +110,18 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
         struggleTimer = setTimeout(() => {
           if (!cancelled) setStrugglingToScan(true);
         }, STRUGGLE_HINT_DELAY_MS);
+
+        // No todos los dispositivos con linterna resuelven esta promesa
+        // igual de rápido (o la resuelven), así que no bloquea el resto del
+        // arranque de la cámara: es solo un botón extra si aplica.
+        scanner
+          .hasFlash()
+          .then((supported) => {
+            if (!cancelled) setHasFlash(supported);
+          })
+          .catch(() => {
+            // Sin linterna detectable: se omite el botón, no es un error.
+          });
       } catch (error) {
         if (cancelled) return;
         if (error instanceof Error && error.name === "NotAllowedError") {
@@ -119,12 +145,31 @@ export function QrScanCamera({ onDecode }: QrScanCameraProps) {
     };
   }, []);
 
+  async function handleToggleFlash() {
+    const scanner = scannerRef.current;
+    if (!scanner) return;
+    try {
+      await scanner.toggleFlash();
+      setFlashOn(scanner.isFlashOn());
+    } catch {
+      // Algunos dispositivos reportan `hasFlash()` true pero fallan al
+      // togglear (p. ej. mientras el navegador aún negocia el stream): se
+      // ignora, el guard puede seguir escaneando sin linterna.
+    }
+  }
+
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-black">
         <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
       </div>
       {state === "starting" && <p className="text-sm text-muted-foreground">Iniciando cámara...</p>}
+      {state === "active" && hasFlash && (
+        <Button type="button" variant="outline" size="sm" onClick={handleToggleFlash}>
+          {flashOn ? <FlashlightOff className="h-4 w-4" /> : <Flashlight className="h-4 w-4" />}
+          {flashOn ? "Apagar linterna" : "Encender linterna"}
+        </Button>
+      )}
       {state === "active" && strugglingToScan && (
         <p className="text-xs text-muted-foreground">
           ¿No logra escanear? Acerque más el código, mejore la iluminación, o use &quot;Omitir escaneo&quot;.

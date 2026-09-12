@@ -12,7 +12,7 @@ import { QrScanCamera } from "./qr-scan-camera";
 import { ReportMissedDialog } from "./report-missed-dialog";
 import { ConfirmScanDialog } from "./confirm-scan-dialog";
 import { registrarEscaneoAction, finalizarTurnoAction } from "@/app/guard/actions";
-import { confirmAction, notifyError } from "@/lib/confirm";
+import { confirmAction, notifyError, notifySuccess } from "@/lib/confirm";
 import type { EscanearInput } from "@/domain/ports/recorrido-repository";
 import { useNow } from "@/lib/hooks/use-now";
 import { cn } from "@/lib/utils";
@@ -55,13 +55,20 @@ export function RoundScanBoard({
   const router = useRouter();
   const refreshedRoundId = useRef<string | null>(null);
 
-  function run(action: () => Promise<ActionResult>) {
+  function run(action: () => Promise<ActionResult>, successTitle?: string) {
     startTransition(async () => {
       const result = await action();
       // Un SweetAlert es más visible que el banner rojo de abajo para un
       // rechazo de escaneo (QR fuera de orden, ventana vencida, etc.) — con
       // la cámara todavía abierta encima, el guard fácilmente no lo notaría.
-      if (result.error) await notifyError("No se pudo registrar el escaneo", result.error);
+      if (result.error) {
+        await notifyError("No se pudo registrar el escaneo", result.error);
+        return;
+      }
+      // Igual de importante en el otro sentido: sin esto, la única señal de
+      // que el escaneo sí quedó registrado era que el diálogo se cerraba —
+      // fácil de perder si el guard ya estaba guardando el teléfono.
+      if (successTitle) await notifySuccess(successTitle);
     });
   }
 
@@ -82,7 +89,7 @@ export function RoundScanBoard({
       observacion: extra.observacion.trim() || undefined,
     };
     setPendingScan(null);
-    run(() => registrarEscaneoAction(input));
+    run(() => registrarEscaneoAction(input), input.skip ? "Registro omitido" : "Escaneo registrado");
   }
 
   async function handleFinalizarTurno() {
