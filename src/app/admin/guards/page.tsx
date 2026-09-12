@@ -10,6 +10,8 @@ import { assignGuardSiteAction } from "./actions";
 export default async function AdminGuardsPage() {
   const [guards, sitios] = await Promise.all([container.listGuards(), container.listSitios()]);
   const sitioById = new Map(sitios.map((sitio) => [sitio.id, sitio.nombre]));
+  // Un sitio desactivado no debe ofrecerse para asignar a un guarda.
+  const sitiosAsignables = sitios.filter((sitio) => sitio.activo);
 
   return (
     <div className="flex flex-col gap-4">
@@ -30,7 +32,7 @@ export default async function AdminGuardsPage() {
               <Badge variant={guard.isActive ? "success" : "destructive"}>
                 {guard.isActive ? "Activo" : "Inactivo"}
               </Badge>
-              <AssignGuardSiteForm guard={guard} sitios={sitios} action={assignGuardSiteAction} />
+              <AssignGuardSiteForm guard={guard} sitios={sitiosAsignables} action={assignGuardSiteAction} />
             </div>
           </div>
         ))}
@@ -73,7 +75,7 @@ export default async function AdminGuardsPage() {
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <AssignGuardSiteForm guard={guard} sitios={sitios} action={assignGuardSiteAction} />
+                  <AssignGuardSiteForm guard={guard} sitios={sitiosAsignables} action={assignGuardSiteAction} />
                 </TableCell>
               </TableRow>
             ))}

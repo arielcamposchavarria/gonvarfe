@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ImageUploadField } from "@/components/shared/image-upload-field";
 import { notifySuccess } from "@/lib/confirm";
 import { useActionSuccess } from "@/lib/hooks/use-action-success";
 
@@ -79,6 +80,8 @@ export function CreateUserForm({ roles }: CreateUserFormProps) {
                 ))}
               </Select>
             </div>
+
+            <ImageUploadField name="fotoPerfil" maxFiles={1} label="Foto de perfil (opcional)" />
 
             {state.error && (
               <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">

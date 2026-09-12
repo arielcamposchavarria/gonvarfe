@@ -2,14 +2,17 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 
 import { container } from "@/infrastructure/container";
+import { getSession } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DeactivateUserButton } from "@/components/admin/deactivate-user-button";
 import { ROLE_LABELS } from "@/domain/value-objects/role";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { deactivateUserAction } from "./actions";
 
 export default async function AdminUsersPage() {
-  const users = await container.listManageableUsers();
+  const [users, session] = await Promise.all([container.listManageableUsers(), getSession()]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,10 +34,21 @@ export default async function AdminUsersPage() {
               <p className="truncate text-xs text-muted-foreground">
                 {user.username} · {ROLE_LABELS[user.role]}
               </p>
+              <p className="truncate text-xs text-muted-foreground">{user.email ?? "Sin correo"}</p>
             </div>
-            <Badge variant={user.isActive ? "success" : "destructive"} className="shrink-0">
-              {user.isActive ? "Activo" : "Inactivo"}
-            </Badge>
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge variant={user.isActive ? "success" : "destructive"}>
+                {user.isActive ? "Activo" : "Inactivo"}
+              </Badge>
+              {user.id !== session?.userId && (
+                <DeactivateUserButton
+                  userId={user.id}
+                  userName={user.name}
+                  isActive={user.isActive}
+                  action={deactivateUserAction}
+                />
+              )}
+            </div>
           </div>
         ))}
       </Card>
@@ -45,8 +59,10 @@ export default async function AdminUsersPage() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Usuario</TableHead>
+              <TableHead>Correo</TableHead>
               <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -54,11 +70,22 @@ export default async function AdminUsersPage() {
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.username}</TableCell>
+                <TableCell>{user.email ?? "Sin correo"}</TableCell>
                 <TableCell>{ROLE_LABELS[user.role]}</TableCell>
                 <TableCell>
                   <Badge variant={user.isActive ? "success" : "destructive"}>
                     {user.isActive ? "Activo" : "Inactivo"}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {user.id !== session?.userId && (
+                    <DeactivateUserButton
+                      userId={user.id}
+                      userName={user.name}
+                      isActive={user.isActive}
+                      action={deactivateUserAction}
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ))}

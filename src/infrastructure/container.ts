@@ -1,5 +1,6 @@
 import { createHttpSitioRepository } from "./http/http-sitio-repository";
 import { createHttpUserRepository } from "./http/http-user-repository";
+import { createHttpAccountRepository } from "./http/http-account-repository";
 import { createHttpAuthService } from "./http/http-auth-service";
 import { createHttpRecoveryService } from "./http/http-recovery-service";
 import { createHttpRoleRepository } from "./http/http-role-repository";
@@ -47,12 +48,16 @@ import { updateMarca, type UpdateMarcaInput } from "@/application/use-cases/supe
 import { deactivateMarca, type DeactivateMarcaInput } from "@/application/use-cases/superadmin/deactivate-marca";
 import { createLocal, type CreateLocalInput } from "@/application/use-cases/admin/create-local";
 import { createUser } from "@/application/use-cases/superadmin/create-user";
-import { deactivateUser } from "@/application/use-cases/superadmin/deactivate-user";
+import { updateOwnProfile } from "@/application/use-cases/account/update-own-profile";
+import { changePassword } from "@/application/use-cases/account/change-password";
+import { deactivateUser } from "@/application/use-cases/admin/deactivate-user";
+import { deleteUser } from "@/application/use-cases/superadmin/delete-user";
 import { listRoles } from "@/application/use-cases/superadmin/list-roles";
 import { assignGuardSite, type AssignGuardSiteInput } from "@/application/use-cases/admin/assign-guard-site";
 import { forzarFinalizarTurno } from "@/application/use-cases/admin/forzar-finalizar-turno";
 import type { CreateSitioInput } from "@/domain/ports/sitio-repository";
 import type { CreateUserInput } from "@/domain/ports/user-repository";
+import type { ChangePasswordInput, UpdateOwnProfileInput } from "@/domain/ports/account-repository";
 import type { EscanearInput, ReportarPerdidoInput } from "@/domain/ports/recorrido-repository";
 import type { DateRange } from "@/lib/date-range";
 
@@ -64,6 +69,7 @@ import type { DateRange } from "@/lib/date-range";
 const sitioRepository = createHttpSitioRepository();
 /** Usuarios, roles y autenticación reales contra el backend (gonvarbe). */
 const userRepository = createHttpUserRepository();
+const accountRepository = createHttpAccountRepository();
 const roleRepository = createHttpRoleRepository();
 const authService = createHttpAuthService();
 const recoveryService = createHttpRecoveryService();
@@ -101,6 +107,7 @@ export const container = {
   forzarFinalizarTurno: (turnoId: string) => forzarFinalizarTurno({ turnoRepository }, turnoId),
   createUser: (input: CreateUserInput) => createUser({ userRepository }, input),
   deactivateUser: (userId: string) => deactivateUser({ userRepository }, userId),
+  deleteUser: (userId: string) => deleteUser({ userRepository }, userId),
   listRoles: () => listRoles({ roleRepository }),
   listUsers: () => listUsers({ userRepository }),
   listSitios: () => listSitios({ sitioRepository }),
@@ -140,6 +147,8 @@ export const container = {
     listGuardScannedStations({ turnoRepository, recorridoRepository, sitioRepository }, guardId, range),
 
   findUserById: (id: string) => userRepository.findById(id),
+  updateOwnProfile: (input: UpdateOwnProfileInput) => updateOwnProfile({ accountRepository }, input),
+  changePassword: (input: ChangePasswordInput) => changePassword({ accountRepository }, input),
 };
 
 // Se exponen para casos donde se necesite un repo crudo fuera de un caso de uso ya envuelto arriba.

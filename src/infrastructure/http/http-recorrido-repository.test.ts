@@ -61,7 +61,7 @@ describe("createHttpRecorridoRepository", () => {
     expect(result.registros[0].abreEn).toEqual(new Date("2026-01-01T08:00:00.000Z"));
   });
 
-  it("traduce QrInvalidoException (409) a un mensaje distinto de VentanaAunNoAbreException", async () => {
+  it("traduce QrInvalidoException (409) a un mensaje distinto del de RegistroNoDisponibleException", async () => {
     const qrFetchMock = vi
       .fn()
       .mockResolvedValue(mockFetchResponse({ statusCode: 409, message: "x", error: "QrInvalidoException" }, 409));
@@ -77,31 +77,21 @@ describe("createHttpRecorridoRepository", () => {
     expect(qrError?.message).toMatch(/orden del recorrido/i);
 
     vi.unstubAllGlobals();
-    const windowFetchMock = vi
+    const registroFetchMock = vi
       .fn()
       .mockResolvedValue(
-        mockFetchResponse({ statusCode: 409, message: "x", error: "VentanaAunNoAbreException" }, 409),
+        mockFetchResponse({ statusCode: 409, message: "x", error: "RegistroNoDisponibleException" }, 409),
       );
-    vi.stubGlobal("fetch", windowFetchMock);
+    vi.stubGlobal("fetch", registroFetchMock);
 
-    let windowError: Error | undefined;
+    let registroError: Error | undefined;
     try {
-      await repository.escanear({ qrValue: "qr-abc", skip: false });
+      await repository.reportarPerdido({ motivo: "x", recorridoId: "r1", registroId: "reg-1" });
     } catch (error) {
-      windowError = error as Error;
+      registroError = error as Error;
     }
-    expect(windowError?.message).toMatch(/ventana/i);
-    expect(windowError?.message).not.toEqual(qrError?.message);
-  });
-
-  it("traduce VentanaCerradaException (409) a un mensaje que indica reportar como no escaneada", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(mockFetchResponse({ statusCode: 409, message: "x", error: "VentanaCerradaException" }, 409));
-    vi.stubGlobal("fetch", fetchMock);
-    const repository = createHttpRecorridoRepository();
-
-    await expect(repository.escanear({ qrValue: "qr-abc", skip: false })).rejects.toThrow(/venció/i);
+    expect(registroError?.message).toMatch(/no está disponible/i);
+    expect(registroError?.message).not.toEqual(qrError?.message);
   });
 
   it("lanza un error legible si no hay turno activo (404)", async () => {
@@ -150,6 +140,24 @@ describe("createHttpRecorridoRepository", () => {
     });
     expect(result.registros[0].fotos).toEqual(["data:image/png;base64,foto1"]);
     expect(result.registros[0].observacion).toBe("Vidrio roto");
+  });
+
+  it("envía recorridoId y registroId al reportar perdido una marca puntual de un recorrido anterior", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(BACKEND_RECORRIDO));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpRecorridoRepository();
+    await repository.reportarPerdido({ motivo: "No pude volver", recorridoId: "recorrido-viejo", registroId: "registro-3" });
+
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:3002/recorridos/reportar-perdido", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer test-token" },
+      body: JSON.stringify({
+        motivo: "No pude volver",
+        recorridoId: "recorrido-viejo",
+        registroId: "registro-3",
+      }),
+    });
   });
 
   it("envía fotos y observación al reportar perdido", async () => {

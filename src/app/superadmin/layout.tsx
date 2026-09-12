@@ -20,7 +20,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   if (!user || user.role !== "superAdmin" || !user.isActive) redirect("/login");
 
   return (
-    <AppShell role="superAdmin" userName={user.name} navItems={NAV_ITEMS}>
+    <AppShell role="superAdmin" userName={user.name} userPhotoUrl={user.photoUrl} navItems={NAV_ITEMS}>
       {children}
     </AppShell>
   );

@@ -32,6 +32,7 @@ describe("listManageableUsers", () => {
       create: vi.fn(),
       assignSite: vi.fn(),
       deactivate: vi.fn(),
+      delete: vi.fn(),
     };
 
     const result = await listManageableUsers({ userRepository });

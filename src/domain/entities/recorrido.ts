@@ -1,6 +1,6 @@
 import type { Registro } from "./registro";
 
-export type RecorridoEstado = "en-progreso" | "completado";
+export type RecorridoEstado = "en-progreso" | "completado" | "vencido";
 
 /** Una vuelta completa a todas las marcas activas del sitio, dentro de un turno. */
 export interface Recorrido {

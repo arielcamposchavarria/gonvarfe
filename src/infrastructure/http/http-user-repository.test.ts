@@ -82,6 +82,46 @@ describe("createHttpUserRepository", () => {
     expect(user.role).toBe("guard");
   });
 
+  it("incluye fotoPerfil en el body al crear si se provee", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/roles")) {
+        return Promise.resolve(mockFetchResponse([{ id: "role-guard", name: "guard" }]));
+      }
+      return Promise.resolve(
+        mockFetchResponse({
+          id: "user-1",
+          username: "msolano",
+          name: "Mario Solano",
+          role: "guard",
+          isActive: true,
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const repository = createHttpUserRepository();
+    await repository.create({
+      name: "Mario Solano",
+      username: "msolano",
+      email: "msolano@example.com",
+      role: "guard",
+      fotoPerfil: "data:image/png;base64,foto1",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:3002/users",
+      expect.objectContaining({
+        body: JSON.stringify({
+          username: "msolano",
+          name: "Mario Solano",
+          email: "msolano@example.com",
+          roleId: "role-guard",
+          fotoPerfil: "data:image/png;base64,foto1",
+        }),
+      }),
+    );
+  });
+
   it("mapea sitioAsignadoId a assignedSiteId al leer un guard", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       mockFetchResponse({
