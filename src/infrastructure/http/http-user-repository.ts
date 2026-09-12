@@ -62,6 +62,7 @@ export function createHttpUserRepository(): UserRepository {
           name: input.name,
           email: input.email,
           roleId: role.id,
+          fotoPerfil: input.fotoPerfil,
         }),
       });
       if (res.status === 409) {
@@ -106,6 +107,17 @@ export function createHttpUserRepository(): UserRepository {
         throw new Error(body?.message ?? "No se pudo desactivar el usuario.");
       }
       return buildAppUser((await res.json()) as BackendUser);
+    },
+
+    async delete(userId) {
+      const res = await fetch(`${baseUrl}/users/${userId}`, {
+        method: "DELETE",
+        headers: await authHeaders(),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(body?.message ?? "No se pudo eliminar el usuario.");
+      }
     },
   };
 }

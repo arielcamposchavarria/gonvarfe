@@ -11,18 +11,27 @@ import { reportarPerdidoAction } from "@/app/guard/actions";
 import { readFileAsDataUrl } from "@/lib/files/read-file-as-data-url";
 import { MAX_LOG_IMAGES } from "@/domain/constants";
 
+export interface ReportMissedDialogTarget {
+  recorridoId: string;
+  registroId: string;
+  marcaNombre?: string;
+}
+
 export interface ReportMissedDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmitted: (error: string | null) => void;
+  /**
+   * Sin esto (default): el backend resuelve el registro objetivo actual (el
+   * pendiente de menor orden del recorrido activo), así que no hace falta
+   * indicar a qué marca corresponde. Con esto: justifica una marca puntual
+   * que quedó pendiente de un recorrido que ya no es el activo (p. ej. uno
+   * vencido) — se manda a reportar-perdido con recorridoId/registroId.
+   */
+  target?: ReportMissedDialogTarget;
 }
 
-/**
- * El backend siempre resuelve el registro objetivo actual (el pendiente de
- * menor orden), así que este diálogo no necesita saber a qué marca
- * corresponde — solo envía el motivo (y, opcionalmente, fotos).
- */
-export function ReportMissedDialog({ open, onClose, onSubmitted }: ReportMissedDialogProps) {
+export function ReportMissedDialog({ open, onClose, onSubmitted, target }: ReportMissedDialogProps) {
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -35,7 +44,12 @@ export function ReportMissedDialog({ open, onClose, onSubmitted }: ReportMissedD
 
     startTransition(async () => {
       const fotos = await Promise.all(photos.map(readFileAsDataUrl));
-      const result = await reportarPerdidoAction({ motivo: reason, fotos });
+      const result = await reportarPerdidoAction({
+        motivo: reason,
+        fotos,
+        recorridoId: target?.recorridoId,
+        registroId: target?.registroId,
+      });
       setReason("");
       onSubmitted(result.error);
     });
@@ -45,7 +59,7 @@ export function ReportMissedDialog({ open, onClose, onSubmitted }: ReportMissedD
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>No pude escanear esta marca</DialogTitle>
+          <DialogTitle>No pude escanear{target?.marcaNombre ? `: ${target.marcaNombre}` : " esta marca"}</DialogTitle>
           <DialogDescription>Indique el motivo. Luego podrá continuar con la siguiente marca.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

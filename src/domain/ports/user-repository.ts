@@ -6,6 +6,7 @@ export interface CreateUserInput {
   username: string;
   email: string;
   role: Role;
+  fotoPerfil?: string;
 }
 
 export class UsernameTakenError extends Error {
@@ -30,4 +31,6 @@ export interface UserRepository {
   /** Solo aplica a guards; null desasigna el sitio vigente. */
   assignSite(guardId: string, siteId: string | null): Promise<AppUser>;
   deactivate(userId: string): Promise<AppUser>;
+  /** Borrado físico e irreversible del usuario. */
+  delete(userId: string): Promise<void>;
 }

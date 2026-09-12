@@ -15,6 +15,7 @@ import type { RecorridoEstado } from "@/domain/entities/recorrido";
 const STATUS_LABEL: Record<RecorridoEstado, string> = {
   "en-progreso": "En curso",
   completado: "Completado",
+  vencido: "Vencido",
 };
 
 export default async function AdminGuardRoundsPage({

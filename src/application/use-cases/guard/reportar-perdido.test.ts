@@ -61,4 +61,17 @@ describe("reportarPerdido", () => {
       observacion: "Sin acceso",
     });
   });
+
+  it("reenvía recorridoId y registroId cuando justifica una marca puntual de un recorrido anterior", async () => {
+    const recorridoRepository = buildRecorridoRepository();
+
+    await reportarPerdido(
+      { recorridoRepository },
+      { motivo: "No pude volver", recorridoId: "recorrido-viejo", registroId: "registro-3" },
+    );
+
+    expect(recorridoRepository.reportarPerdido).toHaveBeenCalledWith(
+      expect.objectContaining({ recorridoId: "recorrido-viejo", registroId: "registro-3" }),
+    );
+  });
 });

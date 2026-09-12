@@ -5,6 +5,7 @@ import { LogOut, type LucideIcon } from "lucide-react";
 import { ROLE_LABELS, type Role } from "@/domain/value-objects/role";
 import { logoutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "./user-avatar";
 
 export interface NavItem {
   href: string;
@@ -15,11 +16,12 @@ export interface NavItem {
 export interface AppShellProps {
   role: Role;
   userName: string;
+  userPhotoUrl?: string | null;
   navItems: NavItem[];
   children: React.ReactNode;
 }
 
-export function AppShell({ role, userName, navItems, children }: AppShellProps) {
+export function AppShell({ role, userName, userPhotoUrl, navItems, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
@@ -45,7 +47,8 @@ export function AppShell({ role, userName, navItems, children }: AppShellProps) 
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <UserAvatar name={userName} photoUrl={userPhotoUrl} size="sm" />
             <span className="hidden max-w-[10rem] truncate text-sm text-muted-foreground sm:inline">{userName}</span>
             <form action={logoutAction}>
               <Button type="submit" variant="outline" size="icon" className="sm:hidden" aria-label="Cerrar sesión">

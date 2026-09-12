@@ -6,6 +6,7 @@ import type { RecorridoRepository } from "@/domain/ports/recorrido-repository";
 import type { GuardSitioRepository } from "@/domain/ports/guard-sitio-repository";
 import type { Turno } from "@/domain/entities/turno";
 import type { Recorrido } from "@/domain/entities/recorrido";
+import type { Registro } from "@/domain/entities/registro";
 import type { GuardSitio } from "@/domain/entities/guard-sitio";
 
 const TURNO: Turno = {
@@ -35,6 +36,20 @@ function buildRecorrido(overrides: Partial<Recorrido> = {}): Recorrido {
     estado: "en-progreso",
     completadoEn: null,
     registros: [],
+    ...overrides,
+  };
+}
+
+function buildRegistro(overrides: Partial<Registro> = {}): Registro {
+  return {
+    id: "registro-1",
+    marcaId: "m1",
+    orden: 1,
+    estado: "pendiente",
+    abreEn: new Date("2026-01-01T08:00:00Z"),
+    cierraEn: new Date("2026-01-01T08:20:00Z"),
+    escaneadoEn: null,
+    motivoPerdido: null,
     ...overrides,
   };
 }
@@ -73,7 +88,13 @@ describe("obtenerEstadoTurno", () => {
 
     const estado = await obtenerEstadoTurno(deps);
 
-    expect(estado).toEqual({ turno: null, sitio: null, recorridoActivo: null, recorridosCompletados: 0 });
+    expect(estado).toEqual({
+      turno: null,
+      sitio: null,
+      recorridoActivo: null,
+      recorridosCompletados: 0,
+      pendientesRecorridoAnterior: [],
+    });
     expect(deps.guardSitioRepository.findAll).not.toHaveBeenCalled();
   });
 
@@ -100,5 +121,35 @@ describe("obtenerEstadoTurno", () => {
     const estado = await obtenerEstadoTurno(deps);
 
     expect(estado.sitio).toBeNull();
+  });
+
+  it("arma pendientesRecorridoAnterior con las marcas pendientes de recorridos que ya no son el activo", async () => {
+    const registroResuelto = buildRegistro({ id: "r1", estado: "a-tiempo" });
+    const registroPendienteVencido = buildRegistro({ id: "r2", estado: "pendiente" });
+    const recorridoVencido = buildRecorrido({
+      id: "recorrido-1",
+      secuencia: 1,
+      estado: "vencido",
+      registros: [registroResuelto, registroPendienteVencido],
+    });
+    const registroPendienteActivo = buildRegistro({ id: "r3", estado: "pendiente" });
+    const recorridoActivo = buildRecorrido({
+      id: "recorrido-2",
+      secuencia: 2,
+      registros: [registroPendienteActivo],
+    });
+    const deps = buildDeps({
+      turno: TURNO,
+      sitios: [SITIO],
+      recorridos: [recorridoVencido, recorridoActivo],
+      recorridoActivo,
+    });
+
+    const estado = await obtenerEstadoTurno(deps);
+
+    // Solo la marca pendiente del recorrido vencido (no la activa).
+    expect(estado.pendientesRecorridoAnterior).toEqual([
+      { recorridoId: "recorrido-1", registro: registroPendienteVencido },
+    ]);
   });
 });

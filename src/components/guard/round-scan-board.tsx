@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, CircleAlert, CircleDashed, LogOut, QrCode } from "lucide-react";
 
@@ -16,16 +16,18 @@ import { confirmAction, notifyError, notifySuccess } from "@/lib/confirm";
 import type { EscanearInput } from "@/domain/ports/recorrido-repository";
 import { useNow } from "@/lib/hooks/use-now";
 import { cn } from "@/lib/utils";
-import { hasWindowOpened, isWindowExpired } from "@/domain/value-objects/time-window";
-import { NOTIFY_BEFORE_WINDOW_CLOSE_MINUTES } from "@/domain/constants";
+import { NOTIFY_BEFORE_ROUND_CLOSE_MINUTES } from "@/domain/constants";
 import type { Recorrido } from "@/domain/entities/recorrido";
 import type { RegistroEstado } from "@/domain/entities/registro";
 import type { GuardSitio } from "@/domain/entities/guard-sitio";
+import type { RegistroPendienteAnterior } from "@/application/use-cases/guard/obtener-estado-turno";
 
 export interface RoundScanBoardProps {
   sitio: GuardSitio;
   recorridoActivo: Recorrido | null;
   recorridosCompletados: number;
+  /** Marcas pendientes de recorridos anteriores (ya vencidos) de este mismo turno, a justificar. */
+  pendientesRecorridoAnterior: RegistroPendienteAnterior[];
 }
 
 const STATUS_LABEL: Record<RegistroEstado, string> = {
@@ -36,14 +38,22 @@ const STATUS_LABEL: Record<RegistroEstado, string> = {
 
 type ActionResult = { error: string | null };
 
-export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }: RoundScanBoardProps) {
+type ReportTarget = "current" | RegistroPendienteAnterior;
+
+export function RoundScanBoard({
+  sitio,
+  recorridoActivo,
+  recorridosCompletados,
+  pendientesRecorridoAnterior,
+}: RoundScanBoardProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isReportingMissed, setIsReportingMissed] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [pendingScan, setPendingScan] = useState<EscanearInput | null>(null);
   const now = useNow();
   const router = useRouter();
+  const refreshedRoundId = useRef<string | null>(null);
 
   function run(action: () => Promise<ActionResult>, successTitle?: string) {
     startTransition(async () => {
@@ -106,19 +116,29 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
   const registros = recorridoActivo ? [...recorridoActivo.registros].sort((a, b) => a.orden - b.orden) : [];
   const target = registros.find((registro) => registro.estado === "pendiente") ?? null;
   // Fin del recorrido: la hora ya la cierra el ultimo registro (todos con
-  // la misma duracion, repartida en partes iguales desde iniciadoEn).
+  // la misma duracion, repartida en partes iguales desde iniciadoEn). Ya no
+  // hay restriccion de tiempo por marca — esta es la unica hora que se
+  // respeta: pasada, el recorrido vence.
   const finEstimado = registros.length > 0 ? registros[registros.length - 1].cierraEn : null;
 
-  const targetWindow = target ? { opensAt: target.abreEn, closesAt: target.cierraEn } : null;
-  const targetOpen = targetWindow ? hasWindowOpened(targetWindow, new Date(now)) : false;
-  // El servidor es quien realmente bloquea el escaneo vencido (rechaza con
-  // VentanaCerradaException); esto solo evita el viaje al servidor y guía
-  // al guard hacia "No pude escanear", la única acción que queda disponible.
-  const targetExpired = targetWindow ? isWindowExpired(targetWindow, new Date(now)) : false;
-  const targetClosingSoon =
-    targetWindow && targetOpen && target && !targetExpired
-      ? target.cierraEn.getTime() - now <= NOTIFY_BEFORE_WINDOW_CLOSE_MINUTES * 60_000
-      : false;
+  const msHastaFin = finEstimado ? finEstimado.getTime() - now : null;
+  const cierraPronto =
+    Boolean(recorridoActivo) && msHastaFin !== null && msHastaFin > 0 && msHastaFin <= NOTIFY_BEFORE_ROUND_CLOSE_MINUTES * 60_000;
+  const siguienteRecorridoEstimado = finEstimado
+    ? new Date(finEstimado.getTime() + NOTIFY_BEFORE_ROUND_CLOSE_MINUTES * 60_000)
+    : null;
+
+  // Cuando se cumple el tiempo total del recorrido y quedan marcas sin
+  // escanear, el servidor lo marca "vencido" en la siguiente consulta — acá
+  // se dispara esa consulta automaticamente (una sola vez por recorrido)
+  // para que la pantalla vuelva sola a "iniciar recorrido / finalizar turno".
+  useEffect(() => {
+    if (!recorridoActivo || !target || !finEstimado) return;
+    if (now === 0 || now < finEstimado.getTime()) return;
+    if (refreshedRoundId.current === recorridoActivo.id) return;
+    refreshedRoundId.current = recorridoActivo.id;
+    router.refresh();
+  }, [now, recorridoActivo, target, finEstimado, router]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -140,6 +160,46 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
         </CardHeader>
       </Card>
 
+      {cierraPronto && finEstimado && (
+        <p role="status" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+          {target
+            ? `El recorrido está por finalizar a las ${finEstimado.toLocaleTimeString()} y tienes marcas pendientes por escanear.`
+            : `El siguiente recorrido inicia aproximadamente a las ${siguienteRecorridoEstimado?.toLocaleTimeString()}.`}
+        </p>
+      )}
+
+      {pendientesRecorridoAnterior.length > 0 && (
+        <Card className="border-danger/40" data-testid="pendientes-recorrido-anterior">
+          <CardHeader>
+            <CardTitle>Marcas pendientes de un recorrido anterior</CardTitle>
+            <CardDescription>
+              Estas marcas quedaron sin escanear cuando venció el tiempo del recorrido anterior. Repórtelas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {pendientesRecorridoAnterior.map((pendiente) => {
+              const marca = marcaById.get(pendiente.registro.marcaId);
+              return (
+                <div
+                  key={pendiente.registro.id}
+                  className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{marca?.nombre ?? pendiente.registro.marcaId}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Hora estimada: {pendiente.registro.abreEn.toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" disabled={isPending} onClick={() => setReportTarget(pendiente)}>
+                    No pude escanear
+                  </Button>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
       {!target ? (
         <Card>
           <CardHeader>
@@ -157,6 +217,9 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
             </Button>
             <Button variant="outline" className="flex-1" onClick={handleSkip} disabled={isPending}>
               Omitir escaneo (demo)
+            </Button>
+            <Button variant="outline" className="flex-1" disabled={isPending} onClick={() => setReportTarget("current")}>
+              No pude escanear
             </Button>
             <Button variant="destructive" className="flex-1" onClick={handleFinalizarTurno} disabled={isPending}>
               <LogOut className="h-4 w-4" />
@@ -181,32 +244,20 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
                     <p className="truncate text-sm font-medium">{marca?.nombre ?? registro.marcaId}</p>
                     <p className="text-xs text-muted-foreground">
                       {registro.estado === "pendiente"
-                        ? isTarget && targetExpired
-                          ? `Venció a las ${registro.cierraEn.toLocaleTimeString()}`
-                          : `Desde las ${registro.abreEn.toLocaleTimeString()}`
+                        ? `Hora estimada: ${registro.abreEn.toLocaleTimeString()}`
                         : STATUS_LABEL[registro.estado]}
                     </p>
-                    {isTarget && targetClosingSoon && (
-                      <p className="text-xs text-danger">Cierra pronto: {registro.cierraEn.toLocaleTimeString()}</p>
-                    )}
-                    {isTarget && targetExpired && (
-                      <p className="text-xs text-danger">Tiempo vencido: repórtela como no escaneada.</p>
-                    )}
                   </div>
                 </div>
                 {isTarget && (
                   <div className="flex flex-wrap gap-2 pl-8 sm:pl-0">
-                    <Button
-                      size="sm"
-                      disabled={!targetOpen || targetExpired || isPending}
-                      onClick={() => setIsCameraOpen(true)}
-                    >
+                    <Button size="sm" disabled={isPending} onClick={() => setIsCameraOpen(true)}>
                       Escanear
                     </Button>
-                    <Button size="sm" variant="outline" disabled={targetExpired || isPending} onClick={handleSkip}>
+                    <Button size="sm" variant="outline" disabled={isPending} onClick={handleSkip}>
                       Omitir (demo)
                     </Button>
-                    <Button size="sm" variant="outline" disabled={isPending} onClick={() => setIsReportingMissed(true)}>
+                    <Button size="sm" variant="outline" disabled={isPending} onClick={() => setReportTarget("current")}>
                       No pude escanear
                     </Button>
                   </div>
@@ -230,12 +281,21 @@ export function RoundScanBoard({ sitio, recorridoActivo, recorridosCompletados }
       </Dialog>
 
       <ReportMissedDialog
-        open={isReportingMissed}
-        onClose={() => setIsReportingMissed(false)}
+        open={reportTarget !== null}
+        onClose={() => setReportTarget(null)}
         onSubmitted={(submitError) => {
-          setIsReportingMissed(false);
+          setReportTarget(null);
           if (submitError) setError(submitError);
         }}
+        target={
+          reportTarget && reportTarget !== "current"
+            ? {
+                recorridoId: reportTarget.recorridoId,
+                registroId: reportTarget.registro.id,
+                marcaNombre: marcaById.get(reportTarget.registro.marcaId)?.nombre,
+              }
+            : undefined
+        }
       />
 
       <ConfirmScanDialog

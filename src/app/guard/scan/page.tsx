@@ -19,6 +19,7 @@ export default async function GuardScanPage() {
       sitio={estado.sitio}
       recorridoActivo={estado.recorridoActivo}
       recorridosCompletados={estado.recorridosCompletados}
+      pendientesRecorridoAnterior={estado.pendientesRecorridoAnterior}
     />
   );
 }

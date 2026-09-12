@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
@@ -7,12 +7,14 @@ import { RoundScanBoard } from "./round-scan-board";
 import type { GuardSitio } from "@/domain/entities/guard-sitio";
 import type { Recorrido } from "@/domain/entities/recorrido";
 import type { Registro } from "@/domain/entities/registro";
+import type { RegistroPendienteAnterior } from "@/application/use-cases/guard/obtener-estado-turno";
 
 const {
   registrarEscaneoActionMock,
   reportarPerdidoActionMock,
   finalizarTurnoActionMock,
   pushMock,
+  refreshMock,
   notifyErrorMock,
   notifySuccessMock,
   confirmActionMock,
@@ -21,6 +23,7 @@ const {
   reportarPerdidoActionMock: vi.fn(),
   finalizarTurnoActionMock: vi.fn(),
   pushMock: vi.fn(),
+  refreshMock: vi.fn(),
   notifyErrorMock: vi.fn(),
   notifySuccessMock: vi.fn(),
   confirmActionMock: vi.fn(),
@@ -39,7 +42,7 @@ vi.mock("@/lib/confirm", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
 }));
 
 vi.mock("./qr-scan-camera", () => ({
@@ -68,7 +71,7 @@ function buildRegistro(overrides: Partial<Registro>): Registro {
     orden: 1,
     estado: "pendiente",
     abreEn: new Date(NOW - 60_000),
-    cierraEn: new Date(NOW + 60_000),
+    cierraEn: new Date(NOW + 30 * 60_000),
     escaneadoEn: null,
     motivoPerdido: null,
     ...overrides,
@@ -106,12 +109,17 @@ function renderTicked(ui: ReactElement) {
   return result;
 }
 
+function baseProps() {
+  return { sitio: SITIO, recorridosCompletados: 0, pendientesRecorridoAnterior: [] as RegistroPendienteAnterior[] };
+}
+
 describe("RoundScanBoard", () => {
   beforeEach(() => {
     registrarEscaneoActionMock.mockReset().mockResolvedValue({ error: null });
     reportarPerdidoActionMock.mockReset().mockResolvedValue({ error: null });
     finalizarTurnoActionMock.mockReset().mockResolvedValue({ error: null });
     pushMock.mockReset();
+    refreshMock.mockReset();
     notifyErrorMock.mockReset().mockResolvedValue(undefined);
     notifySuccessMock.mockReset().mockResolvedValue(undefined);
     confirmActionMock.mockReset().mockResolvedValue(true);
@@ -119,7 +127,7 @@ describe("RoundScanBoard", () => {
 
   it("sin recorrido activo, ofrece iniciar el recorrido escaneando o saltando (camino de saltar)", async () => {
     const user = userEvent.setup();
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={null} recorridosCompletados={0} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={null} />);
 
     expect(screen.getByText(/iniciar recorrido/i)).toBeInTheDocument();
 
@@ -129,30 +137,60 @@ describe("RoundScanBoard", () => {
     expect(registrarEscaneoActionMock).toHaveBeenCalledWith({ skip: true });
   });
 
-  it("deshabilita 'Escanear' mientras la ventana de la marca objetivo no ha abierto", () => {
-    const recorrido = buildRecorrido([
-      buildRegistro({ abreEn: new Date(NOW + 60_000), cierraEn: new Date(NOW + 120_000) }),
-    ]);
-    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+  it("sin recorrido activo, tambien ofrece 'No pude escanear' para el primer escaneo del recorrido", async () => {
+    const user = userEvent.setup();
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={null} />);
 
-    expect(screen.getByRole("button", { name: /^escanear$/i })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /no pude escanear/i }));
+    await user.type(await screen.findByLabelText(/motivo/i), "Camara descompuesta");
+    await user.click(screen.getByRole("button", { name: /^reportar$/i }));
+
+    await waitFor(() =>
+      expect(reportarPerdidoActionMock).toHaveBeenCalledWith(
+        expect.objectContaining({ motivo: "Camara descompuesta", recorridoId: undefined, registroId: undefined }),
+      ),
+    );
   });
 
-  it("deshabilita 'Escanear' y 'Omitir (demo)' una vez vencida la ventana de la marca objetivo, dejando solo 'No pude escanear'", () => {
+  it("'Escanear' y 'Omitir (demo)' quedan habilitados aunque la ventana individual de la marca objetivo aun no haya abierto", () => {
     const recorrido = buildRecorrido([
-      buildRegistro({ abreEn: new Date(NOW - 120_000), cierraEn: new Date(NOW - 60_000) }),
+      buildRegistro({ abreEn: new Date(NOW + 60_000), cierraEn: new Date(NOW + 30 * 60_000) }),
     ]);
-    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
 
-    expect(screen.getByRole("button", { name: /^escanear$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /omitir \(demo\)/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^escanear$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /omitir \(demo\)/i })).toBeEnabled();
+  });
+
+  it("'Escanear' y 'Omitir (demo)' siguen habilitados aunque la ventana individual de la marca objetivo ya haya cerrado, y muestra siempre la hora estimada", () => {
+    const recorrido = buildRecorrido([
+      buildRegistro({
+        id: "r1",
+        marcaId: "marca-1",
+        orden: 1,
+        abreEn: new Date(NOW - 120_000),
+        cierraEn: new Date(NOW - 60_000),
+      }),
+      buildRegistro({
+        id: "r2",
+        marcaId: "marca-2",
+        orden: 2,
+        abreEn: new Date(NOW - 60_000),
+        cierraEn: new Date(NOW + 30 * 60_000),
+      }),
+    ]);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
+
+    expect(screen.getByRole("button", { name: /^escanear$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /omitir \(demo\)/i })).toBeEnabled();
     expect(screen.getByRole("button", { name: /no pude escanear/i })).toBeEnabled();
-    expect(screen.getByText(/tiempo vencido/i)).toBeInTheDocument();
+    expect(screen.queryByText(/venció/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/hora estimada/i).length).toBeGreaterThan(0);
   });
 
-  it("habilita 'Escanear' una vez abierta la ventana, y abre la cámara al presionarlo (camino de cámara)", async () => {
+  it("abre la cámara al presionar 'Escanear' (camino de cámara)", async () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
-    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
     const user = userEvent.setup();
 
     const scanButton = screen.getByRole("button", { name: /^escanear$/i });
@@ -167,7 +205,7 @@ describe("RoundScanBoard", () => {
 
   it("permite adjuntar una observación antes de confirmar el escaneo, y la envía a la acción", async () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
-    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: /^escanear$/i }));
@@ -183,7 +221,7 @@ describe("RoundScanBoard", () => {
 
   it("al cancelar el diálogo de confirmación, no llama la acción", async () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
-    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: /^escanear$/i }));
@@ -198,7 +236,7 @@ describe("RoundScanBoard", () => {
       buildRegistro({ id: "r1", marcaId: "marca-1", orden: 1, estado: "a-tiempo", escaneadoEn: new Date(NOW) }),
       buildRegistro({ id: "r2", marcaId: "marca-2", orden: 2, estado: "pendiente" }),
     ]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
 
     expect(screen.getAllByRole("button", { name: /^escanear$/i })).toHaveLength(1);
     expect(screen.getByText("Área de carga")).toBeInTheDocument();
@@ -233,7 +271,7 @@ describe("RoundScanBoard", () => {
     });
     const user = userEvent.setup();
     const recorrido = buildRecorrido([buildRegistro({})]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
 
     await user.click(screen.getByRole("button", { name: /omitir \(demo\)/i }));
     await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
@@ -249,7 +287,7 @@ describe("RoundScanBoard", () => {
 
   it("cuando todas las marcas del recorrido ya se resolvieron, ofrece continuar o finalizar el turno", () => {
     const recorrido = buildRecorrido([buildRegistro({ id: "r1", estado: "a-tiempo", escaneadoEn: new Date(NOW) })]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={1} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} recorridosCompletados={1} />);
 
     expect(screen.getByText(/recorrido completado/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^escanear$/i })).toBeInTheDocument();
@@ -260,7 +298,7 @@ describe("RoundScanBoard", () => {
   it("al finalizar el turno desde el recorrido completado, llama la acción y redirige al selector de sitio", async () => {
     const user = userEvent.setup();
     const recorrido = buildRecorrido([buildRegistro({ id: "r1", estado: "a-tiempo", escaneadoEn: new Date(NOW) })]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={1} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} recorridosCompletados={1} />);
 
     await user.click(screen.getByRole("button", { name: /finalizar turno/i }));
 
@@ -272,7 +310,7 @@ describe("RoundScanBoard", () => {
     confirmActionMock.mockResolvedValue(false);
     const user = userEvent.setup();
     const recorrido = buildRecorrido([buildRegistro({ id: "r1", estado: "a-tiempo", escaneadoEn: new Date(NOW) })]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={1} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} recorridosCompletados={1} />);
 
     await user.click(screen.getByRole("button", { name: /finalizar turno/i }));
 
@@ -285,7 +323,7 @@ describe("RoundScanBoard", () => {
     // está completo — la tarjeta de "Recorrido completado" debe aparecer,
     // no una lista con un nuevo registro "pendiente" ya en curso.
     const recorrido = buildRecorrido([buildRegistro({ id: "r1", estado: "a-tiempo", escaneadoEn: new Date(NOW) })]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={1} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} recorridosCompletados={1} />);
 
     expect(screen.getByText(/recorrido completado/i)).toBeInTheDocument();
     expect(screen.queryByTestId(/registro-/)).not.toBeInTheDocument();
@@ -293,7 +331,7 @@ describe("RoundScanBoard", () => {
 
   it("muestra la hora de inicio y el fin estimado del recorrido activo en el encabezado", () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
 
     // toLocaleTimeString() usa un espacio angosto (U+202F) antes de "m.", pero
     // RTL normaliza los espacios del DOM a " " al comparar: el regex debe
@@ -302,5 +340,71 @@ describe("RoundScanBoard", () => {
     const cierraEn = recorrido.registros[0].cierraEn.toLocaleTimeString().replace(/\s+/g, "\\s+");
     expect(screen.getByText(new RegExp(`Recorrido iniciado a las ${iniciadoEn}`))).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`Fin estimado ${cierraEn}`))).toBeInTheDocument();
+  });
+
+  it("avisa 10 minutos antes de que termine el recorrido, si quedan marcas pendientes", () => {
+    const recorrido = buildRecorrido([
+      buildRegistro({ id: "r1", cierraEn: new Date(NOW + 5 * 60_000) }),
+    ]);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(/está por finalizar.*tienes marcas pendientes/i);
+  });
+
+  it("avisa 10 minutos antes de que termine el recorrido, indicando la hora del siguiente, si ya se escanearon todas las marcas", () => {
+    const recorrido = buildRecorrido([
+      buildRegistro({ id: "r1", estado: "a-tiempo", escaneadoEn: new Date(NOW), cierraEn: new Date(NOW + 5 * 60_000) }),
+    ]);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} recorridosCompletados={1} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(/el siguiente recorrido inicia aproximadamente/i);
+  });
+
+  it("no avisa si faltan más de 10 minutos para que termine el recorrido", () => {
+    const recorrido = buildRecorrido([buildRegistro({ id: "r1", cierraEn: new Date(NOW + 20 * 60_000) })]);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("cuando se cumple el tiempo total del recorrido y quedan marcas pendientes, refresca la página una sola vez", () => {
+    const recorrido = buildRecorrido([buildRegistro({ id: "r1", cierraEn: new Date(NOW - 1_000) })]);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
+
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("muestra las marcas pendientes de un recorrido anterior y permite reportarlas con recorridoId/registroId", async () => {
+    const user = userEvent.setup();
+    const pendiente: RegistroPendienteAnterior = {
+      recorridoId: "recorrido-viejo",
+      registro: buildRegistro({ id: "registro-3", marcaId: "marca-2", orden: 2, estado: "pendiente" }),
+    };
+    render(
+      <RoundScanBoard
+        {...baseProps()}
+        recorridoActivo={null}
+        pendientesRecorridoAnterior={[pendiente]}
+      />,
+    );
+
+    const seccionAnterior = screen.getByTestId("pendientes-recorrido-anterior");
+    expect(within(seccionAnterior).getByText("Área de carga")).toBeInTheDocument();
+
+    await user.click(within(seccionAnterior).getByRole("button", { name: /no pude escanear/i }));
+    expect(await screen.findByText(/no pude escanear: área de carga/i)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/motivo/i), "Se cortó el turno antes de llegar");
+    await user.click(screen.getByRole("button", { name: /^reportar$/i }));
+
+    await waitFor(() =>
+      expect(reportarPerdidoActionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          motivo: "Se cortó el turno antes de llegar",
+          recorridoId: "recorrido-viejo",
+          registroId: "registro-3",
+        }),
+      ),
+    );
   });
 });
