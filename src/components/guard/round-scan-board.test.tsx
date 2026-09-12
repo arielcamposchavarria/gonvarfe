@@ -244,7 +244,7 @@ describe("RoundScanBoard", () => {
 
   it("al registrar un escaneo exitoso, muestra un SweetAlert de confirmación", async () => {
     const recorrido = buildRecorrido([buildRegistro({})]);
-    renderTicked(<RoundScanBoard sitio={SITIO} recorridoActivo={recorrido} recorridosCompletados={0} />);
+    renderTicked(<RoundScanBoard {...baseProps()} recorridoActivo={recorrido} />);
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: /^escanear$/i }));
@@ -257,7 +257,7 @@ describe("RoundScanBoard", () => {
 
   it("al omitir un escaneo (demo) exitosamente, muestra un SweetAlert distinto al de escaneo real", async () => {
     const user = userEvent.setup();
-    render(<RoundScanBoard sitio={SITIO} recorridoActivo={null} recorridosCompletados={0} />);
+    render(<RoundScanBoard {...baseProps()} recorridoActivo={null} />);
 
     await user.click(screen.getByRole("button", { name: /omitir escaneo \(demo\)/i }));
     await user.click(await screen.findByRole("button", { name: /^confirmar$/i }));
